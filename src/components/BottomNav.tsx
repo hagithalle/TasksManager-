@@ -29,6 +29,8 @@ export default function BottomNav() {
     <Paper
       elevation={0}
       sx={{
+        // Only visible on mobile; tablets/desktop use SideNav instead
+        display: { xs: 'block', sm: 'none' },
         position: 'fixed',
         bottom: 0,
         left: '50%',

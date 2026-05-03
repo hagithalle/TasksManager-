@@ -28,7 +28,16 @@
     "title": "Goal Title",
     "category": "Category",
     "progress": "Progress",
-    "tasks": "Tasks"
+    "tasks": "Tasks",
+    "finite": "Finite",
+    "ongoing": "Ongoing",
+    "tasksCompleted": "{{completed}}/{{total}} tasks",
+    "dueDate": "Due: {{date}}",
+    "weeklyProgress": "Weekly Progress",
+    "weeklyStats": "{{completed}}/{{total}} this week",
+    "todayRemaining": "{{count}} remaining today",
+    "pinned": "Pinned",
+    "all": "All Goals"
   },
   "list": {
     "new": "New List",

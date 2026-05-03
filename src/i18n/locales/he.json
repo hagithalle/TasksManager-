@@ -28,7 +28,16 @@
     "title": "כותרת מטרה",
     "category": "קטגוריה",
     "progress": "התקדמות",
-    "tasks": "משימות"
+    "tasks": "משימות",
+    "finite": "סופית",
+    "ongoing": "מתמשכת",
+    "tasksCompleted": "{{completed}}/{{total}} משימות",
+    "dueDate": "יעד: {{date}}",
+    "weeklyProgress": "התקדמות שבועית",
+    "weeklyStats": "{{completed}}/{{total}} השבוע",
+    "todayRemaining": "{{count}} נותר להיום",
+    "pinned": "מוצמדות",
+    "all": "כל המטרות"
   },
   "list": {
     "new": "רשימה חדשה",

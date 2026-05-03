@@ -1,0 +1,21 @@
+{
+  "name": "מנהל המשימות",
+  "short_name": "Tasks",
+  "description": "Mobile-first task manager with goals, lists and calendar",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F4F3FF",
+  "theme_color": "#7C5CFF",
+  "orientation": "any",
+  "lang": "he",
+  "dir": "rtl",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["productivity", "utilities"]
+}
