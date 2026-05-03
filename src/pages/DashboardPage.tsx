@@ -1,11 +1,6 @@
-import { Box, Typography } from '@mui/material'
-import { useTranslation } from 'react-i18next'
+import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded'
+import PagePlaceholder from '../components/PagePlaceholder'
 
 export default function DashboardPage() {
-  const { t } = useTranslation()
-  return (
-    <Box sx={{ p: 2 }}>
-      <Typography variant="h2">{t('nav.dashboard')}</Typography>
-    </Box>
-  )
+  return <PagePlaceholder titleKey="nav.dashboard" Icon={DashboardRoundedIcon} />
 }

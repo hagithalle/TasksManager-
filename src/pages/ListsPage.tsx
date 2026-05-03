@@ -1,11 +1,6 @@
-import { Box, Typography } from '@mui/material'
-import { useTranslation } from 'react-i18next'
+import ListRoundedIcon from '@mui/icons-material/ListRounded'
+import PagePlaceholder from '../components/PagePlaceholder'
 
 export default function ListsPage() {
-  const { t } = useTranslation()
-  return (
-    <Box sx={{ p: 2 }}>
-      <Typography variant="h2">{t('nav.lists')}</Typography>
-    </Box>
-  )
+  return <PagePlaceholder titleKey="nav.lists" Icon={ListRoundedIcon} />
 }

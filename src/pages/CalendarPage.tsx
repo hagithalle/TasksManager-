@@ -1,11 +1,6 @@
-import { Box, Typography } from '@mui/material'
-import { useTranslation } from 'react-i18next'
+import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded'
+import PagePlaceholder from '../components/PagePlaceholder'
 
 export default function CalendarPage() {
-  const { t } = useTranslation()
-  return (
-    <Box sx={{ p: 2 }}>
-      <Typography variant="h2">{t('nav.calendar')}</Typography>
-    </Box>
-  )
+  return <PagePlaceholder titleKey="nav.calendar" Icon={CalendarMonthRoundedIcon} />
 }

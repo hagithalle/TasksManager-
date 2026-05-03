@@ -2,13 +2,6 @@
   "app": {
     "name": "Tasks Manager"
   },
-  "nav": {
-    "dashboard": "Dashboard",
-    "tasks": "Tasks",
-    "goals": "Goals",
-    "lists": "Lists",
-    "calendar": "Calendar"
-  },
   "common": {
     "add": "Add",
     "edit": "Edit",
@@ -65,5 +58,18 @@
     "he": "עב",
     "en": "EN",
     "switchTo": "Switch to Hebrew"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "tasks": "Tasks",
+    "goals": "Goals",
+    "lists": "Lists",
+    "calendar": "Calendar",
+    "goalDetail": "Goal Details",
+    "listDetail": "List Details"
+  },
+  "page": {
+    "placeholder": "This page is coming soon",
+    "back": "Back"
   }
 }
