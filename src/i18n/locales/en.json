@@ -20,8 +20,24 @@
     "dueDate": "Due Date",
     "executionTime": "Execution Time",
     "subtasks": "Subtasks",
+    "addSubtask": "+ Add subtask",
+    "subtaskPlaceholder": "New subtask...",
     "completed": "Completed",
-    "pending": "Pending"
+    "pending": "Pending",
+    "filter": {
+      "all": "All",
+      "today": "Today",
+      "urgent": "Urgent",
+      "completed": "Completed"
+    },
+    "noGoal": "No Goal",
+    "minutesShort": "min",
+    "stats": {
+      "completed": "Completed",
+      "urgent": "Urgent",
+      "today": "Today",
+      "total": "Total"
+    }
   },
   "goal": {
     "new": "New Goal",
@@ -53,6 +69,12 @@
     "short": "Short (up to 2 min)",
     "medium": "Medium (up to 10 min)",
     "long": "Long (10+ min)"
+  },
+  "executionType": {
+    "quick": "Quick",
+    "short": "Short",
+    "medium": "Medium",
+    "long": "Long"
   },
   "category": {
     "home": "Home",

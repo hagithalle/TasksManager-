@@ -20,8 +20,24 @@
     "dueDate": "תאריך יעד",
     "executionTime": "זמן ביצוע",
     "subtasks": "תת-משימות",
+    "addSubtask": "+ הוסף תת-משימה",
+    "subtaskPlaceholder": "תת-משימה חדשה...",
     "completed": "הושלמה",
-    "pending": "ממתינה"
+    "pending": "ממתינה",
+    "filter": {
+      "all": "הכל",
+      "today": "היום",
+      "urgent": "דחוף",
+      "completed": "הושלמו"
+    },
+    "noGoal": "ללא מטרה",
+    "minutesShort": "דק'",
+    "stats": {
+      "completed": "הושלמו",
+      "urgent": "דחוף",
+      "today": "להיום",
+      "total": "סהכל"
+    }
   },
   "goal": {
     "new": "מטרה חדשה",
@@ -53,6 +69,12 @@
     "short": "קצר (עד 2 דק')",
     "medium": "בינוני (עד 10 דק')",
     "long": "ארוך (10+ דק')"
+  },
+  "executionType": {
+    "quick": "מהיר",
+    "short": "קצר",
+    "medium": "בינוני",
+    "long": "ארוך"
   },
   "category": {
     "home": "בית",

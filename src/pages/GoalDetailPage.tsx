@@ -1,28 +1,57 @@
-import {
+﻿import {
   Box, Typography, LinearProgress, Chip, Divider,
   List, ListItem, ListItemText, ListItemIcon, Checkbox,
-  Collapse, IconButton,
+  Collapse, IconButton, Stack,
 } from '@mui/material'
-import ExpandMoreRoundedIcon  from '@mui/icons-material/ExpandMoreRounded'
-import ExpandLessRoundedIcon  from '@mui/icons-material/ExpandLessRounded'
-import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
+import ExpandMoreRoundedIcon           from '@mui/icons-material/ExpandMoreRounded'
+import ExpandLessRoundedIcon           from '@mui/icons-material/ExpandLessRounded'
+import CheckCircleRoundedIcon          from '@mui/icons-material/CheckCircleRounded'
 import RadioButtonUncheckedRoundedIcon from '@mui/icons-material/RadioButtonUncheckedRounded'
 import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
-import { mockGoals } from '../data'
-import { mockTasks } from '../data'
-import { GoalType } from '../types'
+import { mockGoals, mockTasks } from '../data'
+import { GoalType, Priority } from '../types'
+import type { TaskItem } from '../types'
 import GoalCategoryIcon from '../components/goals/GoalCategoryIcon'
 
+// ג”€ג”€ג”€ filter types ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€
+type Filter = 'all' | 'today' | 'urgent' | 'completed'
+
+const TODAY = new Date().toISOString().slice(0, 10) // 'YYYY-MM-DD'
+
+function applyFilter(tasks: TaskItem[], filter: Filter): TaskItem[] {
+  switch (filter) {
+    case 'today':
+      return tasks.filter((t) => !t.isCompleted && t.dueDate?.startsWith(TODAY))
+    case 'urgent':
+      return tasks.filter(
+        (t) => !t.isCompleted && (t.priority === Priority.Critical || t.priority === Priority.High),
+      )
+    case 'completed':
+      return tasks.filter((t) => t.isCompleted)
+    default:
+      return tasks
+  }
+}
+
+// ג”€ג”€ג”€ priority colour dot ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€
+const PRIORITY_COLOR: Record<string, string> = {
+  low: '#4CAF50',
+  medium: '#FF9800',
+  high: '#F44336',
+  critical: '#9C27B0',
+}
+
+// ג”€ג”€ג”€ component ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€
 export default function GoalDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { t, i18n } = useTranslation()
 
-  const goal  = mockGoals.find((g) => g.id === id)
-  const tasks = mockTasks.filter((t) => t.goalId === id)
+  const goal      = mockGoals.find((g) => g.id === id)
+  const allTasks  = mockTasks.filter((tk) => tk.goalId === id)
 
-  // track which tasks have their subtask list open
+  const [filter,   setFilter]   = useState<Filter>('all')
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
 
   if (!goal) {
@@ -33,48 +62,41 @@ export default function GoalDetailPage() {
     )
   }
 
-  const isFinite = goal.goalType === GoalType.Finite
-
-  const overallProgress =
-    goal.totalTasks > 0
-      ? Math.round((goal.completedTasks / goal.totalTasks) * 100)
-      : 0
-
-  const weeklyProgress =
-    (goal.weeklyTotal ?? 0) > 0
-      ? Math.round(((goal.weeklyCompleted ?? 0) / (goal.weeklyTotal ?? 1)) * 100)
-      : 0
-
-  const formattedDueDate = goal.dueDate
+  const isFinite     = goal.goalType === GoalType.Finite
+  const overallPct   = goal.totalTasks > 0
+    ? Math.round((goal.completedTasks / goal.totalTasks) * 100)
+    : 0
+  const weeklyPct    = (goal.weeklyTotal ?? 0) > 0
+    ? Math.round(((goal.weeklyCompleted ?? 0) / (goal.weeklyTotal ?? 1)) * 100)
+    : 0
+  const formattedDue = goal.dueDate
     ? new Date(goal.dueDate).toLocaleDateString(i18n.language, {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
+        day: '2-digit', month: '2-digit', year: 'numeric',
       })
     : null
 
-  const toggle = (taskId: string) =>
+  const visibleTasks = applyFilter(allTasks, filter)
+
+  const toggleExpand = (taskId: string) =>
     setExpanded((prev) => ({ ...prev, [taskId]: !prev[taskId] }))
 
-  // priority colour dot
-  const priorityColor: Record<string, string> = {
-    low: '#4CAF50', medium: '#FF9800', high: '#F44336', critical: '#9C27B0',
-  }
+  const filters: Filter[] = ['all', 'today', 'urgent', 'completed']
 
   return (
     <Box sx={{ pb: 4 }}>
-      {/* ── Hero header ── */}
+
+      {/* ג”€ג”€ Hero header ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ */}
       <Box
         sx={{
-          px: 2, pt: 3, pb: 2,
+          px: 2, pt: 3, pb: 2.5,
           background: 'linear-gradient(135deg, #EDE9FF 0%, #F3E5F5 100%)',
         }}
       >
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
+        {/* Title row */}
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2.5 }}>
           <GoalCategoryIcon category={goal.category} size={56} />
-
           <Box sx={{ flex: 1 }}>
-            <Typography variant="h6" fontWeight={700} lineHeight={1.2}>
+            <Typography variant="h6" fontWeight={700} lineHeight={1.25}>
               {goal.title}
             </Typography>
             <Chip
@@ -91,37 +113,27 @@ export default function GoalDetailPage() {
           </Box>
         </Box>
 
-        {/* Stats row */}
+        {/* Stat cards */}
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: isFinite ? '1fr 1fr 1fr' : '1fr 1fr 1fr',
+            gridTemplateColumns: '1fr 1fr 1fr',
             gap: 1,
             mb: 2,
           }}
         >
-          {/* Overall progress */}
-          <Box
-            sx={{
-              bgcolor: 'white', borderRadius: 2, p: 1.5, textAlign: 'center',
-              boxShadow: '0 1px 4px rgba(124,92,255,0.1)',
-            }}
-          >
+          {/* % progress */}
+          <Box sx={statCardSx}>
             <Typography variant="h6" fontWeight={700} color="primary.main">
-              {overallProgress}%
+              {overallPct}%
             </Typography>
             <Typography variant="caption" color="text.secondary">
               {t('goal.progress')}
             </Typography>
           </Box>
 
-          {/* Completed tasks */}
-          <Box
-            sx={{
-              bgcolor: 'white', borderRadius: 2, p: 1.5, textAlign: 'center',
-              boxShadow: '0 1px 4px rgba(124,92,255,0.1)',
-            }}
-          >
+          {/* tasks X/Y */}
+          <Box sx={statCardSx}>
             <Typography variant="h6" fontWeight={700} color="primary.main">
               {goal.completedTasks}/{goal.totalTasks}
             </Typography>
@@ -130,17 +142,12 @@ export default function GoalDetailPage() {
             </Typography>
           </Box>
 
-          {/* Due date (Finite) or today remaining (Ongoing) */}
-          <Box
-            sx={{
-              bgcolor: 'white', borderRadius: 2, p: 1.5, textAlign: 'center',
-              boxShadow: '0 1px 4px rgba(124,92,255,0.1)',
-            }}
-          >
+          {/* due date OR today remaining */}
+          <Box sx={statCardSx}>
             {isFinite ? (
               <>
-                <Typography variant="h6" fontWeight={700} color="primary.main" fontSize="0.95rem">
-                  {formattedDueDate ?? '—'}
+                <Typography variant="body2" fontWeight={700} color="primary.main">
+                  {formattedDue ?? 'ג€”'}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   {t('task.dueDate')}
@@ -151,8 +158,10 @@ export default function GoalDetailPage() {
                 <Typography variant="h6" fontWeight={700} color="primary.main">
                   {goal.todayRemaining ?? 0}
                 </Typography>
-                <Typography variant="caption" color="text.secondary" noWrap>
-                  {t('goal.todayRemaining', { count: 0 }).replace(/\d+/, '').trim()}
+                <Typography variant="caption" color="text.secondary">
+                  {t('goal.todayRemaining', { count: goal.todayRemaining ?? 0 })
+                    .replace(/\d+/, '')
+                    .trim()}
                 </Typography>
               </>
             )}
@@ -163,47 +172,66 @@ export default function GoalDetailPage() {
         {isFinite ? (
           <LinearProgress
             variant="determinate"
-            value={overallProgress}
-            sx={{
-              borderRadius: 4, height: 8, bgcolor: 'rgba(124,92,255,0.15)',
-              '& .MuiLinearProgress-bar': { bgcolor: 'primary.main', borderRadius: 4 },
-            }}
+            value={overallPct}
+            sx={progressBarSx}
           />
         ) : (
           <>
             <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
-              {t('goal.weeklyProgress')} — {t('goal.weeklyStats', {
+              {t('goal.weeklyProgress')} ג€” {t('goal.weeklyStats', {
                 completed: goal.weeklyCompleted ?? 0,
-                total: goal.weeklyTotal ?? 0,
+                total:     goal.weeklyTotal ?? 0,
               })}
             </Typography>
-            <LinearProgress
-              variant="determinate"
-              value={weeklyProgress}
-              sx={{
-                borderRadius: 4, height: 8, bgcolor: 'rgba(124,92,255,0.15)',
-                '& .MuiLinearProgress-bar': { bgcolor: 'primary.main', borderRadius: 4 },
-              }}
-            />
+            <LinearProgress variant="determinate" value={weeklyPct} sx={progressBarSx} />
           </>
         )}
       </Box>
 
-      {/* ── Task list ── */}
-      <Box sx={{ px: 2, pt: 2 }}>
-        <Typography variant="subtitle2" fontWeight={700} color="text.secondary" sx={{ mb: 1 }}>
-          {t('goal.tasks')} ({tasks.length})
+      {/* ג”€ג”€ Filter chips ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ */}
+      <Box sx={{ px: 2, pt: 2, pb: 1 }}>
+        <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
+          {filters.map((f) => (
+            <Chip
+              key={f}
+              label={t(`task.filter.${f}`)}
+              onClick={() => setFilter(f)}
+              variant={filter === f ? 'filled' : 'outlined'}
+              size="small"
+              sx={{
+                fontWeight: filter === f ? 700 : 400,
+                bgcolor:    filter === f ? 'primary.main' : 'transparent',
+                color:      filter === f ? 'white' : 'text.secondary',
+                borderColor: filter === f ? 'primary.main' : 'divider',
+                '&:hover': {
+                  bgcolor: filter === f ? 'primary.dark' : 'action.hover',
+                },
+              }}
+            />
+          ))}
+        </Stack>
+      </Box>
+
+      {/* ג”€ג”€ Task list ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ */}
+      <Box sx={{ px: 2 }}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          fontWeight={700}
+          sx={{ letterSpacing: 0.5, textTransform: 'uppercase', mb: 1, display: 'block' }}
+        >
+          {t('goal.tasks')} ({visibleTasks.length})
         </Typography>
 
-        {tasks.length === 0 ? (
-          <Typography variant="body2" color="text.secondary">
+        {visibleTasks.length === 0 ? (
+          <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
             {t('common.noData')}
           </Typography>
         ) : (
           <List disablePadding>
-            {tasks.map((task, index) => {
+            {visibleTasks.map((task, index) => {
               const hasSubTasks = (task.subTasks?.length ?? 0) > 0
-              const isOpen = expanded[task.id] ?? false
+              const isOpen      = expanded[task.id] ?? false
 
               return (
                 <Box key={task.id}>
@@ -211,10 +239,15 @@ export default function GoalDetailPage() {
 
                   <ListItem
                     disablePadding
-                    sx={{ py: 1, gap: 1 }}
+                    sx={{ py: 1.25, alignItems: 'flex-start' }}
                     secondaryAction={
                       hasSubTasks ? (
-                        <IconButton size="small" onClick={() => toggle(task.id)} edge="end">
+                        <IconButton
+                          size="small"
+                          edge="end"
+                          onClick={() => toggleExpand(task.id)}
+                          sx={{ mt: 0.5 }}
+                        >
                           {isOpen
                             ? <ExpandLessRoundedIcon fontSize="small" />
                             : <ExpandMoreRoundedIcon fontSize="small" />}
@@ -222,7 +255,8 @@ export default function GoalDetailPage() {
                       ) : undefined
                     }
                   >
-                    <ListItemIcon sx={{ minWidth: 36 }}>
+                    {/* Checkbox */}
+                    <ListItemIcon sx={{ minWidth: 36, mt: 0.25 }}>
                       <Checkbox
                         edge="start"
                         checked={task.isCompleted}
@@ -233,20 +267,23 @@ export default function GoalDetailPage() {
                       />
                     </ListItemIcon>
 
+                    {/* Title + meta */}
                     <ListItemText
                       primary={
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          {/* priority dot */}
                           <Box
                             sx={{
                               width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-                              bgcolor: priorityColor[task.priority] ?? '#999',
+                              bgcolor: PRIORITY_COLOR[task.priority] ?? '#999',
                             }}
                           />
                           <Typography
                             variant="body2"
                             sx={{
                               textDecoration: task.isCompleted ? 'line-through' : 'none',
-                              color: task.isCompleted ? 'text.disabled' : 'text.primary',
+                              color:          task.isCompleted ? 'text.disabled' : 'text.primary',
+                              fontWeight: 500,
                             }}
                           >
                             {task.title}
@@ -254,14 +291,31 @@ export default function GoalDetailPage() {
                         </Box>
                       }
                       secondary={
-                        task.durationMinutes
-                          ? `${task.durationMinutes} \'`
-                          : undefined
+                        <Box
+                          component="span"
+                          sx={{ display: 'flex', gap: 1, mt: 0.25, flexWrap: 'wrap' }}
+                        >
+                          {task.dueDate && (
+                            <Typography component="span" variant="caption" color="text.secondary">
+                              {t('task.dueDate')}: {new Date(task.dueDate).toLocaleDateString(i18n.language, { day: '2-digit', month: '2-digit' })}
+                            </Typography>
+                          )}
+                          {task.durationMinutes && (
+                            <Typography component="span" variant="caption" color="text.secondary">
+                              {task.durationMinutes}&apos;
+                            </Typography>
+                          )}
+                          {hasSubTasks && (
+                            <Typography component="span" variant="caption" color="text.secondary">
+                              {t('task.subtasks')}: {task.subTasks!.filter((s) => s.isCompleted).length}/{task.subTasks!.length}
+                            </Typography>
+                          )}
+                        </Box>
                       }
                     />
                   </ListItem>
 
-                  {/* Sub-tasks */}
+                  {/* Sub-tasks collapse */}
                   {hasSubTasks && (
                     <Collapse in={isOpen}>
                       <List disablePadding sx={{ pl: 5, pb: 0.5 }}>
@@ -283,7 +337,7 @@ export default function GoalDetailPage() {
                                   variant="caption"
                                   sx={{
                                     textDecoration: sub.isCompleted ? 'line-through' : 'none',
-                                    color: sub.isCompleted ? 'text.disabled' : 'text.secondary',
+                                    color:          sub.isCompleted ? 'text.disabled' : 'text.secondary',
                                   }}
                                 >
                                   {sub.title}
@@ -305,3 +359,18 @@ export default function GoalDetailPage() {
   )
 }
 
+// ג”€ג”€ג”€ shared sx ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€
+const statCardSx = {
+  bgcolor: 'white',
+  borderRadius: 2,
+  p: 1.5,
+  textAlign: 'center',
+  boxShadow: '0 1px 4px rgba(124,92,255,0.10)',
+} as const
+
+const progressBarSx = {
+  borderRadius: 4,
+  height: 8,
+  bgcolor: 'rgba(124,92,255,0.15)',
+  '& .MuiLinearProgress-bar': { bgcolor: 'primary.main', borderRadius: 4 },
+} as const
