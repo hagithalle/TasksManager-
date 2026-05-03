@@ -1,0 +1,69 @@
+{
+  "app": {
+    "name": "Tasks Manager"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "tasks": "Tasks",
+    "goals": "Goals",
+    "lists": "Lists",
+    "calendar": "Calendar"
+  },
+  "common": {
+    "add": "Add",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel",
+    "done": "Done",
+    "back": "Back",
+    "loading": "Loading...",
+    "noData": "No data to display"
+  },
+  "task": {
+    "new": "New Task",
+    "title": "Task Title",
+    "priority": "Priority",
+    "dueDate": "Due Date",
+    "executionTime": "Execution Time",
+    "subtasks": "Subtasks",
+    "completed": "Completed",
+    "pending": "Pending"
+  },
+  "goal": {
+    "new": "New Goal",
+    "title": "Goal Title",
+    "category": "Category",
+    "progress": "Progress",
+    "tasks": "Tasks"
+  },
+  "list": {
+    "new": "New List",
+    "title": "List Title"
+  },
+  "priority": {
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "critical": "Critical"
+  },
+  "executionTime": {
+    "short": "Short (up to 2 min)",
+    "medium": "Medium (up to 10 min)",
+    "long": "Long (10+ min)"
+  },
+  "category": {
+    "home": "Home",
+    "work": "Work",
+    "health": "Health",
+    "business": "Business",
+    "python": "Python",
+    "hobby": "Hobby",
+    "personal": "Personal"
+  },
+  "lang": {
+    "he": "עב",
+    "en": "EN",
+    "switchTo": "Switch to Hebrew"
+  }
+}

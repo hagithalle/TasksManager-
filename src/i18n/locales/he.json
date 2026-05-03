@@ -1,0 +1,69 @@
+{
+  "app": {
+    "name": "מנהל המשימות"
+  },
+  "nav": {
+    "dashboard": "דשבורד",
+    "tasks": "משימות",
+    "goals": "מטרות",
+    "lists": "רשימות",
+    "calendar": "יומן"
+  },
+  "common": {
+    "add": "הוסף",
+    "edit": "ערוך",
+    "delete": "מחק",
+    "save": "שמור",
+    "cancel": "בטל",
+    "done": "סיים",
+    "back": "חזור",
+    "loading": "טוען...",
+    "noData": "אין נתונים להצגה"
+  },
+  "task": {
+    "new": "משימה חדשה",
+    "title": "כותרת משימה",
+    "priority": "עדיפות",
+    "dueDate": "תאריך יעד",
+    "executionTime": "זמן ביצוע",
+    "subtasks": "תת-משימות",
+    "completed": "הושלמה",
+    "pending": "ממתינה"
+  },
+  "goal": {
+    "new": "מטרה חדשה",
+    "title": "כותרת מטרה",
+    "category": "קטגוריה",
+    "progress": "התקדמות",
+    "tasks": "משימות"
+  },
+  "list": {
+    "new": "רשימה חדשה",
+    "title": "כותרת רשימה"
+  },
+  "priority": {
+    "low": "נמוכה",
+    "medium": "בינונית",
+    "high": "גבוהה",
+    "critical": "קריטית"
+  },
+  "executionTime": {
+    "short": "קצר (עד 2 דק')",
+    "medium": "בינוני (עד 10 דק')",
+    "long": "ארוך (10+ דק')"
+  },
+  "category": {
+    "home": "בית",
+    "work": "עבודה",
+    "health": "בריאות",
+    "business": "עסקים",
+    "python": "Python",
+    "hobby": "תחביב",
+    "personal": "אישי"
+  },
+  "lang": {
+    "he": "עב",
+    "en": "EN",
+    "switchTo": "עבור לאנגלית"
+  }
+}

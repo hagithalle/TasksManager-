@@ -1,0 +1,50 @@
+import type { Task } from '../types'
+
+export const mockTasks: Task[] = [
+  {
+    id: 't1',
+    title: 'לסדר את הסלון',
+    completed: false,
+    priority: 'medium',
+    executionTime: 'long',
+    goalId: 'g1',
+    subTasks: [
+      { id: 'st1', title: 'לאסוף חפצים', completed: true },
+      { id: 'st2', title: 'לשאוב אבק', completed: false },
+      { id: 'st3', title: 'לארגן ספרים ומגזינים', completed: false },
+      { id: 'st4', title: 'לשטוב וליישר רצפה', completed: false },
+    ],
+    createdAt: '2025-05-01T08:00:00Z',
+    updatedAt: '2025-05-01T08:00:00Z',
+  },
+  {
+    id: 't2',
+    title: 'למצוא עבודה',
+    completed: false,
+    priority: 'high',
+    executionTime: 'long',
+    goalId: 'g2',
+    createdAt: '2025-05-01T08:00:00Z',
+    updatedAt: '2025-05-01T08:00:00Z',
+  },
+  {
+    id: 't3',
+    title: 'ללכת לרופא',
+    completed: false,
+    priority: 'high',
+    executionTime: 'medium',
+    goalId: 'g3',
+    createdAt: '2025-05-01T08:00:00Z',
+    updatedAt: '2025-05-01T08:00:00Z',
+  },
+  {
+    id: 't4',
+    title: 'ללמוד Python',
+    completed: false,
+    priority: 'medium',
+    executionTime: 'long',
+    goalId: 'g4',
+    createdAt: '2025-05-01T08:00:00Z',
+    updatedAt: '2025-05-01T08:00:00Z',
+  },
+]
