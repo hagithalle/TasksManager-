@@ -71,6 +71,16 @@ function addMonths(isoDate: string, n: number): string {
   return d.toISOString().slice(0, 10)
 }
 
+// ─── Hebrew calendar helpers ────────────────────────────────────────────────
+
+const HE_DAY   = new Intl.DateTimeFormat('he-u-ca-hebrew', { day: 'numeric' })
+const HE_FULL  = new Intl.DateTimeFormat('he-u-ca-hebrew', { day: 'numeric', month: 'long', year: 'numeric' })
+const HE_MONTH = new Intl.DateTimeFormat('he-u-ca-hebrew', { month: 'long', year: 'numeric' })
+
+function hebrewDay(isoDate: string):       string { return HE_DAY.format(new Date(isoDate  + 'T12:00:00')) }
+function hebrewFullDate(isoDate: string):  string { return HE_FULL.format(new Date(isoDate  + 'T12:00:00')) }
+function hebrewMonthYear(isoDate: string): string { return HE_MONTH.format(new Date(isoDate + 'T12:00:00')) }
+
 function getTasksForDate(tasks: TaskItem[], date: string) {
   const forDate     = tasks.filter((tk) => tk.dueDate === date)
   const scheduled   = forDate
@@ -198,8 +208,11 @@ export default function CalendarPage() {
                   >
                     {dayNum}
                   </Typography>
+                  <Typography sx={{ fontSize: '0.58rem', lineHeight: 1, mt: 0.15, color: isSelected ? 'rgba(255,255,255,0.65)' : 'text.disabled' }}>
+                    {hebrewDay(day)}
+                  </Typography>
                   <Box sx={{
-                    mt: 0.5, width: 18, height: 18, borderRadius: '50%',
+                    mt: 0.4, width: 18, height: 18, borderRadius: '50%',
                     bgcolor: count > 0
                       ? (isSelected ? 'rgba(255,255,255,0.22)' : 'rgba(124,92,255,0.12)')
                       : 'transparent',
@@ -233,9 +246,14 @@ export default function CalendarPage() {
           <IconButton size="small" onClick={() => setSelectedDate((d) => addMonths(d, -1))}>
             <ChevronLeftRoundedIcon />
           </IconButton>
-          <Typography variant="body2" fontWeight={700} sx={{ flex: 1, textAlign: 'center' }}>
-            {formatMonthYear(selectedDate, locale)}
-          </Typography>
+          <Box sx={{ flex: 1, textAlign: 'center' }}>
+            <Typography variant="body2" fontWeight={700} sx={{ lineHeight: 1.3 }}>
+              {formatMonthYear(selectedDate, locale)}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem', display: 'block' }}>
+              {hebrewMonthYear(selectedDate)}
+            </Typography>
+          </Box>
           <IconButton size="small" onClick={() => setSelectedDate((d) => addMonths(d, 1))}>
             <ChevronRightRoundedIcon />
           </IconButton>
@@ -248,9 +266,14 @@ export default function CalendarPage() {
           <IconButton size="small" onClick={() => setSelectedDate((d) => addDays(d, -1))}>
             <ChevronLeftRoundedIcon />
           </IconButton>
-          <Typography variant="body2" fontWeight={600} sx={{ flex: 1, textAlign: 'center' }}>
-            {formatFullDate(selectedDate, locale)}
-          </Typography>
+          <Box sx={{ flex: 1, textAlign: 'center' }}>
+            <Typography variant="body2" fontWeight={600} sx={{ lineHeight: 1.3 }}>
+              {formatFullDate(selectedDate, locale)}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem', display: 'block' }}>
+              {hebrewFullDate(selectedDate)}
+            </Typography>
+          </Box>
           <IconButton size="small" onClick={() => setSelectedDate((d) => addDays(d, 1))}>
             <ChevronRightRoundedIcon />
           </IconButton>
@@ -337,6 +360,9 @@ function MonthView({
                 }}
               >
                 {dayNum}
+              </Typography>
+              <Typography sx={{ fontSize: '0.55rem', lineHeight: 1, mt: 0.1, color: isSelected ? 'rgba(255,255,255,0.65)' : 'text.disabled' }}>
+                {hebrewDay(day)}
               </Typography>
 
               {/* Dot indicators */}
