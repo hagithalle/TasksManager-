@@ -1,12 +1,18 @@
 # Dependencies
 node_modules/
+client/node_modules/
+server/node_modules/
 
 # Build output
 dist/
 dist-ssr/
+client/dist/
+client/dist-ssr/
+server/dist/
 
 # Vite cache
 .vite/
+client/.vite/
 
 # TypeScript build info
 *.tsbuildinfo
