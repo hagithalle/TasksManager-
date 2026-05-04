@@ -73,13 +73,56 @@ function addMonths(isoDate: string, n: number): string {
 
 // ─── Hebrew calendar helpers ────────────────────────────────────────────────
 
-const HE_DAY   = new Intl.DateTimeFormat('he-u-ca-hebrew', { day: 'numeric' })
-const HE_FULL  = new Intl.DateTimeFormat('he-u-ca-hebrew', { day: 'numeric', month: 'long', year: 'numeric' })
-const HE_MONTH = new Intl.DateTimeFormat('he-u-ca-hebrew', { month: 'long', year: 'numeric' })
+const GEMATRIA: [number, string][] = [
+  [400, 'ת'], [300, 'ש'], [200, 'ר'], [100, 'ק'],
+  [90, 'צ'], [80, 'פ'], [70, 'ע'], [60, 'ס'], [50, 'נ'],
+  [40, 'מ'], [30, 'ל'], [20, 'כ'], [10, 'י'],
+  [9, 'ט'], [8, 'ח'], [7, 'ז'], [6, 'ו'], [5, 'ה'],
+  [4, 'ד'], [3, 'ג'], [2, 'ב'], [1, 'א'],
+]
 
-function hebrewDay(isoDate: string):       string { return HE_DAY.format(new Date(isoDate  + 'T12:00:00')) }
-function hebrewFullDate(isoDate: string):  string { return HE_FULL.format(new Date(isoDate  + 'T12:00:00')) }
-function hebrewMonthYear(isoDate: string): string { return HE_MONTH.format(new Date(isoDate + 'T12:00:00')) }
+function toGematria(n: number): string {
+  if (n === 15) return 'ט\u05f4ו'   // avoid יה
+  if (n === 16) return 'ט\u05f4ז'   // avoid יו
+  let rem = n
+  let s = ''
+  for (const [val, letter] of GEMATRIA) {
+    while (rem >= val) { s += letter; rem -= val }
+  }
+  if (s.length === 1) return s + '\u05f3'                       // alef → א׳
+  return s.slice(0, -1) + '\u05f4' + s.slice(-1)               // יט  → י״ט
+}
+
+const HE_DAY_FMT   = new Intl.DateTimeFormat('he-u-ca-hebrew', { day: 'numeric' })
+const HE_FULL_FMT  = new Intl.DateTimeFormat('he-u-ca-hebrew', { day: 'numeric', month: 'long', year: 'numeric' })
+const HE_MONTH_FMT = new Intl.DateTimeFormat('he-u-ca-hebrew', { month: 'long', year: 'numeric' })
+
+function hebrewDay(isoDate: string): string {
+  const parts = HE_DAY_FMT.formatToParts(new Date(isoDate + 'T12:00:00'))
+  const day   = parts.find((p) => p.type === 'day')
+  return day ? toGematria(parseInt(day.value, 10)) : ''
+}
+
+function hebrewFullDate(isoDate: string): string {
+  return HE_FULL_FMT
+    .formatToParts(new Date(isoDate + 'T12:00:00'))
+    .map((p) => {
+      if (p.type === 'day')  return toGematria(parseInt(p.value, 10))
+      if (p.type === 'year') return toGematria(parseInt(p.value, 10) % 1000)
+      return p.value
+    })
+    .join('')
+}
+
+function hebrewMonthYear(isoDate: string): string {
+  return HE_MONTH_FMT
+    .formatToParts(new Date(isoDate + 'T12:00:00'))
+    .map((p) => {
+      if (p.type === 'year') return toGematria(parseInt(p.value, 10) % 1000)
+      return p.value
+    })
+    .join('')
+}
 
 function getTasksForDate(tasks: TaskItem[], date: string) {
   const forDate     = tasks.filter((tk) => tk.dueDate === date)
