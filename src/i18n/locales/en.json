@@ -148,6 +148,7 @@
     "today": "Today",
     "noTasks": "No tasks this day",
     "unscheduled": "Unscheduled",
-    "allDay": "All day"
+    "allDay": "All day",
+    "monthly": "Monthly"
   }
 }

@@ -38,6 +38,39 @@ function formatFullDate(isoDate: string, locale: string): string {
   })
 }
 
+function getMonthDays(isoDate: string): string[] {
+  const d     = new Date(isoDate + 'T12:00:00')
+  const year  = d.getFullYear()
+  const month = d.getMonth()
+
+  // First day of the month, roll back to Monday
+  const first    = new Date(year, month, 1)
+  const startPad = (first.getDay() + 6) % 7   // 0=Mon … 6=Sun
+
+  // Last day of the month
+  const lastDate = new Date(year, month + 1, 0).getDate()
+
+  const cells: string[] = []
+  for (let i = 0; i < startPad; i++) cells.push('')  // empty padding
+  for (let d = 1; d <= lastDate; d++) {
+    cells.push(`${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`)
+  }
+  // pad to full 6-row grid if needed
+  while (cells.length % 7 !== 0) cells.push('')
+  return cells
+}
+
+function formatMonthYear(isoDate: string, locale: string): string {
+  return new Date(isoDate + 'T12:00:00').toLocaleDateString(locale, { month: 'long', year: 'numeric' })
+}
+
+function addMonths(isoDate: string, n: number): string {
+  const d = new Date(isoDate + 'T12:00:00')
+  d.setDate(1)
+  d.setMonth(d.getMonth() + n)
+  return d.toISOString().slice(0, 10)
+}
+
 function getTasksForDate(tasks: TaskItem[], date: string) {
   const forDate     = tasks.filter((tk) => tk.dueDate === date)
   const scheduled   = forDate
@@ -67,7 +100,7 @@ export default function CalendarPage() {
   const { t, i18n } = useTranslation()
   const locale = i18n.language === 'he' ? 'he-IL' : 'en-US'
 
-  const [viewMode,     setViewMode]     = useState<'weekly' | 'daily'>('weekly')
+  const [viewMode,     setViewMode]     = useState<'weekly' | 'daily' | 'monthly'>('weekly')
   const [selectedDate, setSelectedDate] = useState(TODAY)
 
   const weekDays = getWeekDays(selectedDate)
@@ -95,7 +128,7 @@ export default function CalendarPage() {
         <ToggleButtonGroup
           value={viewMode}
           exclusive
-          onChange={(_, v: 'weekly' | 'daily' | null) => { if (v) setViewMode(v) }}
+          onChange={(_, v: 'weekly' | 'daily' | 'monthly' | null) => { if (v) setViewMode(v) }}
           size="small"
           sx={{ bgcolor: 'white', borderRadius: 2.5, p: 0.25 }}
         >
@@ -110,6 +143,12 @@ export default function CalendarPage() {
             sx={{ borderRadius: '8px !important', px: 2.5, fontWeight: 600, fontSize: '0.75rem', border: 'none' }}
           >
             {t('calendar.daily')}
+          </ToggleButton>
+          <ToggleButton
+            value="monthly"
+            sx={{ borderRadius: '8px !important', px: 2.5, fontWeight: 600, fontSize: '0.75rem', border: 'none' }}
+          >
+            {t('calendar.monthly')}
           </ToggleButton>
         </ToggleButtonGroup>
       </Box>
@@ -187,6 +226,21 @@ export default function CalendarPage() {
           </Box>
         </>
 
+      ) : viewMode === 'monthly' ? (
+
+        /* ── Monthly: month nav header ── */
+        <Box sx={{ display: 'flex', alignItems: 'center', px: 1, py: 1.25, gap: 0.5 }}>
+          <IconButton size="small" onClick={() => setSelectedDate((d) => addMonths(d, -1))}>
+            <ChevronLeftRoundedIcon />
+          </IconButton>
+          <Typography variant="body2" fontWeight={700} sx={{ flex: 1, textAlign: 'center' }}>
+            {formatMonthYear(selectedDate, locale)}
+          </Typography>
+          <IconButton size="small" onClick={() => setSelectedDate((d) => addMonths(d, 1))}>
+            <ChevronRightRoundedIcon />
+          </IconButton>
+        </Box>
+
       ) : (
 
         /* ── Daily: prev/next day nav ── */
@@ -203,8 +257,104 @@ export default function CalendarPage() {
         </Box>
       )}
 
-      {/* ── Day view (shared between both modes) ── */}
-      <DayView date={selectedDate} />
+      {/* ── Monthly grid or Day view ── */}
+      {viewMode === 'monthly'
+        ? <MonthView selectedDate={selectedDate} onSelectDay={(d) => { setSelectedDate(d); setViewMode('daily') }} />
+        : <DayView date={selectedDate} />}
+    </Box>
+  )
+}
+
+// ─── MonthView ────────────────────────────────────────────────────────────────
+
+const WEEKDAY_LABELS_HE = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש']
+const WEEKDAY_LABELS_EN = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
+
+function MonthView({
+  selectedDate,
+  onSelectDay,
+}: {
+  selectedDate: string
+  onSelectDay: (date: string) => void
+}) {
+  const { i18n } = useTranslation()
+  const isHe = i18n.language === 'he'
+  const dayLabels = isHe ? WEEKDAY_LABELS_HE : WEEKDAY_LABELS_EN
+
+  const cells = getMonthDays(selectedDate)
+
+  return (
+    <Box sx={{ px: 1.5, pt: 0.5, pb: 3 }}>
+      {/* Weekday header row */}
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', mb: 0.5 }}>
+        {dayLabels.map((l) => (
+          <Typography
+            key={l}
+            variant="caption"
+            sx={{ textAlign: 'center', fontWeight: 700, color: 'text.disabled', fontSize: '0.65rem', py: 0.25 }}
+          >
+            {l}
+          </Typography>
+        ))}
+      </Box>
+
+      {/* Day cells */}
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '3px' }}>
+        {cells.map((day, idx) => {
+          if (!day) return <Box key={`empty-${idx}`} />
+
+          const count      = mockTasks.filter((tk) => tk.dueDate === day).length
+          const isSelected = day === selectedDate
+          const isToday    = day === TODAY
+          const dayNum     = new Date(day + 'T12:00:00').getDate()
+
+          return (
+            <Box
+              key={day}
+              onClick={() => onSelectDay(day)}
+              sx={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center',
+                py: 0.75, borderRadius: 2.5, cursor: 'pointer',
+                bgcolor:
+                  isSelected ? 'primary.main'
+                  : isToday  ? 'rgba(124,92,255,0.10)'
+                  : 'transparent',
+                border: '1.5px solid',
+                borderColor:
+                  isSelected ? 'primary.main'
+                  : isToday  ? 'rgba(124,92,255,0.35)'
+                  : 'transparent',
+                transition: 'all 0.12s',
+                '&:hover': { bgcolor: isSelected ? 'primary.main' : 'action.hover' },
+              }}
+            >
+              <Typography
+                variant="body2"
+                fontWeight={isToday || isSelected ? 700 : 400}
+                sx={{
+                  fontSize: '0.8rem', lineHeight: 1.3,
+                  color: isSelected ? 'white' : isToday ? 'primary.main' : 'text.primary',
+                }}
+              >
+                {dayNum}
+              </Typography>
+
+              {/* Dot indicators */}
+              <Box sx={{ display: 'flex', gap: '2px', mt: 0.25, minHeight: 6 }}>
+                {count > 0 && Array.from({ length: Math.min(count, 3) }).map((_, di) => (
+                  <Box
+                    key={di}
+                    sx={{
+                      width: 4, height: 4, borderRadius: '50%',
+                      bgcolor: isSelected ? 'rgba(255,255,255,0.7)' : 'primary.main',
+                    }}
+                  />
+                ))}
+              </Box>
+            </Box>
+          )
+        })}
+      </Box>
     </Box>
   )
 }
