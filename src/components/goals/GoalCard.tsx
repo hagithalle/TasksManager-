@@ -36,8 +36,11 @@ export default function GoalCard({ goal, onClick }: Props) {
     <Card
       sx={{
         borderRadius: 3,
-        boxShadow: '0 2px 12px rgba(124,92,255,0.08)',
-        border: '1px solid rgba(124,92,255,0.08)',
+        border: '1px solid',
+        borderColor: 'rgba(124,92,255,0.12)',
+        boxShadow: '0 2px 10px rgba(124,92,255,0.07)',
+        transition: 'box-shadow 0.2s',
+        '&:hover': { boxShadow: '0 4px 16px rgba(124,92,255,0.13)' },
       }}
     >
       <CardActionArea onClick={onClick} sx={{ p: 2 }}>

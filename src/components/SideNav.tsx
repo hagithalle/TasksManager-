@@ -10,7 +10,7 @@ import {
   Divider,
 } from '@mui/material'
 import DashboardRoundedIcon     from '@mui/icons-material/DashboardRounded'
-import CheckCircleRoundedIcon   from '@mui/icons-material/CheckCircleRounded'
+import TaskAltRoundedIcon       from '@mui/icons-material/TaskAltRounded'
 import FlagRoundedIcon          from '@mui/icons-material/FlagRounded'
 import ListRoundedIcon          from '@mui/icons-material/ListRounded'
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded'
@@ -19,7 +19,7 @@ import { AppRoute } from '../routes/paths'
 
 const NAV_ITEMS = [
   { labelKey: 'nav.dashboard', Icon: DashboardRoundedIcon,     path: AppRoute.Dashboard },
-  { labelKey: 'nav.tasks',     Icon: CheckCircleRoundedIcon,   path: AppRoute.Tasks     },
+  { labelKey: 'nav.tasks',     Icon: TaskAltRoundedIcon,       path: AppRoute.Tasks     },
   { labelKey: 'nav.goals',     Icon: FlagRoundedIcon,          path: AppRoute.Goals     },
   { labelKey: 'nav.lists',     Icon: ListRoundedIcon,          path: AppRoute.Lists     },
   { labelKey: 'nav.calendar',  Icon: CalendarMonthRoundedIcon, path: AppRoute.Calendar  },

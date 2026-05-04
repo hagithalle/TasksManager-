@@ -8,12 +8,10 @@ import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded'
 import CheckCircleRoundedIcon  from '@mui/icons-material/CheckCircleRounded'
 import { useTranslation } from 'react-i18next'
 import { mockTasks } from '../data'
-import { ExecutionType, Priority } from '../types'
 import type { TaskItem } from '../types'
+import { TODAY, PRIORITY_STYLE, EXECUTION_STYLE } from '../utils'
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
-
-const TODAY = new Date().toISOString().slice(0, 10)
 
 function addDays(isoDate: string, n: number): string {
   const d = new Date(isoDate + 'T12:00:00')
@@ -131,20 +129,6 @@ function getTasksForDate(tasks: TaskItem[], date: string) {
     .sort((a, b) => (a.plannedTime ?? '').localeCompare(b.plannedTime ?? ''))
   const unscheduled = forDate.filter((tk) => !tk.plannedTime)
   return { scheduled, unscheduled }
-}
-
-const PRIORITY_STYLE: Record<Priority, { bg: string; color: string }> = {
-  [Priority.Low]:      { bg: '#E8F5E9', color: '#2E7D32' },
-  [Priority.Medium]:   { bg: '#FFF8E1', color: '#F57F17' },
-  [Priority.High]:     { bg: '#FFEBEE', color: '#C62828' },
-  [Priority.Critical]: { bg: '#F3E5F5', color: '#6A1B9A' },
-}
-
-const EXEC_STYLE: Record<ExecutionType, { bg: string; color: string }> = {
-  [ExecutionType.Quick]:  { bg: '#E8F5E9', color: '#2E7D32' },
-  [ExecutionType.Short]:  { bg: '#E3F2FD', color: '#1565C0' },
-  [ExecutionType.Medium]: { bg: '#FFF3E0', color: '#E65100' },
-  [ExecutionType.Long]:   { bg: '#FCE4EC', color: '#C62828' },
 }
 
 // ─── page ─────────────────────────────────────────────────────────────────────
@@ -483,7 +467,7 @@ function DayView({ date }: { date: string }) {
 function TaskRow({ task, showTime = true }: { task: TaskItem; showTime?: boolean }) {
   const { t } = useTranslation()
   const ps = PRIORITY_STYLE[task.priority]
-  const es = EXEC_STYLE[task.executionType]
+  const es = EXECUTION_STYLE[task.executionType]
 
   return (
     <Box sx={{ display: 'flex', gap: 1.5, py: 1.25, alignItems: 'flex-start' }}>

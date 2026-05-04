@@ -5,8 +5,8 @@ import {
   Paper,
 } from '@mui/material'
 import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded'
-import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
-import FlagRoundedIcon from '@mui/icons-material/FlagRounded'
+import TaskAltRoundedIcon    from '@mui/icons-material/TaskAltRounded'
+import FlagRoundedIcon       from '@mui/icons-material/FlagRounded'
 import ListRoundedIcon from '@mui/icons-material/ListRounded'
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded'
 import { useTranslation } from 'react-i18next'
@@ -14,7 +14,7 @@ import { AppRoute } from '../routes/paths'
 
 const NAV_ITEMS = [
   { label: 'nav.dashboard', icon: <DashboardRoundedIcon />,      path: AppRoute.Dashboard },
-  { label: 'nav.tasks',     icon: <CheckCircleRoundedIcon />,    path: AppRoute.Tasks     },
+  { label: 'nav.tasks',     icon: <TaskAltRoundedIcon />,        path: AppRoute.Tasks     },
   { label: 'nav.goals',     icon: <FlagRoundedIcon />,           path: AppRoute.Goals     },
   { label: 'nav.lists',     icon: <ListRoundedIcon />,           path: AppRoute.Lists     },
   { label: 'nav.calendar',  icon: <CalendarMonthRoundedIcon />,  path: AppRoute.Calendar  },

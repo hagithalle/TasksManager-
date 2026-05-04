@@ -9,26 +9,10 @@ import AccessTimeRoundedIcon           from '@mui/icons-material/AccessTimeRound
 import CalendarTodayRoundedIcon        from '@mui/icons-material/CalendarTodayRounded'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ExecutionType, Priority } from '../../types'
 import type { TaskItem } from '../../types'
 import SubProgressBar from './SubProgressBar'
 import SubTaskList    from './SubTaskList'
-
-// ─── colour maps ─────────────────────────────────────────────────────────────
-
-const PRIORITY_STYLE: Record<Priority, { bg: string; color: string }> = {
-  [Priority.Low]:      { bg: '#E8F5E9', color: '#2E7D32' },
-  [Priority.Medium]:   { bg: '#FFF8E1', color: '#F57F17' },
-  [Priority.High]:     { bg: '#FFEBEE', color: '#C62828' },
-  [Priority.Critical]: { bg: '#F3E5F5', color: '#6A1B9A' },
-}
-
-const EXECUTION_STYLE: Record<ExecutionType, { bg: string; color: string }> = {
-  [ExecutionType.Quick]:  { bg: '#E0F7FA', color: '#00695C' },
-  [ExecutionType.Short]:  { bg: '#E3F2FD', color: '#1565C0' },
-  [ExecutionType.Medium]: { bg: '#FFF3E0', color: '#E65100' },
-  [ExecutionType.Long]:   { bg: '#EDE9FF', color: '#5438CC' },
-}
+import { PRIORITY_STYLE, EXECUTION_STYLE } from '../../utils'
 
 // ─── TaskChips ────────────────────────────────────────────────────────────────
 
@@ -57,7 +41,7 @@ function TaskChips({ task }: { task: TaskItem }) {
 // ─── TaskMeta ─────────────────────────────────────────────────────────────────
 
 function TaskMeta({ task }: { task: TaskItem }) {
-  const { i18n } = useTranslation()
+  const { i18n, t } = useTranslation()
   const subsDone  = task.subTasks?.filter((s) => s.isCompleted).length ?? 0
   const subsTotal = task.subTasks?.length ?? 0
 
@@ -83,7 +67,7 @@ function TaskMeta({ task }: { task: TaskItem }) {
           )}
           {task.durationMinutes && (
             <Typography variant="caption" color="text.secondary">
-              {task.durationMinutes}&apos;
+              {task.durationMinutes}{t('task.minutesShort')}
             </Typography>
           )}
         </Box>

@@ -1,7 +1,7 @@
 ﻿import {
   Box, Typography, LinearProgress, Chip, Divider,
   List, ListItem, ListItemText, ListItemIcon, Checkbox,
-  Collapse, IconButton, Stack,
+  Collapse, IconButton,
 } from '@mui/material'
 import ExpandMoreRoundedIcon           from '@mui/icons-material/ExpandMoreRounded'
 import ExpandLessRoundedIcon           from '@mui/icons-material/ExpandLessRounded'
@@ -11,39 +11,11 @@ import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import { mockGoals, mockTasks } from '../data'
-import { GoalType, Priority } from '../types'
-import type { TaskItem } from '../types'
+import { GoalType } from '../types'
 import GoalCategoryIcon from '../components/goals/GoalCategoryIcon'
+import { Filter, applyFilter, PRIORITY_COLOR } from '../utils'
 
-// ג”€ג”€ג”€ filter types ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€
-type Filter = 'all' | 'today' | 'urgent' | 'completed'
-
-const TODAY = new Date().toISOString().slice(0, 10) // 'YYYY-MM-DD'
-
-function applyFilter(tasks: TaskItem[], filter: Filter): TaskItem[] {
-  switch (filter) {
-    case 'today':
-      return tasks.filter((t) => !t.isCompleted && t.dueDate?.startsWith(TODAY))
-    case 'urgent':
-      return tasks.filter(
-        (t) => !t.isCompleted && (t.priority === Priority.Critical || t.priority === Priority.High),
-      )
-    case 'completed':
-      return tasks.filter((t) => t.isCompleted)
-    default:
-      return tasks
-  }
-}
-
-// ג”€ג”€ג”€ priority colour dot ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€
-const PRIORITY_COLOR: Record<string, string> = {
-  low: '#4CAF50',
-  medium: '#FF9800',
-  high: '#F44336',
-  critical: '#9C27B0',
-}
-
-// ג”€ג”€ג”€ component ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€
+// ─── component ────────────────────────────────────────────────────────────────
 export default function GoalDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { t, i18n } = useTranslation()
@@ -190,7 +162,7 @@ export default function GoalDetailPage() {
 
       {/* ג”€ג”€ Filter chips ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ */}
       <Box sx={{ px: 2, pt: 2, pb: 1 }}>
-        <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
           {filters.map((f) => (
             <Chip
               key={f}
@@ -209,7 +181,7 @@ export default function GoalDetailPage() {
               }}
             />
           ))}
-        </Stack>
+        </Box>
       </Box>
 
       {/* ג”€ג”€ Task list ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ */}
@@ -302,7 +274,7 @@ export default function GoalDetailPage() {
                           )}
                           {task.durationMinutes && (
                             <Typography component="span" variant="caption" color="text.secondary">
-                              {task.durationMinutes}&apos;
+                              {task.durationMinutes}{t('task.minutesShort')}
                             </Typography>
                           )}
                           {hasSubTasks && (

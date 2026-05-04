@@ -15,10 +15,9 @@ import { ExecutionType, GoalType, Priority } from '../types'
 import type { TaskItem } from '../types'
 import GoalCategoryIcon from '../components/goals/GoalCategoryIcon'
 import TaskWheelModal   from '../components/tasks/TaskWheelModal'
+import { TODAY, PRIORITY_STYLE } from '../utils'
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
-
-const TODAY = new Date().toISOString().slice(0, 10)
 
 const PRIORITY_ORDER: Record<Priority, number> = {
   [Priority.Critical]: 0,
@@ -26,15 +25,6 @@ const PRIORITY_ORDER: Record<Priority, number> = {
   [Priority.Medium]:   2,
   [Priority.Low]:      3,
 }
-
-const PRIORITY_STYLE: Record<Priority, { bg: string; color: string }> = {
-  [Priority.Low]:      { bg: '#E8F5E9', color: '#2E7D32' },
-  [Priority.Medium]:   { bg: '#FFF8E1', color: '#F57F17' },
-  [Priority.High]:     { bg: '#FFEBEE', color: '#C62828' },
-  [Priority.Critical]: { bg: '#F3E5F5', color: '#6A1B9A' },
-}
-
-// ─── page ─────────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
   const { t } = useTranslation()
@@ -134,7 +124,7 @@ export default function DashboardPage() {
                 <Box sx={{ display: 'flex', gap: 0.75, mt: 0.5, flexWrap: 'wrap', alignItems: 'center' }}>
                   <PriorityChip priority={frog.priority} />
                   {frog.durationMinutes && (
-                    <Typography variant="caption" color="text.secondary">{frog.durationMinutes}&apos;</Typography>
+                    <Typography variant="caption" color="text.secondary">{frog.durationMinutes}{t('task.minutesShort')}</Typography>
                   )}
                 </Box>
               </Box>
@@ -160,7 +150,7 @@ export default function DashboardPage() {
                   />
                   {tk.durationMinutes && (
                     <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0, ml: 1 }}>
-                      {tk.durationMinutes}&apos;
+                      {tk.durationMinutes}{t('task.minutesShort')}
                     </Typography>
                   )}
                 </ListItem>
@@ -276,7 +266,7 @@ export default function DashboardPage() {
   )
 }
 
-// ─── sub-components ───────────────────────────────────────────────────────────
+// ─── sub-components ───────────────────────────────────────────────────────────────
 
 function SectionHeader({
   title, subtitle, emoji,

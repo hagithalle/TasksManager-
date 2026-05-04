@@ -1,5 +1,5 @@
 import {
-  Box, Typography, Chip, Stack, Divider,
+  Box, Typography, Chip, Divider,
   List, ListItem, ListItemIcon, ListItemText, Checkbox,
   Collapse, IconButton, ButtonBase,
 } from '@mui/material'
@@ -17,31 +17,7 @@ import { useState }       from 'react'
 import { mockTasks, mockGoals } from '../data'
 import { Priority }             from '../types'
 import type { TaskItem }        from '../types'
-
-// ─── filter ──────────────────────────────────────────────────────────────────
-type Filter = 'all' | 'today' | 'urgent' | 'completed'
-
-const TODAY = new Date().toISOString().slice(0, 10)
-
-function applyFilter(tasks: TaskItem[], filter: Filter): TaskItem[] {
-  switch (filter) {
-    case 'today':
-      return tasks.filter((t) => !t.isCompleted && t.dueDate?.startsWith(TODAY))
-    case 'urgent':
-      return tasks.filter(
-        (t) => !t.isCompleted && (t.priority === Priority.Critical || t.priority === Priority.High),
-      )
-    case 'completed':
-      return tasks.filter((t) => t.isCompleted)
-    default:
-      return tasks
-  }
-}
-
-// ─── priority colour ─────────────────────────────────────────────────────────
-const PRIORITY_COLOR: Record<string, string> = {
-  low: '#4CAF50', medium: '#FF9800', high: '#F44336', critical: '#9C27B0',
-}
+import { Filter, TODAY, applyFilter, PRIORITY_COLOR } from '../utils'
 
 // ─── component ───────────────────────────────────────────────────────────────
 export default function TasksPage() {
@@ -198,7 +174,7 @@ export default function TasksPage() {
       </Box>
 
       {/* ── Filter chips ── */}
-      <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1, mb: 2 }}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
         {filters.map((f) => (
           <Chip
             key={f}
@@ -215,7 +191,7 @@ export default function TasksPage() {
             }}
           />
         ))}
-      </Stack>
+      </Box>
 
       {/* ── No results ── */}
       {grouped.length === 0 && ungrouped.length === 0 && (

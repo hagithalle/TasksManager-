@@ -2,6 +2,7 @@ import { Box, Checkbox, IconButton, Typography } from '@mui/material'
 import CheckCircleRoundedIcon          from '@mui/icons-material/CheckCircleRounded'
 import RadioButtonUncheckedRoundedIcon from '@mui/icons-material/RadioButtonUncheckedRounded'
 import DeleteRoundedIcon               from '@mui/icons-material/DeleteRounded'
+import { useTranslation } from 'react-i18next'
 import type { PersonalListItem } from '../../types'
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export default function ListItemRow({ item, onToggle, onDelete }: Props) {
+  const { t } = useTranslation()
   return (
     <Box
       sx={{
@@ -68,7 +70,7 @@ export default function ListItemRow({ item, onToggle, onDelete }: Props) {
           '&:hover': { color: 'error.main', bgcolor: 'error.light' },
           flexShrink: 0,
         }}
-        aria-label="delete"
+        aria-label={t('common.delete')}
       >
         <DeleteRoundedIcon sx={{ fontSize: 18 }} />
       </IconButton>
