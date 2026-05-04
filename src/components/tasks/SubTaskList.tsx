@@ -1,14 +1,15 @@
 import {
   Box, Checkbox, Divider, IconButton, InputBase,
-  LinearProgress, List, ListItem, ListItemIcon,
-  ListItemText, Typography,
+  List, ListItem, ListItemIcon, ListItemText, Typography,
 } from '@mui/material'
 import CheckCircleRoundedIcon          from '@mui/icons-material/CheckCircleRounded'
 import RadioButtonUncheckedRoundedIcon from '@mui/icons-material/RadioButtonUncheckedRounded'
 import AddRoundedIcon                  from '@mui/icons-material/AddRounded'
+import PlaylistAddCheckRoundedIcon     from '@mui/icons-material/PlaylistAddCheckRounded'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { SubTask } from '../../types'
+import SubProgressBar from './SubProgressBar'
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -43,7 +44,6 @@ export default function SubTaskList({
 
   const done  = subTasks.filter((s) => s.isCompleted).length
   const total = subTasks.length
-  const pct   = total > 0 ? Math.round((done / total) * 100) : 0
 
   // ── When parent is marked complete → tick all subs ──────────────────────
   useEffect(() => {
@@ -86,37 +86,29 @@ export default function SubTaskList({
 
   return (
     <Box>
-      {/* ── Header: progress count + bar ── */}
-      <Box sx={{ px: 2, pt: 1.5, pb: 0.75 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.75 }}>
-          <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ letterSpacing: 0.4 }}>
-            {t('task.subtasks')}
-          </Typography>
-          <Typography
-            variant="caption"
-            fontWeight={700}
-            color={done === total && total > 0 ? 'primary.main' : 'text.secondary'}
-          >
-            {done}/{total}
+      {/* ── Header: progress bar ── */}
+      {total > 0 && (
+        <Box sx={{ px: 2, pt: 1.5, pb: 1 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.75 }}>
+            <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ letterSpacing: 0.4 }}>
+              {t('task.subtasks')}
+            </Typography>
+          </Box>
+          <SubProgressBar done={done} total={total} height={4} showLabel />
+        </Box>
+      )}
+
+      {total > 0 && <Divider />}
+
+      {/* ── Empty state ── */}
+      {total === 0 && (
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 2.5, px: 2, gap: 0.75, opacity: 0.55 }}>
+          <PlaylistAddCheckRoundedIcon sx={{ fontSize: 32, color: 'text.disabled' }} />
+          <Typography variant="caption" color="text.disabled" textAlign="center">
+            {t('task.noSubtasks')}
           </Typography>
         </Box>
-
-        <LinearProgress
-          variant="determinate"
-          value={pct}
-          sx={{
-            borderRadius: 4,
-            height: 4,
-            bgcolor: 'rgba(124,92,255,0.12)',
-            '& .MuiLinearProgress-bar': {
-              bgcolor: done === total && total > 0 ? '#4CAF50' : 'primary.main',
-              borderRadius: 4,
-            },
-          }}
-        />
-      </Box>
-
-      <Divider />
+      )}
 
       {/* ── Subtask rows ── */}
       {total > 0 && (

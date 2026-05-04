@@ -21,6 +21,7 @@
     "executionTime": "זמן ביצוע",
     "subtasks": "תת-משימות",
     "addSubtask": "+ הוסף תת-משימה",
+    "noSubtasks": "אין תת-משימות עדיין",
     "subtaskPlaceholder": "תת-משימה חדשה...",
     "completed": "הושלמה",
     "pending": "ממתינה",
@@ -102,5 +103,23 @@
   "page": {
     "placeholder": "הדף יהיה זמין בקרוב",
     "back": "חזרה"
+  },
+  "dashboard": {
+    "totalToday": "היום",
+    "completedToday": "הושלמו",
+    "remainingToday": "נותרו",
+    "urgent": "דחוף",
+    "frog": "צפרדע",
+    "frogSubtitle": "המשימה הקשה ביותר — עשה אותה ראשונה",
+    "noFrog": "אין צפרדע היום 🐸",
+    "twoMin": "2 דקות",
+    "twoMinSubtitle": "עכשיו — לא מתחמקים",
+    "noTwoMin": "אין משימות מהירות כרגע",
+    "goalProgress": "התקדמות לפי מטרות",
+    "todayList": "משימות להיום",
+    "noTodayTasks": "כל המשימות הושלמו! 🎉",
+    "overallProgress": "התקדמות כוללת",
+    "weeklyProgress": "השבוע",
+    "todayProgress": "היום"
   }
 }

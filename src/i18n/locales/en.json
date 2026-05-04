@@ -21,6 +21,7 @@
     "executionTime": "Execution Time",
     "subtasks": "Subtasks",
     "addSubtask": "+ Add subtask",
+    "noSubtasks": "No subtasks yet",
     "subtaskPlaceholder": "New subtask...",
     "completed": "Completed",
     "pending": "Pending",
@@ -102,5 +103,23 @@
   "page": {
     "placeholder": "This page is coming soon",
     "back": "Back"
+  },
+  "dashboard": {
+    "totalToday": "Today",
+    "completedToday": "Done",
+    "remainingToday": "Left",
+    "urgent": "Urgent",
+    "frog": "Frog",
+    "frogSubtitle": "The hardest task — do it first",
+    "noFrog": "No frog today 🐸",
+    "twoMin": "2 Minutes",
+    "twoMinSubtitle": "Do it now — no excuses",
+    "noTwoMin": "No quick tasks right now",
+    "goalProgress": "Progress by Goal",
+    "todayList": "Today's Tasks",
+    "noTodayTasks": "All done for today! 🎉",
+    "overallProgress": "Overall",
+    "weeklyProgress": "This week",
+    "todayProgress": "Today"
   }
 }
