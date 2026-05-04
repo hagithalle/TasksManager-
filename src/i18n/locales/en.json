@@ -141,5 +141,13 @@
     "pickAnother": "Pick another",
     "close": "Close",
     "includeSubtasks": "Include subtasks"
+  },
+  "calendar": {
+    "daily": "Daily",
+    "weekly": "Weekly",
+    "today": "Today",
+    "noTasks": "No tasks this day",
+    "unscheduled": "Unscheduled",
+    "allDay": "All day"
   }
 }

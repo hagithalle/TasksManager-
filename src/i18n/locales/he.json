@@ -141,5 +141,13 @@
     "pickAnother": "בחר אחרת",
     "close": "סגור",
     "includeSubtasks": "כלול גם תת-משימות"
+  },
+  "calendar": {
+    "daily": "יומי",
+    "weekly": "שבועי",
+    "today": "היום",
+    "noTasks": "אין משימות ביום זה",
+    "unscheduled": "ללא שעה קבועה",
+    "allDay": "כל היום"
   }
 }
