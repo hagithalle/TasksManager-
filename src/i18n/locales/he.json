@@ -33,6 +33,7 @@
     },
     "noGoal": "ללא מטרה",
     "minutesShort": "דק'",
+    "durationLabel": "משך (דק')",
     "stats": {
       "completed": "הושלמו",
       "urgent": "דחוף",

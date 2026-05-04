@@ -9,7 +9,7 @@ import CheckCircleRoundedIcon          from '@mui/icons-material/CheckCircleRoun
 import RadioButtonUncheckedRoundedIcon from '@mui/icons-material/RadioButtonUncheckedRounded'
 import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { mockGoals, mockTasks } from '../data'
 import { GoalType } from '../types'
 import GoalCategoryIcon from '../components/goals/GoalCategoryIcon'
@@ -21,10 +21,29 @@ export default function GoalDetailPage() {
   const { t, i18n } = useTranslation()
 
   const goal      = mockGoals.find((g) => g.id === id)
-  const allTasks  = mockTasks.filter((tk) => tk.goalId === id)
+  const seedTasks  = mockTasks.filter((tk) => tk.goalId === id)
 
-  const [filter,   setFilter]   = useState<Filter>('all')
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
+  const [filter,     setFilter]     = useState<Filter>('all')
+  const [expanded,   setExpanded]   = useState<Record<string, boolean>>({})
+  const [localTasks, setLocalTasks] = useState(seedTasks)
+
+  const toggleTaskComplete = useCallback((taskId: string) => {
+    setLocalTasks((prev) => prev.map((t) =>
+      t.id === taskId ? { ...t, isCompleted: !t.isCompleted } : t,
+    ))
+  }, [])
+
+  const toggleSubComplete = useCallback((taskId: string, subId: string) => {
+    setLocalTasks((prev) => prev.map((t) => {
+      if (t.id !== taskId) return t
+      return {
+        ...t,
+        subTasks: (t.subTasks ?? []).map((s) =>
+          s.id === subId ? { ...s, isCompleted: !s.isCompleted } : s,
+        ),
+      }
+    }))
+  }, [])
 
   if (!goal) {
     return (
@@ -35,8 +54,10 @@ export default function GoalDetailPage() {
   }
 
   const isFinite     = goal.goalType === GoalType.Finite
-  const overallPct   = goal.totalTasks > 0
-    ? Math.round((goal.completedTasks / goal.totalTasks) * 100)
+  const completedCount = localTasks.filter((t) => t.isCompleted).length
+  const totalCount     = localTasks.length
+  const overallPct   = totalCount > 0
+    ? Math.round((completedCount / totalCount) * 100)
     : 0
   const weeklyPct    = (goal.weeklyTotal ?? 0) > 0
     ? Math.round(((goal.weeklyCompleted ?? 0) / (goal.weeklyTotal ?? 1)) * 100)
@@ -47,7 +68,7 @@ export default function GoalDetailPage() {
       })
     : null
 
-  const visibleTasks = applyFilter(allTasks, filter)
+  const visibleTasks = applyFilter(localTasks, filter)
 
   const toggleExpand = (taskId: string) =>
     setExpanded((prev) => ({ ...prev, [taskId]: !prev[taskId] }))
@@ -107,7 +128,7 @@ export default function GoalDetailPage() {
           {/* tasks X/Y */}
           <Box sx={statCardSx}>
             <Typography variant="h6" fontWeight={700} color="primary.main">
-              {goal.completedTasks}/{goal.totalTasks}
+              {completedCount}/{totalCount}
             </Typography>
             <Typography variant="caption" color="text.secondary">
               {t('goal.tasks')}
@@ -232,6 +253,7 @@ export default function GoalDetailPage() {
                       <Checkbox
                         edge="start"
                         checked={task.isCompleted}
+                        onChange={() => toggleTaskComplete(task.id)}
                         disableRipple
                         icon={<RadioButtonUncheckedRoundedIcon sx={{ color: 'text.disabled' }} />}
                         checkedIcon={<CheckCircleRoundedIcon sx={{ color: 'primary.main' }} />}
@@ -297,6 +319,7 @@ export default function GoalDetailPage() {
                               <Checkbox
                                 edge="start"
                                 checked={sub.isCompleted}
+                                onChange={() => toggleSubComplete(task.id, sub.id)}
                                 disableRipple
                                 icon={<RadioButtonUncheckedRoundedIcon sx={{ fontSize: 16, color: 'text.disabled' }} />}
                                 checkedIcon={<CheckCircleRoundedIcon sx={{ fontSize: 16, color: 'primary.main' }} />}

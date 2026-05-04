@@ -33,6 +33,7 @@
     },
     "noGoal": "No Goal",
     "minutesShort": "min",
+    "durationLabel": "Duration (min)",
     "stats": {
       "completed": "Completed",
       "urgent": "Urgent",
