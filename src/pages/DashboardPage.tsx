@@ -51,10 +51,10 @@ export default function DashboardPage() {
   )
 
   const stats = [
-    { label: t('dashboard.totalToday'),     value: todayTasks.length, color: '#5438CC', bg: '#EDE9FF', Icon: TodayRoundedIcon         },
-    { label: t('dashboard.completedToday'), value: completedToday,    color: '#2E7D32', bg: '#E8F5E9', Icon: CheckCircleRoundedIcon    },
-    { label: t('dashboard.remainingToday'), value: remainingToday,    color: '#E65100', bg: '#FFF3E0', Icon: TimerRoundedIcon          },
-    { label: t('dashboard.urgent'),         value: urgentToday,       color: '#C62828', bg: '#FFEBEE', Icon: ErrorRoundedIcon          },
+    { label: t('dashboard.totalToday'),     value: todayTasks.length, color: '#5438CC', bg: '#EDE9FF', Icon: TodayRoundedIcon,      filter: 'today'     },
+    { label: t('dashboard.completedToday'), value: completedToday,    color: '#2E7D32', bg: '#E8F5E9', Icon: CheckCircleRoundedIcon, filter: 'completed' },
+    { label: t('dashboard.remainingToday'), value: remainingToday,    color: '#E65100', bg: '#FFF3E0', Icon: TimerRoundedIcon,       filter: 'today'     },
+    { label: t('dashboard.urgent'),         value: urgentToday,       color: '#C62828', bg: '#FFEBEE', Icon: ErrorRoundedIcon,       filter: 'urgent'    },
   ]
 
   return (
@@ -65,6 +65,7 @@ export default function DashboardPage() {
         {stats.map((s) => (
           <Box
             key={s.label}
+            onClick={() => navigate(`/tasks?filter=${s.filter}`)}
             sx={{
               borderRadius: 2.5,
               py: 1.5,
@@ -73,6 +74,10 @@ export default function DashboardPage() {
               bgcolor: s.bg,
               border: '1.5px solid',
               borderColor: `${s.color}22`,
+              cursor: 'pointer',
+              transition: 'transform 0.12s, box-shadow 0.12s',
+              '&:hover': { transform: 'translateY(-2px)', boxShadow: `0 4px 12px ${s.color}33` },
+              '&:active': { transform: 'translateY(0)' },
             }}
           >
             <s.Icon sx={{ fontSize: 22, color: s.color, display: 'block', mx: 'auto', mb: 0.25 }} />

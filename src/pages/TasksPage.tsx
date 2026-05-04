@@ -16,6 +16,7 @@ import type { SvgIconComponent }       from '@mui/icons-material'
 import { useTranslation }  from 'react-i18next'
 import { useNavigate }     from 'react-router-dom'
 import { useCallback, useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { mockTasks, mockGoals }        from '../data'
 import { ExecutionType, Priority }     from '../types'
 import type { TaskItem }               from '../types'
@@ -26,7 +27,11 @@ export default function TasksPage() {
   const { t, i18n } = useTranslation()
   const navigate     = useNavigate()
 
-  const [filter,   setFilter]   = useState<Filter>('all')
+  const [searchParams] = useSearchParams()
+  const [filter,   setFilter]   = useState<Filter>(() => {
+    const qp = searchParams.get('filter')
+    return (qp === 'today' || qp === 'urgent' || qp === 'completed') ? qp : 'all'
+  })
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const [localTasks, setLocalTasks] = useState<TaskItem[]>(() => mockTasks)
   const [addOpen,    setAddOpen]    = useState(false)
