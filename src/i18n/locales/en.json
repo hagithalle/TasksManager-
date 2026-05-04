@@ -58,7 +58,15 @@
   },
   "list": {
     "new": "New List",
-    "title": "List Title"
+    "title": "List Title",
+    "all": "All Lists",
+    "empty": "No lists yet",
+    "noItems": "No items yet",
+    "addItem": "+ Add item",
+    "itemPlaceholder": "New item...",
+    "deleteItem": "Delete item",
+    "progress": "{{done}}/{{total}} done",
+    "items": "{{count}} items"
   },
   "priority": {
     "low": "Low",

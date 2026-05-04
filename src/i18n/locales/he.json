@@ -58,7 +58,15 @@
   },
   "list": {
     "new": "רשימה חדשה",
-    "title": "כותרת רשימה"
+    "title": "כותרת רשימה",
+    "all": "כל הרשימות",
+    "empty": "אין רשימות עדיין",
+    "noItems": "אין פריטים עדיין",
+    "addItem": "+ הוסף פריט",
+    "itemPlaceholder": "פריט חדש...",
+    "deleteItem": "מחק פריט",
+    "progress": "{{done}}/{{total}} הושלמו",
+    "items": "{{count}} פריטים"
   },
   "priority": {
     "low": "נמוכה",
