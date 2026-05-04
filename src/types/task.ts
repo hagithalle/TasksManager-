@@ -1,4 +1,4 @@
-import { Priority, ExecutionType } from './enums'
+import { Priority, ExecutionType, Difficulty } from './enums'
 
 export interface SubTask {
   id: string
@@ -22,6 +22,9 @@ export interface TaskItem {
 
   priority: Priority
   executionType: ExecutionType
+
+  /** Perceived difficulty of this task */
+  difficulty?: Difficulty
 
   /** ISO date string, e.g. "2025-06-15" */
   dueDate?: string

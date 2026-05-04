@@ -129,5 +129,17 @@
     "overallProgress": "התקדמות כוללת",
     "weeklyProgress": "השבוע",
     "todayProgress": "היום"
+  },
+  "wheel": {
+    "cardTitle": "לא בטוח מאיפה להתחיל?",
+    "cardSubtitle": "הגלגל יבחר בשבילך",
+    "spin": "סובב גלגל",
+    "spinning": "מסתובב...",
+    "result": "המשימה שלך!",
+    "noTasks": "אין משימות מתאימות כרגע",
+    "startNow": "התחל עכשיו",
+    "pickAnother": "בחר אחרת",
+    "close": "סגור",
+    "includeSubtasks": "כלול גם תת-משימות"
   }
 }

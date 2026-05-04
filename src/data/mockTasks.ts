@@ -1,5 +1,5 @@
 import type { TaskItem } from '../types'
-import { Priority, ExecutionType } from '../types'
+import { Difficulty, Priority, ExecutionType } from '../types'
 
 export const mockTasks: TaskItem[] = [
   // ── Goal: בית מסודר ────────────────────────────────────────────
@@ -99,6 +99,7 @@ export const mockTasks: TaskItem[] = [
     isCompleted: false,
     priority: Priority.Medium,
     executionType: ExecutionType.Medium,
+    difficulty: Difficulty.Easy,
     durationMinutes: 30,
     dueDate: '2026-05-04',
     plannedTime: '07:00',
@@ -165,6 +166,42 @@ export const mockTasks: TaskItem[] = [
       { id: 'st10', title: 'להפשיר בשר',         isCompleted: false },
       { id: 'st11', title: 'להכין מרק',          isCompleted: false },
     ],
+    createdAt: '2026-05-01T08:00:00Z',
+    updatedAt: '2026-05-01T08:00:00Z',
+  },
+
+  // ── Wheel-eligible quick tasks ────────────────────────────────────────────
+  {
+    id: 't12',
+    title: 'לכתוב 3 דברים טובים שקרו היום',
+    isCompleted: false,
+    priority: Priority.Low,
+    executionType: ExecutionType.Short,
+    difficulty: Difficulty.Easy,
+    durationMinutes: 5,
+    dueDate: '2026-05-04',
+    createdAt: '2026-05-01T08:00:00Z',
+    updatedAt: '2026-05-01T08:00:00Z',
+  },
+  {
+    id: 't13',
+    title: 'להכין כוס תה',
+    isCompleted: false,
+    priority: Priority.Low,
+    executionType: ExecutionType.Quick,
+    durationMinutes: 3,
+    dueDate: '2026-05-04',
+    createdAt: '2026-05-01T08:00:00Z',
+    updatedAt: '2026-05-01T08:00:00Z',
+  },
+  {
+    id: 't14',
+    title: 'להתקשר להורים',
+    isCompleted: false,
+    priority: Priority.Low,
+    executionType: ExecutionType.Short,
+    difficulty: Difficulty.Easy,
+    durationMinutes: 10,
     createdAt: '2026-05-01T08:00:00Z',
     updatedAt: '2026-05-01T08:00:00Z',
   },

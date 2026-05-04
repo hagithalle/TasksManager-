@@ -34,6 +34,16 @@ export enum Priority {
 }
 
 /**
+ * Perceived difficulty of a task.
+ * Maps to translation key `difficulty.<value>`.
+ */
+export enum Difficulty {
+  Easy   = 'easy',
+  Medium = 'medium',
+  Hard   = 'hard',
+}
+
+/**
  * Rough estimate of how long a task takes to execute.
  * Used to suggest "quick win" tasks.
  * Maps to translation key `executionType.<value>`.

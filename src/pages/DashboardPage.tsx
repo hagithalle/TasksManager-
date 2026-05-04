@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import {
-  Box, Card, CardActionArea, Chip, Divider,
+  Box, Button, Card, CardActionArea, Chip, Divider,
   LinearProgress, List, ListItem, ListItemText, Typography,
 } from '@mui/material'
 import CheckCircleRoundedIcon          from '@mui/icons-material/CheckCircleRounded'
@@ -13,6 +14,7 @@ import { mockTasks, mockGoals } from '../data'
 import { ExecutionType, GoalType, Priority } from '../types'
 import type { TaskItem } from '../types'
 import GoalCategoryIcon from '../components/goals/GoalCategoryIcon'
+import TaskWheelModal   from '../components/tasks/TaskWheelModal'
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -37,6 +39,7 @@ const PRIORITY_STYLE: Record<Priority, { bg: string; color: string }> = {
 export default function DashboardPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const [wheelOpen, setWheelOpen] = useState(false)
 
   // ── Derived data ────────────────────────────────────────────────────────────
   const todayTasks     = mockTasks.filter((tk) => tk.dueDate?.startsWith(TODAY))
@@ -92,6 +95,32 @@ export default function DashboardPage() {
           </Box>
         ))}
       </Box>
+
+      {/* ── Task Wheel ── */}
+      <Card
+        sx={{
+          borderRadius: 3, mb: 3,
+          background: 'linear-gradient(135deg, #EDE9FF 0%, #F5F0FF 100%)',
+          border: '1.5px solid rgba(124,92,255,0.2)',
+          boxShadow: '0 2px 16px rgba(124,92,255,0.1)',
+        }}
+      >
+        <Box sx={{ px: 2, py: 1.75, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Typography sx={{ fontSize: 28, lineHeight: 1, flexShrink: 0 }}>🎡</Typography>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="body2" fontWeight={700}>{t('wheel.cardTitle')}</Typography>
+            <Typography variant="caption" color="text.secondary">{t('wheel.cardSubtitle')}</Typography>
+          </Box>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => setWheelOpen(true)}
+            sx={{ borderRadius: 2.5, fontWeight: 700, fontSize: '0.72rem', flexShrink: 0 }}
+          >
+            {t('wheel.spin')}
+          </Button>
+        </Box>
+      </Card>
 
       {/* ── Frog task ── */}
       <SectionHeader title={t('dashboard.frog')} subtitle={t('dashboard.frogSubtitle')} emoji="🐸" />
@@ -241,6 +270,8 @@ export default function DashboardPage() {
           </List>
         </Card>
       )}
+
+      <TaskWheelModal open={wheelOpen} onClose={() => setWheelOpen(false)} tasks={mockTasks} />
     </Box>
   )
 }

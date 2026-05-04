@@ -129,5 +129,17 @@
     "overallProgress": "Overall",
     "weeklyProgress": "This week",
     "todayProgress": "Today"
+  },
+  "wheel": {
+    "cardTitle": "Not sure where to start?",
+    "cardSubtitle": "The wheel will choose for you",
+    "spin": "Spin wheel",
+    "spinning": "Spinning...",
+    "result": "Your task!",
+    "noTasks": "No eligible tasks right now",
+    "startNow": "Start now",
+    "pickAnother": "Pick another",
+    "close": "Close",
+    "includeSubtasks": "Include subtasks"
   }
 }
