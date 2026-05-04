@@ -7,9 +7,43 @@ import RadioButtonUncheckedRoundedIcon from '@mui/icons-material/RadioButtonUnch
 import AddRoundedIcon                  from '@mui/icons-material/AddRounded'
 import PlaylistAddCheckRoundedIcon     from '@mui/icons-material/PlaylistAddCheckRounded'
 import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import type { SubTask } from '../../types'
+import { mockLists } from '../../data'
 import SubProgressBar from './SubProgressBar'
+
+// ─── LinkedListButton ─────────────────────────────────────────────────────────
+
+function LinkedListButton({ listId }: { listId: string }) {
+  const navigate = useNavigate()
+  const list = mockLists.find((l) => l.id === listId)
+  if (!list) return null
+  return (
+    <Box
+      component="span"
+      onClick={(e: React.MouseEvent) => { e.stopPropagation(); navigate(`/lists/${listId}`) }}
+      sx={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 0.4,
+        cursor: 'pointer',
+        fontSize: '0.7rem',
+        fontWeight: 600,
+        color: 'primary.main',
+        bgcolor: 'rgba(124,92,255,0.08)',
+        px: 0.75,
+        py: 0.2,
+        borderRadius: 1.5,
+        mt: 0.3,
+        '&:hover': { bgcolor: 'rgba(124,92,255,0.16)' },
+        transition: 'background-color 0.15s',
+      }}
+    >
+      {list.emoji ?? '📋'} {list.title}
+    </Box>
+  )
+}
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -149,6 +183,12 @@ export default function SubTaskList({
                       {sub.title}
                     </Typography>
                   }
+                  secondary={
+                    sub.linkedListId
+                      ? <LinkedListButton listId={sub.linkedListId} />
+                      : undefined
+                  }
+                  secondaryTypographyProps={{ component: 'div' }}
                 />
               </ListItem>
             </Box>

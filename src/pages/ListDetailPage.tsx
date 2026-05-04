@@ -29,6 +29,13 @@ export default function ListDetailPage() {
   const [newTitle, setNewTitle] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
+  // Reset local state when navigating between lists
+  useEffect(() => {
+    setItems(seed?.items ?? [])
+    setAdding(false)
+    setNewTitle('')
+  }, [id, seed])
+
   useEffect(() => {
     if (adding) inputRef.current?.focus()
   }, [adding])

@@ -149,4 +149,23 @@ export const mockTasks: TaskItem[] = [
     createdAt: '2026-05-01T08:00:00Z',
     updatedAt: '2026-05-01T08:00:00Z',
   },
+
+  // ── Home: Friday cooking ───────────────────────────────────────
+  {
+    id: 't11',
+    title: 'בישול ליום שישי',
+    isCompleted: false,
+    priority: Priority.Medium,
+    executionType: ExecutionType.Long,
+    durationMinutes: 90,
+    dueDate: '2026-05-04',
+    goalId: 'g1',
+    subTasks: [
+      { id: 'st9',  title: 'להכין רשימת קניות', isCompleted: false, linkedListId: 'l1' },
+      { id: 'st10', title: 'להפשיר בשר',         isCompleted: false },
+      { id: 'st11', title: 'להכין מרק',          isCompleted: false },
+    ],
+    createdAt: '2026-05-01T08:00:00Z',
+    updatedAt: '2026-05-01T08:00:00Z',
+  },
 ]

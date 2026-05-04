@@ -7,6 +7,9 @@ export interface SubTask {
   title: string
 
   isCompleted: boolean
+
+  /** Optional link to a PersonalList — navigates to /lists/:id */
+  linkedListId?: string
 }
 
 export interface TaskItem {
