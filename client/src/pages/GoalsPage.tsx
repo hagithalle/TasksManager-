@@ -1,20 +1,45 @@
-import { Box, Typography, Fab } from '@mui/material'
+import { Box, Typography, Fab, CircularProgress, Alert } from '@mui/material'
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { mockGoals } from '../data'
+import { useEffect, useState } from 'react'
+import { goalsApi } from '../api'
+import { mockUser } from '../data/mockUser'
+import type { Goal } from '../types'
 import GoalCard from '../components/goals/GoalCard'
 
 export default function GoalsPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
 
-  const pinned = mockGoals.filter((g) => g.isPinned)
-  const rest   = mockGoals.filter((g) => !g.isPinned)
+  const [goals, setGoals]   = useState<Goal[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError]   = useState<string | null>(null)
+
+  useEffect(() => {
+    goalsApi
+      .getByUser(mockUser.id)
+      .then(setGoals)
+      .catch(() => setError(t('error.loadFailed', 'Failed to load goals')))
+      .finally(() => setLoading(false))
+  }, [t])
+
+  const pinned = goals.filter((g) => g.isPinned)
+  const rest   = goals.filter((g) => !g.isPinned)
 
   return (
     <Box sx={{ px: 2, pt: 2, pb: 4, position: 'relative' }}>
 
+      {loading && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', pt: 6 }}>
+          <CircularProgress />
+        </Box>
+      )}
+
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
+      {!loading && !error && (
+        <>
       {/* ── Pinned section ── */}
       {pinned.length > 0 && (
         <Box sx={{ mb: 3 }}>
@@ -61,6 +86,8 @@ export default function GoalsPage() {
             ))}
           </Box>
         </Box>
+      )}
+        </>
       )}
 
       {/* ── FAB ── */}
