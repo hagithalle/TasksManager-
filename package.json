@@ -5,6 +5,7 @@
   "scripts": {
     "client:dev":   "npm run dev   --prefix client",
     "client:build": "npm run build --prefix client",
+    "server:dev":   "dotnet run --project server/TasksManager.API",
     "dev":          "npm run dev   --prefix client"
   }
 }
