@@ -179,9 +179,13 @@
     "goals": "Goals",
     "createSelected": "Create {{count}} items",
     "back": "Back to edit",
-    "noResults": "No tasks or goals detected. Try rephrasing.",
+    "noResults": "No tasks, goals, or list items detected. Try rephrasing.",
     "error": "Error analyzing text. Please try again.",
     "saveError": "Error creating items. Please try again.",
-    "buttonTooltip": "AI text analysis"
+    "buttonTooltip": "AI text analysis",
+    "listItems": "List items",
+    "listTarget": "Add to list",
+    "newList": "New list",
+    "newListName": "List"
   }
 }

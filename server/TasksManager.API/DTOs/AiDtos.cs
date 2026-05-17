@@ -15,7 +15,14 @@ public record AiParsedGoalDto(
     string? DueDate
 );
 
+public record AiParsedListItemDto(
+    string Title,
+    string? Quantity,  // "2", "1 kg", etc. or null
+    string? ListName   // suggested list name in original language
+);
+
 public record AiParseResponseDto(
     List<AiParsedTaskDto> Tasks,
-    List<AiParsedGoalDto> Goals
+    List<AiParsedGoalDto> Goals,
+    List<AiParsedListItemDto> ListItems
 );
