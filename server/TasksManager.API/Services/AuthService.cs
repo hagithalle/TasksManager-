@@ -66,22 +66,46 @@ public class AuthService : IAuthService
 
     public async Task<AuthResponseDto> LoginWithGoogleAsync(GoogleLoginDto dto)
     {
-        var clientId = _config["Google:ClientId"]
-            ?? throw new InvalidOperationException("Google ClientId is not configured.");
+        // Support both id_token (JWT) and access_token (opaque)
+        // Try id_token first, fall back to access_token via userinfo endpoint
+        string email, name, picture;
 
-        GoogleJsonWebSignature.Payload payload;
-        try
+        if (dto.IdToken.Contains('.'))
         {
-            payload = await GoogleJsonWebSignature.ValidateAsync(
-                dto.IdToken,
-                new GoogleJsonWebSignature.ValidationSettings { Audience = new[] { clientId } });
+            // Looks like a JWT — validate as id_token
+            var clientId = _config["Google:ClientId"]
+                ?? throw new InvalidOperationException("Google ClientId is not configured.");
+            GoogleJsonWebSignature.Payload payload;
+            try
+            {
+                payload = await GoogleJsonWebSignature.ValidateAsync(
+                    dto.IdToken,
+                    new GoogleJsonWebSignature.ValidationSettings { Audience = new[] { clientId } });
+            }
+            catch (InvalidJwtException)
+            {
+                throw new UnauthorizedAccessException("Invalid Google token.");
+            }
+            email   = payload.Email.Trim().ToLowerInvariant();
+            name    = payload.Name ?? email;
+            picture = payload.Picture ?? string.Empty;
         }
-        catch (InvalidJwtException)
+        else
         {
-            throw new UnauthorizedAccessException("Invalid Google token.");
+            // Treat as access_token — verify via Google userinfo endpoint
+            using var http = new System.Net.Http.HttpClient();
+            http.DefaultRequestHeaders.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", dto.IdToken);
+            var response = await http.GetAsync("https://www.googleapis.com/oauth2/v3/userinfo");
+            if (!response.IsSuccessStatusCode)
+                throw new UnauthorizedAccessException("Invalid Google access token.");
+            var json = await response.Content.ReadAsStringAsync();
+            var info = System.Text.Json.JsonDocument.Parse(json).RootElement;
+            email   = (info.GetProperty("email").GetString() ?? "").Trim().ToLowerInvariant();
+            name    = info.TryGetProperty("name", out var n) ? n.GetString() ?? email : email;
+            picture = info.TryGetProperty("picture", out var p) ? p.GetString() ?? "" : "";
         }
 
-        var email = payload.Email.Trim().ToLowerInvariant();
         var user  = await _db.Users.FirstOrDefaultAsync(u => u.Email == email);
 
         if (user is null)
@@ -89,10 +113,10 @@ public class AuthService : IAuthService
             user = new User
             {
                 Id           = Guid.NewGuid(),
-                DisplayName  = payload.Name ?? email,
+                DisplayName  = name,
                 Email        = email,
-                PasswordHash = Guid.NewGuid().ToString("N"), // unusable — google users can't password-login
-                AvatarUrl    = payload.Picture,
+                PasswordHash = Guid.NewGuid().ToString("N"),
+                AvatarUrl    = picture,
                 Language     = "he",
                 CreatedAt    = DateTime.UtcNow,
                 UpdatedAt    = DateTime.UtcNow,
@@ -100,9 +124,9 @@ public class AuthService : IAuthService
             _db.Users.Add(user);
             await _db.SaveChangesAsync();
         }
-        else if (payload.Picture is not null && user.AvatarUrl != payload.Picture)
+        else if (!string.IsNullOrEmpty(picture) && user.AvatarUrl != picture)
         {
-            user.AvatarUrl = payload.Picture;
+            user.AvatarUrl = picture;
             user.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
         }

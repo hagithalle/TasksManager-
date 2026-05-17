@@ -81,12 +81,6 @@ export default function LoginPage() {
       setError(null)
       setLoading(true)
       try {
-        // exchange the access_token for an id_token via userinfo endpoint
-        const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-        })
-        if (!userInfoRes.ok) throw new Error('Google userinfo failed')
-        // use the access_token as a credential via backend's own verification
         const res = await authApi.googleLogin(tokenResponse.access_token)
         handleSuccess(res.token, res.user)
       } catch {
