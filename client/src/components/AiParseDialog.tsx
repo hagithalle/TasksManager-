@@ -22,6 +22,7 @@ interface AiParsedTask {
   dueDate?: string | null
   priority?: string | null
   executionType?: string | null
+  subTasks?: string[]
 }
 
 interface AiParsedGoal {
@@ -151,6 +152,11 @@ export default function AiParseDialog({ open, onClose, userId, onCreated }: Prop
           executionType: (tk.executionType as any) ?? undefined,
           dueDate: tk.dueDate ?? undefined,
         })
+        if (tk.subTasks && tk.subTasks.length > 0) {
+          for (const stTitle of tk.subTasks) {
+            await tasksApi.addSubTask(task.id, { title: stTitle })
+          }
+        }
         createdTasks.push(task)
       }
 
@@ -240,10 +246,21 @@ export default function AiParseDialog({ open, onClose, userId, onCreated }: Prop
                       <ListItemText
                         primary={tk.title}
                         secondary={
-                          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 0.3 }}>
-                            {tk.dueDate && <Chip label={tk.dueDate} size="small" variant="outlined" />}
-                            {tk.priority && <Chip label={t(`priority.${tk.priority}`)} size="small" color="primary" variant="outlined" />}
-                            {tk.executionType && <Chip label={t(`executionType.${tk.executionType}`)} size="small" variant="outlined" />}
+                          <Box sx={{ mt: 0.3 }}>
+                            <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                              {tk.dueDate && <Chip label={tk.dueDate} size="small" variant="outlined" />}
+                              {tk.priority && <Chip label={t(`priority.${tk.priority}`)} size="small" color="primary" variant="outlined" />}
+                              {tk.executionType && <Chip label={t(`executionType.${tk.executionType}`)} size="small" variant="outlined" />}
+                            </Box>
+                            {tk.subTasks && tk.subTasks.length > 0 && (
+                              <Box sx={{ mt: 0.5, pl: 1, borderLeft: '2px solid', borderColor: 'divider' }}>
+                                {tk.subTasks.map((st, si) => (
+                                  <Typography key={si} variant="caption" display="block" color="text.secondary">
+                                    • {st}
+                                  </Typography>
+                                ))}
+                              </Box>
+                            )}
                           </Box>
                         }
                       />

@@ -42,7 +42,8 @@ Return ONLY valid JSON in this exact format (no markdown, no explanation):
       ""title"": ""task title in the original language"",
       ""dueDate"": ""YYYY-MM-DD or null"",
       ""priority"": ""low|medium|high or null"",
-      ""executionType"": ""quick|short|medium|long or null""
+      ""executionType"": ""quick|short|medium|long or null"",
+      ""subTasks"": [""sub-task 1 title"", ""sub-task 2 title""]
     }}
   ],
   ""goals"": [
@@ -67,6 +68,9 @@ Rules:
 - Quick tasks (< 15 min) get executionType ""quick"", short (15-30 min) ""short"", medium (30-60 min) ""medium"", long (>1 hr) ""long""
 - If something is a broad goal (like ""get fit"", ""learn programming""), put it in goals
 - If something is a specific action (like ""call doctor"", ""submit report""), put it in tasks
+- If a task is complex or multi-step (e.g., ""organize birthday party"", ""plan a trip"", ""prepare a presentation""), break it down into 3-7 concrete sub-tasks in the ""subTasks"" array
+- Simple tasks (like ""buy milk"", ""call mom"") should have an empty ""subTasks"" array []
+- Sub-task titles should be short, actionable, and in the ORIGINAL language
 - If something is a list item to buy or collect (like ""buy milk"", ""2 sugar"", ""1 flour""), put it in listItems with the quantity extracted
 - listItems should NOT also appear in tasks
 

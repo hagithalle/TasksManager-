@@ -6,7 +6,8 @@ public record AiParsedTaskDto(
     string Title,
     string? DueDate,       // "YYYY-MM-DD" or null
     string? Priority,      // "low"/"medium"/"high" or null
-    string? ExecutionType  // "quick"/"short"/"medium"/"long" or null
+    string? ExecutionType, // "quick"/"short"/"medium"/"long" or null
+    List<string>? SubTasks // breakdown steps for complex tasks
 );
 
 public record AiParsedGoalDto(
