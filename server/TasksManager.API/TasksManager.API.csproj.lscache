@@ -56,6 +56,7 @@ TemporaryDependencyNodeTargetIdentifier=net10.0
 
 [sourceFiles]
 Controllers/
+ AiController.cs
  AuthController.cs
  GoalsController.cs
  PersonalListsController.cs
@@ -63,6 +64,7 @@ Controllers/
  UsersController.cs
 Data/AppDbContext.cs
 DTOs/
+ AiDtos.cs
  AuthDtos.cs
  GoalDtos.cs
  ListDtos.cs
@@ -90,6 +92,7 @@ obj/Debug/net10.0/
  TasksManager.API.GlobalUsings.g.cs
 Program.cs
 Services/
+ AiService.cs
  AuthService.cs
  GoalService.cs
  Interfaces/

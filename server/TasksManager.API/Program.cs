@@ -32,6 +32,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IGoalService, GoalService>();
 builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<IPersonalListService, PersonalListService>();
+builder.Services.AddScoped<AiService>();
 
 // JWT Authentication
 var jwtSection = builder.Configuration.GetSection("Jwt");

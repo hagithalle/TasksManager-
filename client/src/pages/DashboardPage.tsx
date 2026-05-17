@@ -20,6 +20,8 @@ import GoalCategoryIcon  from '../components/goals/GoalCategoryIcon'
 import TaskWheelModal    from '../components/tasks/TaskWheelModal'
 import AddTaskDialog     from '../components/tasks/AddTaskDialog'
 import AddGoalDialog     from '../components/goals/AddGoalDialog'
+import AiParseDialog     from '../components/AiParseDialog'
+import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded'
 import { TODAY, PRIORITY_STYLE } from '../utils'
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
@@ -41,6 +43,7 @@ export default function DashboardPage() {
   const [goals, setGoals] = useState<Goal[]>([])
   const [addTaskOpen, setAddTaskOpen] = useState(false)
   const [addGoalOpen, setAddGoalOpen] = useState(false)
+  const [aiOpen, setAiOpen] = useState(false)
 
   useEffect(() => {
     if (!user) return
@@ -300,6 +303,20 @@ export default function DashboardPage() {
 
       <TaskWheelModal open={wheelOpen} onClose={() => setWheelOpen(false)} tasks={tasks} />
 
+      <Tooltip title={t('ai.buttonTooltip')}>
+        <IconButton
+          onClick={() => setAiOpen(true)}
+          sx={{
+            position: 'fixed', bottom: 88, right: 16,
+            bgcolor: 'secondary.main', color: 'white',
+            '&:hover': { bgcolor: 'secondary.dark' },
+            boxShadow: 3,
+          }}
+        >
+          <AutoAwesomeRoundedIcon />
+        </IconButton>
+      </Tooltip>
+
       <AddTaskDialog
         open={addTaskOpen}
         onClose={() => setAddTaskOpen(false)}
@@ -314,6 +331,16 @@ export default function DashboardPage() {
         onAdd={(goal) => { setGoals((prev) => [goal, ...prev]); setAddGoalOpen(false) }}
         userId={user?.id ?? ''}
         createGoal={goalsApi.create}
+      />
+
+      <AiParseDialog
+        open={aiOpen}
+        onClose={() => setAiOpen(false)}
+        userId={user?.id ?? ''}
+        onCreated={(newTasks, newGoals) => {
+          setTasks(prev => [...newTasks, ...prev])
+          setGoals(prev => [...newGoals, ...prev])
+        }}
       />
     </Box>
   )

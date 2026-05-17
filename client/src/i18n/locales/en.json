@@ -167,5 +167,21 @@
     "errorInvalidCredentials": "Invalid email or password",
     "errorEmailTaken": "Email is already in use",
     "errorGoogle": "Google sign-in failed. Please try again"
+  },
+  "ai": {
+    "title": "Smart Text Analysis",
+    "subtitle": "Write freely what you need to do — AI will extract tasks and goals",
+    "placeholder": "e.g. Need to finish the report by end of week, buy groceries on Thursday, and start learning Spanish...",
+    "analyze": "Analyze",
+    "analyzing": "Analyzing...",
+    "selectItems": "Select what to create:",
+    "tasks": "Tasks",
+    "goals": "Goals",
+    "createSelected": "Create {{count}} items",
+    "back": "Back to edit",
+    "noResults": "No tasks or goals detected. Try rephrasing.",
+    "error": "Error analyzing text. Please try again.",
+    "saveError": "Error creating items. Please try again.",
+    "buttonTooltip": "AI text analysis"
   }
 }
