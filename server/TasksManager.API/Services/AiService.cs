@@ -100,7 +100,7 @@ Text to analyze:
         if (!response.IsSuccessStatusCode)
         {
             _logger.LogError("Gemini API error: {Status} {Body}", response.StatusCode, responseText);
-            throw new InvalidOperationException("AI service error.");
+            throw new InvalidOperationException($"Gemini API error {(int)response.StatusCode}: {responseText}");
         }
 
         // Extract text from Gemini response

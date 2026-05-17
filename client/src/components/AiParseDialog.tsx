@@ -99,8 +99,9 @@ export default function AiParseDialog({ open, onClose, userId, onCreated }: Prop
       setSelectedTasks(new Set(res.data.tasks.map((_: AiParsedTask, i: number) => i)))
       setSelectedGoals(new Set(res.data.goals.map((_: AiParsedGoal, i: number) => i)))
       setSelectedListItems(new Set(res.data.listItems.map((_: AiParsedListItem, i: number) => i)))
-    } catch {
-      setError(t('ai.error'))
+    } catch (err: any) {
+      const msg = err?.response?.data?.message
+      setError(msg ? `${t('ai.error')} (${msg})` : t('ai.error'))
     } finally {
       setLoading(false)
     }

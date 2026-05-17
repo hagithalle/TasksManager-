@@ -30,5 +30,9 @@ public class AiController : ControllerBase
         {
             return StatusCode(503, new { message = ex.Message });
         }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
     }
 }
