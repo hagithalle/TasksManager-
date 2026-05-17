@@ -8,6 +8,7 @@ import ExpandLessRoundedIcon           from '@mui/icons-material/ExpandLessRound
 import CheckCircleRoundedIcon          from '@mui/icons-material/CheckCircleRounded'
 import RadioButtonUncheckedRoundedIcon from '@mui/icons-material/RadioButtonUncheckedRounded'
 import AddRoundedIcon                  from '@mui/icons-material/AddRounded'
+import EditRoundedIcon                 from '@mui/icons-material/EditRounded'
 import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useCallback, useEffect, useState } from 'react'
@@ -17,6 +18,7 @@ import { GoalType } from '../types'
 import type { Goal, TaskItem } from '../types'
 import GoalCategoryIcon from '../components/goals/GoalCategoryIcon'
 import AddTaskDialog    from '../components/tasks/AddTaskDialog'
+import AddGoalDialog    from '../components/goals/AddGoalDialog'
 import { Filter, applyFilter, PRIORITY_COLOR } from '../utils'
 
 // ─── component ────────────────────────────────────────────────────────────────
@@ -33,6 +35,8 @@ export default function GoalDetailPage() {
   const [localTasks, setLocalTasks] = useState<TaskItem[]>([])
   const [addOpen,    setAddOpen]    = useState(false)
   const [allGoals,   setAllGoals]   = useState<Goal[]>([])
+  const [editTask,   setEditTask]   = useState<TaskItem | null>(null)
+  const [editGoalOpen, setEditGoalOpen] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -152,6 +156,9 @@ export default function GoalDetailPage() {
               }}
             />
           </Box>
+          <IconButton size="small" onClick={() => setEditGoalOpen(true)} sx={{ alignSelf: 'flex-start' }}>
+            <EditRoundedIcon sx={{ fontSize: 18 }} />
+          </IconButton>
         </Box>
 
         {/* Stat cards */}
@@ -282,18 +289,22 @@ export default function GoalDetailPage() {
                     disablePadding
                     sx={{ py: 1.25, alignItems: 'flex-start' }}
                     secondaryAction={
-                      hasSubTasks ? (
-                        <IconButton
-                          size="small"
-                          edge="end"
-                          onClick={() => toggleExpand(task.id)}
-                          sx={{ mt: 0.5 }}
-                        >
-                          {isOpen
-                            ? <ExpandLessRoundedIcon fontSize="small" />
-                            : <ExpandMoreRoundedIcon fontSize="small" />}
+                      <Box sx={{ display: 'flex', gap: 0, mt: 0.5 }}>
+                        <IconButton size="small" onClick={() => setEditTask(task)}>
+                          <EditRoundedIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
                         </IconButton>
-                      ) : undefined
+                        {hasSubTasks && (
+                          <IconButton
+                            size="small"
+                            edge="end"
+                            onClick={() => toggleExpand(task.id)}
+                          >
+                            {isOpen
+                              ? <ExpandLessRoundedIcon fontSize="small" />
+                              : <ExpandMoreRoundedIcon fontSize="small" />}
+                          </IconButton>
+                        )}
+                      </Box>
                     }
                   >
                     {/* Checkbox */}
@@ -423,6 +434,29 @@ export default function GoalDetailPage() {
         goals={allGoals}
         userId={user?.id ?? ''}
         defaultGoalId={id}
+      />
+
+      <AddTaskDialog
+        open={!!editTask}
+        onClose={() => setEditTask(null)}
+        onAdd={() => {}}
+        onEdit={(updated) => {
+          setLocalTasks((prev) => prev.map((t) => t.id === updated.id ? updated : t))
+          setEditTask(null)
+        }}
+        editTask={editTask ?? undefined}
+        goals={allGoals}
+        userId={user?.id ?? ''}
+      />
+
+      <AddGoalDialog
+        open={editGoalOpen}
+        onClose={() => setEditGoalOpen(false)}
+        onAdd={() => {}}
+        onEdit={(updated) => { setGoal(updated); setEditGoalOpen(false) }}
+        editGoal={goal ?? undefined}
+        userId={user?.id ?? ''}
+        createGoal={goalsApi.create}
       />
     </>
   )

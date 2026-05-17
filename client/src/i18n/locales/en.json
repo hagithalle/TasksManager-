@@ -15,6 +15,7 @@
   },
   "task": {
     "new": "New Task",
+    "edit": "Edit Task",
     "title": "Task Title",
     "priority": "Priority",
     "dueDate": "Due Date",
@@ -43,6 +44,7 @@
   },
   "goal": {
     "new": "New Goal",
+    "edit": "Edit Goal",
     "title": "Goal Title",
     "category": "Category",
     "progress": "Progress",

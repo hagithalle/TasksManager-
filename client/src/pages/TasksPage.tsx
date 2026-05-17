@@ -11,6 +11,7 @@ import ExpandLessRoundedIcon           from '@mui/icons-material/ExpandLessRound
 import ErrorRoundedIcon                from '@mui/icons-material/ErrorRounded'
 import CalendarMonthRoundedIcon        from '@mui/icons-material/CalendarMonthRounded'
 import TodayRoundedIcon                from '@mui/icons-material/TodayRounded'
+import EditRoundedIcon                 from '@mui/icons-material/EditRounded'
 import type { SvgIconComponent }       from '@mui/icons-material'
 import { useTranslation }  from 'react-i18next'
 import { useNavigate }     from 'react-router-dom'
@@ -38,6 +39,7 @@ export default function TasksPage() {
   const [localTasks, setLocalTasks] = useState<TaskItem[]>([])
   const [goals,      setGoals]      = useState<Goal[]>([])
   const [addOpen,    setAddOpen]    = useState(false)
+  const [editTask,   setEditTask]   = useState<TaskItem | null>(null)
 
   useEffect(() => {
     if (!user) return
@@ -70,6 +72,11 @@ export default function TasksPage() {
   const handleAddTask = useCallback((task: TaskItem) => {
     setLocalTasks((prev) => [task, ...prev])
     setAddOpen(false)
+  }, [])
+
+  const handleEditTask = useCallback((task: TaskItem) => {
+    setLocalTasks((prev) => prev.map((t) => t.id === task.id ? task : t))
+    setEditTask(null)
   }, [])
   // ── stats (always over the full data set) ──
   const statsCompleted = localTasks.filter((tk) => tk.isCompleted).length
@@ -277,6 +284,7 @@ export default function TasksPage() {
             onToggleExpand={toggleExpand}
             onToggleTask={toggleTaskComplete}
             onToggleSub={toggleSubComplete}
+            onEdit={setEditTask}
             i18n={i18n}
             t={t}
           />
@@ -300,6 +308,7 @@ export default function TasksPage() {
             onToggleExpand={toggleExpand}
             onToggleTask={toggleTaskComplete}
             onToggleSub={toggleSubComplete}
+            onEdit={setEditTask}
             i18n={i18n}
             t={t}
           />
@@ -329,6 +338,16 @@ export default function TasksPage() {
         goals={goals}
         userId={user?.id ?? ''}
       />
+
+      <AddTaskDialog
+        open={!!editTask}
+        onClose={() => setEditTask(null)}
+        onAdd={handleAddTask}
+        onEdit={handleEditTask}
+        editTask={editTask ?? undefined}
+        goals={goals}
+        userId={user?.id ?? ''}
+      />
     </Box>
   )
 }
@@ -340,12 +359,13 @@ interface TaskGroupProps {
   onToggleExpand: (id: string) => void
   onToggleTask:   (id: string) => void
   onToggleSub:    (taskId: string, subId: string) => void
+  onEdit:         (task: TaskItem) => void
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   t:              (key: string, opts?: any) => string
   i18n:           { language: string }
 }
 
-function TaskGroup({ tasks, expanded, onToggleExpand, onToggleTask, onToggleSub, t, i18n }: TaskGroupProps) {
+function TaskGroup({ tasks, expanded, onToggleExpand, onToggleTask, onToggleSub, onEdit, t, i18n }: TaskGroupProps) {
   return (
     <Box
       sx={{
@@ -369,13 +389,18 @@ function TaskGroup({ tasks, expanded, onToggleExpand, onToggleTask, onToggleSub,
                 disablePadding
                 sx={{ px: 1.5, py: 1, alignItems: 'flex-start' }}
                 secondaryAction={
-                  hasSubs ? (
-                    <IconButton size="small" edge="end" onClick={() => onToggleExpand(task.id)}>
-                      {isOpen
-                        ? <ExpandLessRoundedIcon fontSize="small" />
-                        : <ExpandMoreRoundedIcon fontSize="small" />}
+                  <Box sx={{ display: 'flex', gap: 0 }}>
+                    <IconButton size="small" onClick={() => onEdit(task)}>
+                      <EditRoundedIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
                     </IconButton>
-                  ) : undefined
+                    {hasSubs && (
+                      <IconButton size="small" edge="end" onClick={() => onToggleExpand(task.id)}>
+                        {isOpen
+                          ? <ExpandLessRoundedIcon fontSize="small" />
+                          : <ExpandMoreRoundedIcon fontSize="small" />}
+                      </IconButton>
+                    )}
+                  </Box>
                 }
               >
                 <ListItemIcon sx={{ minWidth: 36, mt: 0.25 }}>

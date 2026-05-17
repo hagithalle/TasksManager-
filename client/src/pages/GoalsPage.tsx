@@ -1,5 +1,6 @@
-import { Box, Typography, Fab, CircularProgress, Alert } from '@mui/material'
+import { Box, Typography, Fab, CircularProgress, Alert, IconButton } from '@mui/material'
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
+import EditRoundedIcon from '@mui/icons-material/EditRounded'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
@@ -18,6 +19,7 @@ export default function GoalsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError]   = useState<string | null>(null)
   const [addOpen, setAddOpen] = useState(false)
+  const [editGoal, setEditGoal] = useState<Goal | null>(null)
 
   useEffect(() => {
     if (!user) return
@@ -57,11 +59,16 @@ export default function GoalsPage() {
           </Typography>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
             {pinned.map((goal) => (
-              <GoalCard
-                key={goal.id}
-                goal={goal}
-                onClick={() => navigate(`/goals/${goal.id}`)}
-              />
+              <Box key={goal.id} sx={{ position: 'relative' }}>
+                <GoalCard goal={goal} onClick={() => navigate(`/goals/${goal.id}`)} />
+                <IconButton
+                  size="small"
+                  onClick={(e) => { e.stopPropagation(); setEditGoal(goal) }}
+                  sx={{ position: 'absolute', top: 8, right: 8, bgcolor: 'background.paper', boxShadow: 1 }}
+                >
+                  <EditRoundedIcon sx={{ fontSize: 16 }} />
+                </IconButton>
+              </Box>
             ))}
           </Box>
         </Box>
@@ -82,12 +89,18 @@ export default function GoalsPage() {
           )}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
             {rest.map((goal) => (
-              <GoalCard
-                key={goal.id}
-                goal={goal}
-                onClick={() => navigate(`/goals/${goal.id}`)}
-              />
+              <Box key={goal.id} sx={{ position: 'relative' }}>
+                <GoalCard goal={goal} onClick={() => navigate(`/goals/${goal.id}`)} />
+                <IconButton
+                  size="small"
+                  onClick={(e) => { e.stopPropagation(); setEditGoal(goal) }}
+                  sx={{ position: 'absolute', top: 8, right: 8, bgcolor: 'background.paper', boxShadow: 1 }}
+                >
+                  <EditRoundedIcon sx={{ fontSize: 16 }} />
+                </IconButton>
+              </Box>
             ))}
+          </Box>
           </Box>
         </Box>
       )}
@@ -114,6 +127,19 @@ export default function GoalsPage() {
         open={addOpen}
         onClose={() => setAddOpen(false)}
         onAdd={(goal) => { setGoals((prev) => [goal, ...prev]); setAddOpen(false) }}
+        userId={user?.id ?? ''}
+        createGoal={goalsApi.create}
+      />
+
+      <AddGoalDialog
+        open={!!editGoal}
+        onClose={() => setEditGoal(null)}
+        onAdd={() => {}}
+        onEdit={(updated) => {
+          setGoals((prev) => prev.map((g) => g.id === updated.id ? updated : g))
+          setEditGoal(null)
+        }}
+        editGoal={editGoal ?? undefined}
         userId={user?.id ?? ''}
         createGoal={goalsApi.create}
       />
