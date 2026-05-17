@@ -1,20 +1,25 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
-  Box, Button, Card, CardActionArea, Chip, Divider,
-  LinearProgress, List, ListItem, ListItemText, Typography,
+  Box, Button, Card, CardActionArea, Chip, Divider, IconButton,
+  LinearProgress, List, ListItem, ListItemText, Tooltip, Typography,
 } from '@mui/material'
 import CheckCircleRoundedIcon          from '@mui/icons-material/CheckCircleRounded'
 import ErrorRoundedIcon                from '@mui/icons-material/ErrorRounded'
 import TodayRoundedIcon                from '@mui/icons-material/TodayRounded'
 import TimerRoundedIcon                from '@mui/icons-material/TimerRounded'
 import RadioButtonUncheckedRoundedIcon from '@mui/icons-material/RadioButtonUncheckedRounded'
+import AddRoundedIcon                  from '@mui/icons-material/AddRounded'
+import ArrowForwardIosRoundedIcon      from '@mui/icons-material/ArrowForwardIosRounded'
 import { useTranslation } from 'react-i18next'
 import { useNavigate }    from 'react-router-dom'
-import { mockTasks, mockGoals } from '../data'
+import { tasksApi, goalsApi } from '../api'
+import { useAuth }        from '../contexts/AuthContext'
 import { ExecutionType, GoalType, Priority } from '../types'
-import type { TaskItem } from '../types'
-import GoalCategoryIcon from '../components/goals/GoalCategoryIcon'
-import TaskWheelModal   from '../components/tasks/TaskWheelModal'
+import type { TaskItem, Goal } from '../types'
+import GoalCategoryIcon  from '../components/goals/GoalCategoryIcon'
+import TaskWheelModal    from '../components/tasks/TaskWheelModal'
+import AddTaskDialog     from '../components/tasks/AddTaskDialog'
+import AddGoalDialog     from '../components/goals/AddGoalDialog'
 import { TODAY, PRIORITY_STYLE } from '../utils'
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
@@ -29,10 +34,22 @@ const PRIORITY_ORDER: Record<Priority, number> = {
 export default function DashboardPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [wheelOpen, setWheelOpen] = useState(false)
 
+  const [tasks, setTasks] = useState<TaskItem[]>([])
+  const [goals, setGoals] = useState<Goal[]>([])
+  const [addTaskOpen, setAddTaskOpen] = useState(false)
+  const [addGoalOpen, setAddGoalOpen] = useState(false)
+
+  useEffect(() => {
+    if (!user) return
+    tasksApi.getByUser(user.id).then(setTasks).catch(() => {})
+    goalsApi.getByUser(user.id).then(setGoals).catch(() => {})
+  }, [user])
+
   // ── Derived data ────────────────────────────────────────────────────────────
-  const todayTasks     = mockTasks.filter((tk) => tk.dueDate?.startsWith(TODAY))
+  const todayTasks     = tasks.filter((tk) => tk.dueDate?.startsWith(TODAY))
   const completedToday = todayTasks.filter((tk) =>  tk.isCompleted).length
   const remainingToday = todayTasks.filter((tk) => !tk.isCompleted).length
   const urgentToday    = todayTasks.filter(
@@ -121,7 +138,7 @@ export default function DashboardPage() {
       <SectionHeader title={t('dashboard.frog')} subtitle={t('dashboard.frogSubtitle')} emoji="🐸" />
       {frog ? (
         <Card sx={{ borderRadius: 3, mb: 3, border: '1.5px solid rgba(124,92,255,0.18)', boxShadow: '0 2px 12px rgba(124,92,255,0.09)' }}>
-          <CardActionArea sx={{ p: 2 }}>
+          <CardActionArea onClick={() => navigate('/tasks')} sx={{ p: 2 }}>
             <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
               <Typography sx={{ fontSize: 28, lineHeight: 1, flexShrink: 0 }}>🐸</Typography>
               <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -148,7 +165,10 @@ export default function DashboardPage() {
             {twoMinTasks.map((tk, i) => (
               <Box key={tk.id}>
                 {i > 0 && <Divider sx={{ ml: 5 }} />}
-                <ListItem sx={{ px: 2, py: 0.75 }}>
+                <ListItem
+                  onClick={() => navigate('/tasks')}
+                  sx={{ px: 2, py: 0.75, cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
+                >
                   <RadioButtonUncheckedRoundedIcon sx={{ fontSize: 18, color: 'text.disabled', mr: 1.5, flexShrink: 0 }} />
                   <ListItemText
                     primary={<Typography variant="body2" fontWeight={500}>{tk.title}</Typography>}
@@ -168,9 +188,14 @@ export default function DashboardPage() {
       )}
 
       {/* ── Progress by goal ── */}
-      <SectionHeader title={t('dashboard.goalProgress')} emoji="🎯" />
+      <SectionHeader
+        title={t('dashboard.goalProgress')}
+        emoji="🎯"
+        onAdd={() => setAddGoalOpen(true)}
+        onSeeAll={() => navigate('/goals')}
+      />
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mb: 3 }}>
-        {mockGoals.map((goal) => {
+        {goals.map((goal) => {
           const isFiniteGoal = goal.goalType === GoalType.Finite
           const pct = isFiniteGoal
             ? (goal.totalTasks > 0 ? Math.round((goal.completedTasks / goal.totalTasks) * 100) : 0)
@@ -224,7 +249,12 @@ export default function DashboardPage() {
       </Box>
 
       {/* ── Today's task list ── */}
-      <SectionHeader title={t('dashboard.todayList')} emoji="📋" />
+      <SectionHeader
+        title={t('dashboard.todayList')}
+        emoji="📋"
+        onAdd={() => setAddTaskOpen(true)}
+        onSeeAll={() => navigate('/tasks')}
+      />
       {todayTasks.length === 0 ? (
         <EmptyState text={t('dashboard.noTodayTasks')} />
       ) : (
@@ -233,7 +263,9 @@ export default function DashboardPage() {
             {todayTasks.map((tk, i) => (
               <Box key={tk.id}>
                 {i > 0 && <Divider sx={{ ml: 5 }} />}
-                <ListItem sx={{ px: 2, py: 0.875, alignItems: 'flex-start' }}>
+                <ListItem sx={{ px: 2, py: 0.875, alignItems: 'flex-start', cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
+                  onClick={() => navigate('/tasks')}
+                >
                   {tk.isCompleted
                     ? <CheckCircleRoundedIcon sx={{ fontSize: 18, color: 'primary.main', mr: 1.5, mt: 0.2, flexShrink: 0 }} />
                     : <RadioButtonUncheckedRoundedIcon sx={{ fontSize: 18, color: 'text.disabled', mr: 1.5, mt: 0.2, flexShrink: 0 }} />
@@ -266,7 +298,23 @@ export default function DashboardPage() {
         </Card>
       )}
 
-      <TaskWheelModal open={wheelOpen} onClose={() => setWheelOpen(false)} tasks={mockTasks} />
+      <TaskWheelModal open={wheelOpen} onClose={() => setWheelOpen(false)} tasks={tasks} />
+
+      <AddTaskDialog
+        open={addTaskOpen}
+        onClose={() => setAddTaskOpen(false)}
+        onAdd={(task) => { setTasks((prev) => [task, ...prev]); setAddTaskOpen(false) }}
+        goals={goals}
+        userId={user?.id ?? ''}
+      />
+
+      <AddGoalDialog
+        open={addGoalOpen}
+        onClose={() => setAddGoalOpen(false)}
+        onAdd={(goal) => { setGoals((prev) => [goal, ...prev]); setAddGoalOpen(false) }}
+        userId={user?.id ?? ''}
+        createGoal={goalsApi.create}
+      />
     </Box>
   )
 }
@@ -274,12 +322,15 @@ export default function DashboardPage() {
 // ─── sub-components ───────────────────────────────────────────────────────────────
 
 function SectionHeader({
-  title, subtitle, emoji,
+  title, subtitle, emoji, onAdd, onSeeAll,
 }: {
   title: string; subtitle?: string; emoji?: string
+  onAdd?: () => void
+  onSeeAll?: () => void
 }) {
+  const { t } = useTranslation()
   return (
-    <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.75, mb: 1 }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1 }}>
       {emoji && (
         <Typography sx={{ fontSize: 16, lineHeight: 1 }}>{emoji}</Typography>
       )}
@@ -287,14 +338,28 @@ function SectionHeader({
         variant="caption"
         fontWeight={700}
         color="text.secondary"
-        sx={{ letterSpacing: 0.4, textTransform: 'uppercase' }}
+        sx={{ letterSpacing: 0.4, textTransform: 'uppercase', flex: 1 }}
       >
         {title}
+        {subtitle && (
+          <Typography component="span" variant="caption" color="text.disabled" sx={{ fontSize: '0.68rem', ml: 0.5 }}>
+            — {subtitle}
+          </Typography>
+        )}
       </Typography>
-      {subtitle && (
-        <Typography variant="caption" color="text.disabled" sx={{ fontSize: '0.68rem' }}>
-          — {subtitle}
-        </Typography>
+      {onSeeAll && (
+        <Tooltip title={t('common.viewAll', 'View all')}>
+          <IconButton size="small" onClick={onSeeAll} sx={{ color: 'primary.main', p: 0.25 }}>
+            <ArrowForwardIosRoundedIcon sx={{ fontSize: 13 }} />
+          </IconButton>
+        </Tooltip>
+      )}
+      {onAdd && (
+        <Tooltip title={t('common.add')}>
+          <IconButton size="small" onClick={onAdd} sx={{ color: 'primary.main', p: 0.25 }}>
+            <AddRoundedIcon sx={{ fontSize: 18 }} />
+          </IconButton>
+        </Tooltip>
       )}
     </Box>
   )

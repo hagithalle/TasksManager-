@@ -10,6 +10,11 @@ client/dist/
 client/dist-ssr/
 server/dist/
 
+# .NET build artifacts
+server/**/bin/
+server/**/obj/
+*.lscache
+
 # Vite cache
 .vite/
 client/.vite/

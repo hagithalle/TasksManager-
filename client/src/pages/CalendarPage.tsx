@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Box, Chip, Divider, IconButton,
   ToggleButton, ToggleButtonGroup, Typography,
@@ -7,7 +7,8 @@ import ChevronLeftRoundedIcon  from '@mui/icons-material/ChevronLeftRounded'
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded'
 import CheckCircleRoundedIcon  from '@mui/icons-material/CheckCircleRounded'
 import { useTranslation } from 'react-i18next'
-import { mockTasks } from '../data'
+import { tasksApi } from '../api'
+import { useAuth }   from '../contexts/AuthContext'
 import type { TaskItem } from '../types'
 import { TODAY, PRIORITY_STYLE, EXECUTION_STYLE } from '../utils'
 
@@ -136,9 +137,16 @@ function getTasksForDate(tasks: TaskItem[], date: string) {
 export default function CalendarPage() {
   const { t, i18n } = useTranslation()
   const locale = i18n.language === 'he' ? 'he-IL' : 'en-US'
+  const { user } = useAuth()
 
   const [viewMode,     setViewMode]     = useState<'weekly' | 'daily' | 'monthly'>('weekly')
   const [selectedDate, setSelectedDate] = useState(TODAY)
+  const [tasks,        setTasks]        = useState<TaskItem[]>([])
+
+  useEffect(() => {
+    if (!user) return
+    tasksApi.getByUser(user.id).then(setTasks).catch(() => {})
+  }, [user])
 
   const weekDays = getWeekDays(selectedDate)
 
@@ -203,7 +211,7 @@ export default function CalendarPage() {
               const d          = new Date(day + 'T12:00:00')
               const weekday    = d.toLocaleDateString(locale, { weekday: 'short' })
               const dayNum     = d.getDate()
-              const { scheduled, unscheduled } = getTasksForDate(mockTasks, day)
+              const { scheduled, unscheduled } = getTasksForDate(tasks, day)
               const count      = scheduled.length + unscheduled.length
               const isSelected = day === selectedDate
               const isToday    = day === TODAY
@@ -309,8 +317,8 @@ export default function CalendarPage() {
 
       {/* ── Monthly grid or Day view ── */}
       {viewMode === 'monthly'
-        ? <MonthView selectedDate={selectedDate} onSelectDay={(d) => { setSelectedDate(d); setViewMode('daily') }} />
-        : <DayView date={selectedDate} />}
+        ? <MonthView selectedDate={selectedDate} onSelectDay={(d) => { setSelectedDate(d); setViewMode('daily') }} tasks={tasks} />
+        : <DayView date={selectedDate} tasks={tasks} />}
     </Box>
   )
 }
@@ -323,9 +331,11 @@ const WEEKDAY_LABELS_EN = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
 function MonthView({
   selectedDate,
   onSelectDay,
+  tasks,
 }: {
   selectedDate: string
   onSelectDay: (date: string) => void
+  tasks: TaskItem[]
 }) {
   const { i18n } = useTranslation()
   const isHe = i18n.language === 'he'
@@ -353,7 +363,7 @@ function MonthView({
         {cells.map((day, idx) => {
           if (!day) return <Box key={`empty-${idx}`} />
 
-          const count      = mockTasks.filter((tk) => tk.dueDate === day).length
+          const count      = tasks.filter((tk) => tk.dueDate === day).length
           const isSelected = day === selectedDate
           const isToday    = day === TODAY
           const dayNum     = new Date(day + 'T12:00:00').getDate()
@@ -414,9 +424,9 @@ function MonthView({
 
 // ─── DayView ──────────────────────────────────────────────────────────────────
 
-function DayView({ date }: { date: string }) {
+function DayView({ date, tasks }: { date: string; tasks: TaskItem[] }) {
   const { t } = useTranslation()
-  const { scheduled, unscheduled } = getTasksForDate(mockTasks, date)
+  const { scheduled, unscheduled } = getTasksForDate(tasks, date)
 
   if (scheduled.length === 0 && unscheduled.length === 0) {
     return (

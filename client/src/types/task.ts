@@ -8,6 +8,10 @@ export interface SubTask {
 
   isCompleted: boolean
 
+  executionType?: ExecutionType
+  priority?: Priority
+  durationMinutes?: number
+
   /** Optional link to a PersonalList — navigates to /lists/:id */
   linkedListId?: string
 }

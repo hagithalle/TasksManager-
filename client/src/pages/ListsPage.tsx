@@ -1,13 +1,32 @@
-import { Box, Fab, Typography } from '@mui/material'
+import { Box, CircularProgress, Alert, Fab, Typography } from '@mui/material'
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import { useTranslation } from 'react-i18next'
 import { useNavigate }    from 'react-router-dom'
-import { mockLists }      from '../data'
+import { useEffect, useState } from 'react'
+import { listsApi }       from '../api'
+import { useAuth }        from '../contexts/AuthContext'
+import type { PersonalList } from '../types'
 import PersonalListCard   from '../components/lists/PersonalListCard'
+import AddListDialog      from '../components/lists/AddListDialog'
 
 export default function ListsPage() {
   const { t }      = useTranslation()
   const navigate   = useNavigate()
+  const { user }   = useAuth()
+
+  const [lists,   setLists]   = useState<PersonalList[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error,   setError]   = useState<string | null>(null)
+  const [addOpen, setAddOpen] = useState(false)
+
+  useEffect(() => {
+    if (!user) return
+    listsApi
+      .getByUser(user.id)
+      .then(setLists)
+      .catch(() => setError(t('error.loadFailed', 'Failed to load lists')))
+      .finally(() => setLoading(false))
+  }, [t, user])
 
   return (
     <Box sx={{ px: 2, pt: 2, pb: 4, position: 'relative' }}>
@@ -22,8 +41,16 @@ export default function ListsPage() {
         {t('list.all')}
       </Typography>
 
+      {loading && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', pt: 6 }}>
+          <CircularProgress />
+        </Box>
+      )}
+
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
       {/* ── List grid ── */}
-      {mockLists.length === 0 ? (
+      {!loading && !error && (lists.length === 0 ? (
         <Box
           sx={{
             borderRadius: 3,
@@ -39,7 +66,7 @@ export default function ListsPage() {
         </Box>
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-          {mockLists.map((list) => (
+          {lists.map((list) => (
             <PersonalListCard
               key={list.id}
               list={list}
@@ -47,12 +74,13 @@ export default function ListsPage() {
             />
           ))}
         </Box>
-      )}
+      ))}
 
       {/* ── FAB ── */}
       <Fab
         color="primary"
         aria-label={t('list.new')}
+        onClick={() => setAddOpen(true)}
         sx={{
           position: 'fixed',
           bottom: { xs: 80, sm: 24 },
@@ -63,6 +91,14 @@ export default function ListsPage() {
       >
         <AddRoundedIcon />
       </Fab>
+
+      <AddListDialog
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onAdd={(list) => { setLists((prev) => [...prev, list]); setAddOpen(false) }}
+        userId={user?.id ?? ''}
+        createList={listsApi.create}
+      />
     </Box>
   )
 }

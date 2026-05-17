@@ -4,25 +4,29 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { goalsApi } from '../api'
-import { mockUser } from '../data/mockUser'
+import { useAuth } from '../contexts/AuthContext'
 import type { Goal } from '../types'
 import GoalCard from '../components/goals/GoalCard'
+import AddGoalDialog from '../components/goals/AddGoalDialog'
 
 export default function GoalsPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const { user } = useAuth()
 
   const [goals, setGoals]   = useState<Goal[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError]   = useState<string | null>(null)
+  const [addOpen, setAddOpen] = useState(false)
 
   useEffect(() => {
+    if (!user) return
     goalsApi
-      .getByUser(mockUser.id)
+      .getByUser(user.id)
       .then(setGoals)
       .catch(() => setError(t('error.loadFailed', 'Failed to load goals')))
       .finally(() => setLoading(false))
-  }, [t])
+  }, [t, user])
 
   const pinned = goals.filter((g) => g.isPinned)
   const rest   = goals.filter((g) => !g.isPinned)
@@ -94,6 +98,7 @@ export default function GoalsPage() {
       <Fab
         color="primary"
         aria-label={t('goal.new')}
+        onClick={() => setAddOpen(true)}
         sx={{
           position: 'fixed',
           bottom: { xs: 80, sm: 24 },
@@ -104,6 +109,14 @@ export default function GoalsPage() {
       >
         <AddRoundedIcon />
       </Fab>
+
+      <AddGoalDialog
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onAdd={(goal) => { setGoals((prev) => [goal, ...prev]); setAddOpen(false) }}
+        userId={user?.id ?? ''}
+        createGoal={goalsApi.create}
+      />
     </Box>
   )
 }

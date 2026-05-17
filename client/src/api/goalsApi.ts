@@ -30,7 +30,7 @@ function mapGoal(raw: any): Goal {
     progress:         raw.totalTasks > 0
                         ? Math.round((raw.completedTasks / raw.totalTasks) * 100)
                         : 0,
-    dueDate:          raw.dueDate ?? undefined,
+    dueDate:          raw.dueDate ? (raw.dueDate as string).slice(0, 10) : undefined,
     isPinned:         raw.isPinned ?? false,
     createdAt:        raw.createdAt,
     updatedAt:        raw.updatedAt,

@@ -3,6 +3,7 @@ namespace TasksManager.API.DTOs;
 public record UserDto(
     Guid Id,
     string DisplayName,
+    string Email,
     string? AvatarUrl,
     string Language,
     DateTime CreatedAt,

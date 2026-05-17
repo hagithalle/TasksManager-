@@ -29,21 +29,30 @@ export interface UpdateTaskPayload {
 
 export interface CreateSubTaskPayload {
   title: string
+  executionType?: string
+  priority?: string
+  durationMinutes?: number
   linkedListId?: string
 }
 
 export interface UpdateSubTaskPayload {
   title?: string
   isCompleted?: boolean
+  executionType?: string
+  priority?: string
+  durationMinutes?: number
   linkedListId?: string
 }
 
 function mapSubTask(raw: any): SubTask {
   return {
-    id:           raw.id,
-    title:        raw.title,
-    isCompleted:  raw.isCompleted,
-    linkedListId: raw.linkedListId ?? undefined,
+    id:              raw.id,
+    title:           raw.title,
+    isCompleted:     raw.isCompleted,
+    executionType:   raw.executionType ?? undefined,
+    priority:        raw.priority ?? undefined,
+    durationMinutes: raw.durationMinutes ?? undefined,
+    linkedListId:    raw.linkedListId ?? undefined,
   }
 }
 
@@ -55,7 +64,7 @@ function mapTask(raw: any): TaskItem {
     priority:        raw.priority,
     executionType:   raw.executionType,
     difficulty:      raw.difficulty ?? undefined,
-    dueDate:         raw.dueDate ?? undefined,
+    dueDate:         raw.dueDate ? (raw.dueDate as string).slice(0, 10) : undefined,
     plannedTime:     raw.plannedTime ?? undefined,
     durationMinutes: raw.durationMinutes ?? undefined,
     goalId:          raw.goalId ?? undefined,

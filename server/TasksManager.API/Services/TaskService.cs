@@ -103,6 +103,9 @@ public class TaskService : ITaskService
             Id = Guid.NewGuid(),
             TaskItemId = taskId,
             Title = dto.Title,
+            ExecutionType = dto.ExecutionType,
+            Priority = dto.Priority,
+            DurationMinutes = dto.DurationMinutes,
             LinkedListId = dto.LinkedListId
         };
         _db.SubTasks.Add(sub);
@@ -115,9 +118,12 @@ public class TaskService : ITaskService
         var sub = await _db.SubTasks.FirstOrDefaultAsync(s => s.Id == subTaskId);
         if (sub is null) return null;
 
-        if (dto.Title is not null)        sub.Title        = dto.Title;
-        if (dto.IsCompleted.HasValue)     sub.IsCompleted  = dto.IsCompleted.Value;
-        if (dto.LinkedListId.HasValue)    sub.LinkedListId = dto.LinkedListId;
+        if (dto.Title is not null)           sub.Title           = dto.Title;
+        if (dto.IsCompleted.HasValue)          sub.IsCompleted     = dto.IsCompleted.Value;
+        if (dto.ExecutionType.HasValue)        sub.ExecutionType   = dto.ExecutionType;
+        if (dto.Priority.HasValue)             sub.Priority        = dto.Priority;
+        if (dto.DurationMinutes.HasValue)      sub.DurationMinutes = dto.DurationMinutes;
+        if (dto.LinkedListId.HasValue)         sub.LinkedListId    = dto.LinkedListId;
 
         await _db.SaveChangesAsync();
         return ToSubDto(sub);
@@ -144,5 +150,6 @@ public class TaskService : ITaskService
     );
 
     private static SubTaskDto ToSubDto(SubTask s) =>
-        new(s.Id, s.TaskItemId, s.Title, s.IsCompleted, s.LinkedListId);
+        new(s.Id, s.TaskItemId, s.Title, s.IsCompleted,
+            s.ExecutionType, s.Priority, s.DurationMinutes, s.LinkedListId);
 }

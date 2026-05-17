@@ -151,5 +151,21 @@
     "unscheduled": "ללא שעה קבועה",
     "allDay": "כל היום",
     "monthly": "חודשי"
+  },
+  "auth": {
+    "greeting": "שלום, {{name}}",
+    "loginTab": "כניסה",
+    "registerTab": "הרשמה",
+    "loginBtn": "כניסה",
+    "registerBtn": "צור חשבון",
+    "email": "אימייל",
+    "password": "סיסמה",
+    "displayName": "שם תצוגה",
+    "continueWithGoogle": "המשך עם Google",
+    "or": "או",
+    "logout": "יציאה",
+    "errorInvalidCredentials": "אימייל או סיסמה שגויים",
+    "errorEmailTaken": "כתובת האימייל כבר בשימוש",
+    "errorGoogle": "כניסה עם Google נכשלה. נסה שוב"
   }
 }

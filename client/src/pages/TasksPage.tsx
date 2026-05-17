@@ -1,8 +1,7 @@
 import {
-  Box, Button, ButtonBase, Checkbox, Chip, Collapse, Dialog,
-  DialogActions, DialogContent, DialogTitle, Divider, Fab,
-  FormControl, IconButton, InputLabel, List, ListItem,
-  ListItemIcon, ListItemText, MenuItem, Select, TextField, Typography,
+  Box, ButtonBase, Checkbox, Chip, Collapse, Divider, Fab,
+  IconButton, List, ListItem,
+  ListItemIcon, ListItemText, Typography,
 } from '@mui/material'
 import AddRoundedIcon                  from '@mui/icons-material/AddRounded'
 import CheckCircleRoundedIcon          from '@mui/icons-material/CheckCircleRounded'
@@ -17,15 +16,18 @@ import { useTranslation }  from 'react-i18next'
 import { useNavigate }     from 'react-router-dom'
 import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { mockTasks, mockGoals }        from '../data'
-import { ExecutionType, Priority }     from '../types'
-import type { TaskItem }               from '../types'
-import { Filter, TODAY, applyFilter, PRIORITY_COLOR, PRIORITY_STYLE, EXECUTION_STYLE } from '../utils'
+import { useAuth }                     from '../contexts/AuthContext'
+import { tasksApi, goalsApi }          from '../api'
+import { Priority }     from '../types'
+import type { TaskItem, Goal }         from '../types'
+import { Filter, TODAY, applyFilter, PRIORITY_COLOR } from '../utils'
+import AddTaskDialog from '../components/tasks/AddTaskDialog'
 
 // ─── component ───────────────────────────────────────────────────────────────
 export default function TasksPage() {
   const { t, i18n } = useTranslation()
   const navigate     = useNavigate()
+  const { user }     = useAuth()
 
   const [searchParams] = useSearchParams()
   const [filter,   setFilter]   = useState<Filter>(() => {
@@ -33,14 +35,25 @@ export default function TasksPage() {
     return (qp === 'today' || qp === 'urgent' || qp === 'completed') ? qp : 'all'
   })
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
-  const [localTasks, setLocalTasks] = useState<TaskItem[]>(() => mockTasks)
+  const [localTasks, setLocalTasks] = useState<TaskItem[]>([])
+  const [goals,      setGoals]      = useState<Goal[]>([])
   const [addOpen,    setAddOpen]    = useState(false)
 
+  useEffect(() => {
+    if (!user) return
+    tasksApi.getByUser(user.id).then(setLocalTasks).catch(() => {})
+    goalsApi.getByUser(user.id).then(setGoals).catch(() => {})
+  }, [user])
+
   const toggleTaskComplete = useCallback((taskId: string) => {
-    setLocalTasks((prev) => prev.map((t) =>
-      t.id === taskId ? { ...t, isCompleted: !t.isCompleted } : t,
-    ))
-  }, [])
+    const task = localTasks.find((t) => t.id === taskId)
+    if (!task) return
+    const updated = { ...task, isCompleted: !task.isCompleted }
+    setLocalTasks((prev) => prev.map((t) => t.id === taskId ? updated : t))
+    tasksApi.update(taskId, { isCompleted: updated.isCompleted }).catch(() => {
+      setLocalTasks((prev) => prev.map((t) => t.id === taskId ? task : t))
+    })
+  }, [localTasks])
 
   const toggleSubComplete = useCallback((taskId: string, subId: string) => {
     setLocalTasks((prev) => prev.map((t) => {
@@ -58,7 +71,6 @@ export default function TasksPage() {
     setLocalTasks((prev) => [task, ...prev])
     setAddOpen(false)
   }, [])
-
   // ── stats (always over the full data set) ──
   const statsCompleted = localTasks.filter((tk) => tk.isCompleted).length
   const statsUrgent    = localTasks.filter(
@@ -114,7 +126,7 @@ export default function TasksPage() {
   const filtered = applyFilter(localTasks, filter)
 
   // group by goalId
-  const grouped = mockGoals
+  const grouped = goals
     .map((goal) => ({
       goal,
       tasks: filtered.filter((tk) => tk.goalId === goal.id),
@@ -314,6 +326,8 @@ export default function TasksPage() {
         open={addOpen}
         onClose={() => setAddOpen(false)}
         onAdd={handleAddTask}
+        goals={goals}
+        userId={user?.id ?? ''}
       />
     </Box>
   )
@@ -459,177 +473,5 @@ function TaskGroup({ tasks, expanded, onToggleExpand, onToggleTask, onToggleSub,
         })}
       </List>
     </Box>
-  )
-}
-
-// ─── AddTaskDialog ────────────────────────────────────────────────────────────
-interface AddTaskDialogProps {
-  open:    boolean
-  onClose: () => void
-  onAdd:   (task: TaskItem) => void
-}
-
-function AddTaskDialog({ open, onClose, onAdd }: AddTaskDialogProps) {
-  const { t } = useTranslation()
-
-  const [title,           setTitle]           = useState('')
-  const [goalId,          setGoalId]          = useState<string>('')
-  const [priority,        setPriority]        = useState<Priority>(Priority.Medium)
-  const [executionType,   setExecutionType]   = useState<ExecutionType>(ExecutionType.Short)
-  const [dueDate,         setDueDate]         = useState('')
-  const [durationMinutes, setDurationMinutes] = useState('')
-  const [titleError,      setTitleError]      = useState(false)
-
-  useEffect(() => {
-    if (!open) {
-      setTitle('')
-      setGoalId('')
-      setPriority(Priority.Medium)
-      setExecutionType(ExecutionType.Short)
-      setDueDate('')
-      setDurationMinutes('')
-      setTitleError(false)
-    }
-  }, [open])
-
-  function handleSubmit() {
-    if (!title.trim()) { setTitleError(true); return }
-    onAdd({
-      id:              `t-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      title:           title.trim(),
-      goalId:          goalId || undefined,
-      priority,
-      executionType,
-      dueDate:         dueDate || undefined,
-      durationMinutes: durationMinutes ? Number(durationMinutes) : undefined,
-      isCompleted:     false,
-      subTasks:        [],
-      createdAt:       new Date().toISOString(),
-      updatedAt:       new Date().toISOString(),
-    })
-  }
-
-  return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: 4 } }}>
-      <DialogTitle sx={{ fontWeight: 700 }}>{t('task.new')}</DialogTitle>
-
-      <DialogContent sx={{ pt: '12px !important' }}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-
-          {/* Title */}
-          <TextField
-            label={t('task.title')}
-            value={title}
-            onChange={(e) => { setTitle(e.target.value); setTitleError(false) }}
-            error={titleError}
-            helperText={titleError ? t('common.required') : undefined}
-            fullWidth
-            autoFocus
-            size="small"
-          />
-
-          {/* Goal */}
-          <FormControl fullWidth size="small">
-            <InputLabel>{t('nav.goals')}</InputLabel>
-            <Select
-              value={goalId}
-              onChange={(e) => setGoalId(e.target.value)}
-              label={t('nav.goals')}
-            >
-              <MenuItem value="">{t('task.noGoal')}</MenuItem>
-              {mockGoals.map((g) => (
-                <MenuItem key={g.id} value={g.id}>{g.title}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          {/* Priority */}
-          <Box>
-            <Typography variant="caption" color="text.secondary" sx={{ mb: 0.75, display: 'block' }}>
-              {t('task.priority')}
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
-              {([Priority.Low, Priority.Medium, Priority.High, Priority.Critical] as Priority[]).map((p) => {
-                const style  = PRIORITY_STYLE[p]
-                const active = priority === p
-                return (
-                  <Chip
-                    key={p}
-                    label={t(`priority.${p}`)}
-                    onClick={() => setPriority(p)}
-                    sx={{
-                      fontWeight: 700,
-                      bgcolor:    active ? style.color : 'transparent',
-                      color:      active ? 'white'     : style.color,
-                      border:     `1.5px solid ${style.color}`,
-                      '&:hover':  { bgcolor: active ? style.color : `${style.color}18` },
-                    }}
-                  />
-                )
-              })}
-            </Box>
-          </Box>
-
-          {/* Execution Type */}
-          <Box>
-            <Typography variant="caption" color="text.secondary" sx={{ mb: 0.75, display: 'block' }}>
-              {t('task.executionTime')}
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
-              {([ExecutionType.Quick, ExecutionType.Short, ExecutionType.Medium, ExecutionType.Long] as ExecutionType[]).map((et) => {
-                const style  = EXECUTION_STYLE[et]
-                const active = executionType === et
-                return (
-                  <Chip
-                    key={et}
-                    label={t(`executionType.${et}`)}
-                    onClick={() => setExecutionType(et)}
-                    sx={{
-                      fontWeight: 700,
-                      bgcolor:    active ? style.color : 'transparent',
-                      color:      active ? 'white'     : style.color,
-                      border:     `1.5px solid ${style.color}`,
-                      '&:hover':  { bgcolor: active ? style.color : `${style.color}18` },
-                    }}
-                  />
-                )
-              })}
-            </Box>
-          </Box>
-
-          {/* Due Date + Duration */}
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <TextField
-              label={t('task.dueDate')}
-              type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-              size="small"
-              sx={{ flex: 1 }}
-              InputLabelProps={{ shrink: true }}
-            />
-            <TextField
-              label={t('task.durationLabel')}
-              type="number"
-              value={durationMinutes}
-              onChange={(e) => setDurationMinutes(e.target.value)}
-              size="small"
-              sx={{ width: 140 }}
-              inputProps={{ min: 1, max: 480 }}
-            />
-          </Box>
-
-        </Box>
-      </DialogContent>
-
-      <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-        <Button onClick={onClose} variant="outlined" sx={{ borderRadius: 2.5 }}>
-          {t('common.cancel')}
-        </Button>
-        <Button onClick={handleSubmit} variant="contained" sx={{ borderRadius: 2.5, fontWeight: 700 }}>
-          {t('common.add')}
-        </Button>
-      </DialogActions>
-    </Dialog>
   )
 }

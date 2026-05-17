@@ -1,10 +1,12 @@
 import { useNavigate, useLocation } from 'react-router-dom'
-import { AppBar, Toolbar, Typography, IconButton, Box } from '@mui/material'
+import { AppBar, Toolbar, Typography, IconButton, Box, Avatar, Tooltip } from '@mui/material'
 import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded'
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded'
+import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded'
 import { useTranslation } from 'react-i18next'
 import LanguageSwitcher from './LanguageSwitcher'
 import { AppRoute } from '../routes/paths'
+import { useAuth } from '../contexts/AuthContext'
 
 /** Map every route pattern to its translation key */
 const TITLE_MAP: { pattern: string; key: string; isDetail?: boolean }[] = [
@@ -38,8 +40,18 @@ export default function TopBar() {
   const navigate = useNavigate()
   const { titleKey, isDetail } = useTopBarMeta()
   const isRtl = i18n.dir() === 'rtl'
+  const { user, logout } = useAuth()
 
   const BackIcon = isRtl ? ArrowForwardIosRoundedIcon : ArrowBackIosNewRoundedIcon
+
+  const handleLogout = () => {
+    logout()
+    navigate(AppRoute.Login, { replace: true })
+  }
+
+  const initials = user?.displayName
+    ? user.displayName.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
+    : '?'
 
   return (
     <AppBar
@@ -53,18 +65,38 @@ export default function TopBar() {
       }}
     >
       <Toolbar sx={{ minHeight: 56, px: 1.5, gap: 0.5 }}>
-        {/* Leading slot — back button on detail pages, empty space otherwise */}
-        <Box sx={{ width: 40, flexShrink: 0 }}>
-          {isDetail && (
-            <IconButton
-              size="small"
-              onClick={() => navigate(-1)}
-              aria-label={t('page.back')}
-              sx={{ color: 'primary.main' }}
-            >
-              <BackIcon fontSize="small" />
-            </IconButton>
+        {/* First slot — greeting + logout (RIGHT in RTL / LEFT in LTR) */}
+        <Box sx={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          {user && (
+            <>
+              <Typography
+                variant="body2"
+                sx={{
+                  display: { xs: 'none', sm: 'block' },
+                  color: 'text.secondary',
+                  fontWeight: 500,
+                  mx: 0.5,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {t('auth.greeting', { name: user.displayName })}
+              </Typography>
+              <Tooltip title={user.displayName}>
+                <Avatar
+                  src={user.avatarUrl}
+                  sx={{ width: 30, height: 30, fontSize: '0.75rem', bgcolor: 'primary.main' }}
+                >
+                  {initials}
+                </Avatar>
+              </Tooltip>
+              <Tooltip title={t('auth.logout')}>
+                <IconButton size="small" onClick={handleLogout} sx={{ color: 'text.secondary' }}>
+                  <LogoutRoundedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </>
           )}
+          <LanguageSwitcher />
         </Box>
 
         {/* Page title — centered */}
@@ -82,9 +114,18 @@ export default function TopBar() {
           {t(titleKey)}
         </Typography>
 
-        {/* Trailing slot — language switcher */}
-        <Box sx={{ flexShrink: 0 }}>
-          <LanguageSwitcher />
+        {/* Last slot — back button on detail pages, empty space otherwise (LEFT in RTL / RIGHT in LTR) */}
+        <Box sx={{ width: 40, flexShrink: 0 }}>
+          {isDetail && (
+            <IconButton
+              size="small"
+              onClick={() => navigate(-1)}
+              aria-label={t('page.back')}
+              sx={{ color: 'primary.main' }}
+            >
+              <BackIcon fontSize="small" />
+            </IconButton>
+          )}
         </Box>
       </Toolbar>
     </AppBar>

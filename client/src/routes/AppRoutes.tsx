@@ -1,6 +1,9 @@
+import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { AppRoute } from './paths'
+import { useAuth } from '../contexts/AuthContext'
 import MainLayout from '../layout/MainLayout'
+import LoginPage     from '../pages/LoginPage'
 import DashboardPage  from '../pages/DashboardPage'
 import TasksPage      from '../pages/TasksPage'
 import GoalsPage      from '../pages/GoalsPage'
@@ -9,10 +12,22 @@ import ListsPage      from '../pages/ListsPage'
 import ListDetailPage from '../pages/ListDetailPage'
 import CalendarPage   from '../pages/CalendarPage'
 
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated } = useAuth()
+  return isAuthenticated ? <>{children}</> : <Navigate to={AppRoute.Login} replace />
+}
+
 export default function AppRoutes() {
   return (
     <Routes>
-      <Route element={<MainLayout />}>
+      <Route path={AppRoute.Login} element={<LoginPage />} />
+      <Route
+        element={
+          <ProtectedRoute>
+            <MainLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route path={AppRoute.Dashboard}  element={<DashboardPage />}  />
         <Route path={AppRoute.Tasks}      element={<TasksPage />}      />
         <Route path={AppRoute.Goals}      element={<GoalsPage />}      />

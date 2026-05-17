@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using TasksManager.API.Models;
 
 namespace TasksManager.API.Data;
@@ -6,6 +7,12 @@ namespace TasksManager.API.Data;
 public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.ConfigureWarnings(w =>
+            w.Ignore(RelationalEventId.PendingModelChangesWarning));
+    }
 
     public DbSet<User> Users => Set<User>();
     public DbSet<Goal> Goals => Set<Goal>();
@@ -23,7 +30,10 @@ public class AppDbContext : DbContext
         {
             e.HasKey(u => u.Id);
             e.Property(u => u.DisplayName).IsRequired().HasMaxLength(100);
+            e.Property(u => u.Email).IsRequired().HasMaxLength(200);
+            e.Property(u => u.PasswordHash).IsRequired();
             e.Property(u => u.Language).HasMaxLength(10).HasDefaultValue("en");
+            e.HasIndex(u => u.Email).IsUnique();
         });
 
         // ── Goal ─────────────────────────────────────────────────────────────
@@ -73,6 +83,8 @@ public class AppDbContext : DbContext
         {
             e.HasKey(s => s.Id);
             e.Property(s => s.Title).IsRequired().HasMaxLength(300);
+            e.Property(s => s.ExecutionType).HasConversion<string>();
+            e.Property(s => s.Priority).HasConversion<string>();
 
             e.HasOne(s => s.TaskItem)
              .WithMany(t => t.SubTasks)

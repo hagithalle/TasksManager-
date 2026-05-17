@@ -151,5 +151,21 @@
     "unscheduled": "Unscheduled",
     "allDay": "All day",
     "monthly": "Monthly"
+  },
+  "auth": {
+    "greeting": "Hello, {{name}}",
+    "loginTab": "Sign In",
+    "registerTab": "Sign Up",
+    "loginBtn": "Sign In",
+    "registerBtn": "Create account",
+    "email": "Email",
+    "password": "Password",
+    "displayName": "Display Name",
+    "continueWithGoogle": "Continue with Google",
+    "or": "or",
+    "logout": "Logout",
+    "errorInvalidCredentials": "Invalid email or password",
+    "errorEmailTaken": "Email is already in use",
+    "errorGoogle": "Google sign-in failed. Please try again"
   }
 }

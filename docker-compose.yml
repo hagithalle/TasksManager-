@@ -1,0 +1,55 @@
+services:
+
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       TaskMangerDb
+      POSTGRES_USER:     postgres
+      POSTGRES_PASSWORD: postgres123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── ASP.NET Core API ────────────────────────────────────────────────────────
+  api:
+    build:
+      context: ./server/TasksManager.API
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: >-
+        Host=db;Port=5432;Database=TaskMangerDb;Username=postgres;Password=postgres123
+      Jwt__Key:        CHANGE_ME_TO_A_SECRET_KEY_AT_LEAST_32_CHARS_LONG!
+      Jwt__Issuer:     TasksManagerAPI
+      Jwt__Audience:   TasksManagerClient
+      Jwt__ExpiryDays: "7"
+      Google__ClientId: YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com
+    ports:
+      - "5000:5000"
+
+  # ── React Frontend (nginx) ───────────────────────────────────────────────────
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: /api
+        VITE_GOOGLE_CLIENT_ID: YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+
+volumes:
+  postgres_data:

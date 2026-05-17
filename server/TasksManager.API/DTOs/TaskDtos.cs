@@ -7,17 +7,26 @@ public record SubTaskDto(
     Guid TaskItemId,
     string Title,
     bool IsCompleted,
+    ExecutionType? ExecutionType,
+    Priority? Priority,
+    int? DurationMinutes,
     Guid? LinkedListId
 );
 
 public record CreateSubTaskDto(
     string Title,
+    ExecutionType? ExecutionType,
+    Priority? Priority,
+    int? DurationMinutes,
     Guid? LinkedListId
 );
 
 public record UpdateSubTaskDto(
     string? Title,
     bool? IsCompleted,
+    ExecutionType? ExecutionType,
+    Priority? Priority,
+    int? DurationMinutes,
     Guid? LinkedListId
 );
 

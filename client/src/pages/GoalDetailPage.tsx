@@ -1,54 +1,101 @@
 ﻿import {
   Box, Typography, LinearProgress, Chip, Divider,
   List, ListItem, ListItemText, ListItemIcon, Checkbox,
-  Collapse, IconButton,
+  Collapse, IconButton, Fab, CircularProgress, Alert,
 } from '@mui/material'
 import ExpandMoreRoundedIcon           from '@mui/icons-material/ExpandMoreRounded'
 import ExpandLessRoundedIcon           from '@mui/icons-material/ExpandLessRounded'
 import CheckCircleRoundedIcon          from '@mui/icons-material/CheckCircleRounded'
 import RadioButtonUncheckedRoundedIcon from '@mui/icons-material/RadioButtonUncheckedRounded'
+import AddRoundedIcon                  from '@mui/icons-material/AddRounded'
 import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useCallback, useState } from 'react'
-import { mockGoals, mockTasks } from '../data'
+import { useCallback, useEffect, useState } from 'react'
+import { goalsApi, tasksApi } from '../api'
+import { useAuth } from '../contexts/AuthContext'
 import { GoalType } from '../types'
+import type { Goal, TaskItem } from '../types'
 import GoalCategoryIcon from '../components/goals/GoalCategoryIcon'
+import AddTaskDialog    from '../components/tasks/AddTaskDialog'
 import { Filter, applyFilter, PRIORITY_COLOR } from '../utils'
 
 // ─── component ────────────────────────────────────────────────────────────────
 export default function GoalDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { t, i18n } = useTranslation()
+  const { user } = useAuth()
 
-  const goal      = mockGoals.find((g) => g.id === id)
-  const seedTasks  = mockTasks.filter((tk) => tk.goalId === id)
-
+  const [goal,       setGoal]       = useState<Goal | null>(null)
+  const [loading,    setLoading]    = useState(true)
+  const [error,      setError]      = useState<string | null>(null)
   const [filter,     setFilter]     = useState<Filter>('all')
   const [expanded,   setExpanded]   = useState<Record<string, boolean>>({})
-  const [localTasks, setLocalTasks] = useState(seedTasks)
+  const [localTasks, setLocalTasks] = useState<TaskItem[]>([])
+  const [addOpen,    setAddOpen]    = useState(false)
+  const [allGoals,   setAllGoals]   = useState<Goal[]>([])
 
-  const toggleTaskComplete = useCallback((taskId: string) => {
-    setLocalTasks((prev) => prev.map((t) =>
-      t.id === taskId ? { ...t, isCompleted: !t.isCompleted } : t,
-    ))
-  }, [])
+  useEffect(() => {
+    if (!id) return
+    Promise.all([
+      goalsApi.getById(id),
+      tasksApi.getByGoal(id),
+      user ? goalsApi.getByUser(user.id) : Promise.resolve([]),
+    ])
+      .then(([g, tasks, goals]) => {
+        setGoal(g)
+        setLocalTasks(tasks)
+        setAllGoals(goals)
+      })
+      .catch(() => setError(t('error.loadFailed', 'Failed to load')))
+      .finally(() => setLoading(false))
+  }, [id, user, t])
 
-  const toggleSubComplete = useCallback((taskId: string, subId: string) => {
+  const toggleTaskComplete = useCallback(async (taskId: string) => {
+    const task = localTasks.find((t) => t.id === taskId)
+    if (!task) return
+    const next = !task.isCompleted
+    setLocalTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, isCompleted: next } : t))
+    try {
+      await tasksApi.update(taskId, { isCompleted: next })
+    } catch {
+      setLocalTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, isCompleted: task.isCompleted } : t))
+    }
+  }, [localTasks])
+
+  const toggleSubComplete = useCallback(async (taskId: string, subId: string) => {
+    const task = localTasks.find((t) => t.id === taskId)
+    const sub  = task?.subTasks?.find((s) => s.id === subId)
+    if (!sub) return
+    const next = !sub.isCompleted
     setLocalTasks((prev) => prev.map((t) => {
       if (t.id !== taskId) return t
-      return {
-        ...t,
-        subTasks: (t.subTasks ?? []).map((s) =>
-          s.id === subId ? { ...s, isCompleted: !s.isCompleted } : s,
-        ),
-      }
+      return { ...t, subTasks: (t.subTasks ?? []).map((s) => s.id === subId ? { ...s, isCompleted: next } : s) }
     }))
-  }, [])
+    try {
+      await tasksApi.updateSubTask(subId, { isCompleted: next })
+    } catch {
+      setLocalTasks((prev) => prev.map((t) => {
+        if (t.id !== taskId) return t
+        return { ...t, subTasks: (t.subTasks ?? []).map((s) => s.id === subId ? { ...s, isCompleted: sub.isCompleted } : s) }
+      }))
+    }
+  }, [localTasks])
 
-  if (!goal) {
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', pt: 8 }}>
+        <CircularProgress />
+      </Box>
+    )
+  }
+
+  if (error || !goal) {
     return (
       <Box sx={{ p: 4, textAlign: 'center' }}>
-        <Typography color="text.secondary">{t('common.noData')}</Typography>
+        {error
+          ? <Alert severity="error">{error}</Alert>
+          : <Typography color="text.secondary">{t('common.noData')}</Typography>
+        }
       </Box>
     )
   }
@@ -76,7 +123,8 @@ export default function GoalDetailPage() {
   const filters: Filter[] = ['all', 'today', 'urgent', 'completed']
 
   return (
-    <Box sx={{ pb: 4 }}>
+    <>
+    <Box sx={{ pb: 10 }}>
 
       {/* ג”€ג”€ Hero header ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ */}
       <Box
@@ -351,6 +399,32 @@ export default function GoalDetailPage() {
         )}
       </Box>
     </Box>
+
+      {/* ── FAB ── */}
+      <Fab
+        color="primary"
+        aria-label={t('task.new')}
+        onClick={() => setAddOpen(true)}
+        sx={{
+          position: 'fixed',
+          bottom: { xs: 80, sm: 24 },
+          right:  { xs: 16, sm: 24 },
+          left: 'auto',
+          boxShadow: '0 4px 16px rgba(124,92,255,0.4)',
+        }}
+      >
+        <AddRoundedIcon />
+      </Fab>
+
+      <AddTaskDialog
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onAdd={(task) => { setLocalTasks((prev) => [task, ...prev]); setAddOpen(false) }}
+        goals={allGoals}
+        userId={user?.id ?? ''}
+        defaultGoalId={id}
+      />
+    </>
   )
 }
 

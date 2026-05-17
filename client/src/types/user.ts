@@ -4,6 +4,9 @@ export interface User {
   /** Display name shown in the UI */
   displayName: string
 
+  /** Email address */
+  email: string
+
   /** Optional avatar URL or data-URL */
   avatarUrl?: string
 

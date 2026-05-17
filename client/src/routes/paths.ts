@@ -1,9 +1,10 @@
 export enum AppRoute {
+  Login     = '/login',
   Dashboard = '/',
-  Tasks = '/tasks',
-  Goals = '/goals',
+  Tasks     = '/tasks',
+  Goals     = '/goals',
   GoalDetail = '/goals/:id',
-  Lists = '/lists',
+  Lists     = '/lists',
   ListDetail = '/lists/:id',
-  Calendar = '/calendar',
+  Calendar  = '/calendar',
 }

@@ -34,7 +34,8 @@ public enum Difficulty
 
 public enum ExecutionType
 {
-    Quick = 0,
-    Medium = 1,
-    Long = 2
+    Quick  = 0,
+    Short  = 1,
+    Medium = 2,
+    Long   = 3
 }

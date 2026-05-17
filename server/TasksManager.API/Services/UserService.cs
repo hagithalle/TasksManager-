@@ -64,5 +64,5 @@ public class UserService : IUserService
     }
 
     private static UserDto ToDto(User u) =>
-        new(u.Id, u.DisplayName, u.AvatarUrl, u.Language, u.CreatedAt, u.UpdatedAt);
+        new(u.Id, u.DisplayName, u.Email, u.AvatarUrl, u.Language, u.CreatedAt, u.UpdatedAt);
 }

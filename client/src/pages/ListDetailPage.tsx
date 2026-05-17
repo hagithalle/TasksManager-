@@ -1,20 +1,14 @@
 import {
-  Box, Divider, IconButton, InputBase,
+  Box, CircularProgress, Divider, IconButton, InputBase,
   LinearProgress, List, Typography,
 } from '@mui/material'
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { mockLists } from '../data'
-import type { PersonalListItem } from '../types'
+import { listsApi } from '../api'
+import type { PersonalList } from '../types'
 import ListItemRow from '../components/lists/ListItemRow'
-
-// ─── helpers ──────────────────────────────────────────────────────────────────
-
-function makeId() {
-  return `li-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
-}
 
 // ─── page ─────────────────────────────────────────────────────────────────────
 
@@ -22,25 +16,34 @@ export default function ListDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { t }  = useTranslation()
 
-  const seed = mockLists.find((l) => l.id === id)
-
-  const [items,    setItems]    = useState<PersonalListItem[]>(seed?.items ?? [])
+  const [list,    setList]    = useState<PersonalList | null>(null)
+  const [loading, setLoading] = useState(true)
   const [adding,   setAdding]   = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // Reset local state when navigating between lists
   useEffect(() => {
-    setItems(seed?.items ?? [])
-    setAdding(false)
-    setNewTitle('')
-  }, [id, seed])
+    if (!id) return
+    setLoading(true)
+    listsApi
+      .getById(id)
+      .then(setList)
+      .finally(() => setLoading(false))
+  }, [id])
 
   useEffect(() => {
     if (adding) inputRef.current?.focus()
   }, [adding])
 
-  if (!seed) {
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', pt: 6 }}>
+        <CircularProgress />
+      </Box>
+    )
+  }
+
+  if (!list) {
     return (
       <Box sx={{ p: 4, textAlign: 'center' }}>
         <Typography color="text.secondary">{t('common.noData')}</Typography>
@@ -48,6 +51,7 @@ export default function ListDetailPage() {
     )
   }
 
+  const items   = list.items
   const total   = items.length
   const done    = items.filter((i) => i.isCompleted).length
   const pct     = total > 0 ? Math.round((done / total) * 100) : 0
@@ -55,26 +59,31 @@ export default function ListDetailPage() {
 
   // ── handlers ────────────────────────────────────────────────────────────────
 
-  function toggleItem(itemId: string) {
-    setItems((prev) =>
-      prev.map((i) => i.id === itemId ? { ...i, isCompleted: !i.isCompleted } : i),
-    )
+  async function toggleItem(itemId: string) {
+    const item = items.find((i) => i.id === itemId)
+    if (!item) return
+    const updated = await listsApi.updateItem(itemId, { isCompleted: !item.isCompleted })
+    setList((prev) => prev ? {
+      ...prev,
+      items: prev.items.map((i) => i.id === itemId ? updated : i),
+    } : prev)
   }
 
-  function deleteItem(itemId: string) {
-    setItems((prev) => prev.filter((i) => i.id !== itemId))
+  async function deleteItem(itemId: string) {
+    await listsApi.deleteItem(itemId)
+    setList((prev) => prev ? {
+      ...prev,
+      items: prev.items.filter((i) => i.id !== itemId),
+    } : prev)
   }
 
-  function commitAdd() {
+  async function commitAdd() {
     const title = newTitle.trim()
-    if (title) {
-      setItems((prev) => [
-        ...prev,
-        { id: makeId(), title, isCompleted: false },
-      ])
-    }
     setNewTitle('')
     setAdding(false)
+    if (!title || !id) return
+    const newItem = await listsApi.addItem(id, { title })
+    setList((prev) => prev ? { ...prev, items: [...prev.items, newItem] } : prev)
   }
 
   // ── render ──────────────────────────────────────────────────────────────────
@@ -101,11 +110,11 @@ export default function ListDetailPage() {
               transition: 'background-color 0.3s',
             }}
           >
-            {seed.emoji ?? '📋'}
+            {list.emoji ?? '📋'}
           </Box>
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography variant="h3" fontWeight={700} noWrap>
-              {seed.title}
+              {list.title}
             </Typography>
             <Typography variant="caption" color="text.secondary">
               {t('list.items', { count: total })}
