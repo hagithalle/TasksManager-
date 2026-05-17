@@ -56,7 +56,13 @@ builder.Services
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ClientPolicy", policy =>
-        policy.WithOrigins("http://localhost:5173", "http://localhost:3000")
+        policy.WithOrigins(
+                  "http://localhost:5173",
+                  "http://localhost:3000",
+                  "http://localhost:80",
+                  "https://tasks-manager-psi.vercel.app",
+                  builder.Configuration["AllowedOrigin"] ?? "https://tasks-manager-psi.vercel.app"
+              )
               .AllowAnyHeader()
               .AllowAnyMethod());
 });
