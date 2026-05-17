@@ -70,7 +70,8 @@ public class AuthService : IAuthService
         // Try id_token first, fall back to access_token via userinfo endpoint
         string email, name, picture;
 
-        if (dto.IdToken.Contains('.'))
+        // access_token is short (<512 chars), id_token is a long JWT (>512 chars)
+        if (dto.IdToken.Length > 512 && dto.IdToken.Contains('.'))
         {
             // Looks like a JWT — validate as id_token
             var clientId = _config["Google:ClientId"]
