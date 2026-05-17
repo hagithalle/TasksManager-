@@ -28,11 +28,12 @@ public class AiController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return StatusCode(503, new { message = ex.Message });
+            return StatusCode(503, new { code = ex.Message });
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { message = ex.Message });
+            _logger.LogError(ex, "Unexpected AI error");
+            return StatusCode(500, new { code = "AI_ERROR" });
         }
     }
 }

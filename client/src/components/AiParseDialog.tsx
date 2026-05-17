@@ -100,8 +100,9 @@ export default function AiParseDialog({ open, onClose, userId, onCreated }: Prop
       setSelectedGoals(new Set(res.data.goals.map((_: AiParsedGoal, i: number) => i)))
       setSelectedListItems(new Set(res.data.listItems.map((_: AiParsedListItem, i: number) => i)))
     } catch (err: any) {
-      const msg = err?.response?.data?.message
-      setError(msg ? `${t('ai.error')} (${msg})` : t('ai.error'))
+      const code = err?.response?.data?.code
+      if (code === 'RATE_LIMIT') setError(t('ai.errorRateLimit'))
+      else setError(t('ai.error'))
     } finally {
       setLoading(false)
     }
