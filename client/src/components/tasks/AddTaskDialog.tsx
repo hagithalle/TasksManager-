@@ -14,9 +14,9 @@ import { PRIORITY_STYLE, EXECUTION_STYLE } from '../../utils'
 export interface AddTaskDialogProps {
   open:           boolean
   onClose:        () => void
-  onAdd:          (task: TaskItem) => void
-  goals:          Goal[]
-  userId:         string
+  onAdd?:         (task: TaskItem) => void
+  goals?:         Goal[]
+  userId?:        string
   defaultGoalId?: string
   editTask?:      TaskItem
   onEdit?:        (task: TaskItem) => void
