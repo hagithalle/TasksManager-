@@ -58,8 +58,10 @@ TemporaryDependencyNodeTargetIdentifier=net10.0
 Controllers/
  AiController.cs
  AuthController.cs
+ CalendarController.cs
  GoalsController.cs
  PersonalListsController.cs
+ ShareController.cs
  TasksController.cs
  UsersController.cs
 Data/AppDbContext.cs
@@ -68,6 +70,7 @@ DTOs/
  AuthDtos.cs
  GoalDtos.cs
  ListDtos.cs
+ ShareDtos.cs
  TaskDtos.cs
  UserDtos.cs
 Migrations/
@@ -77,12 +80,17 @@ Migrations/
  20260514100627_AddAuthFields.Designer.cs
  20260517101331_AddSubTaskFields.cs
  20260517101331_AddSubTaskFields.Designer.cs
+ 20260518065645_AddGoogleRefreshToken.cs
+ 20260518065645_AddGoogleRefreshToken.Designer.cs
+ 20260518092406_AddShareInvites.cs
+ 20260518092406_AddShareInvites.Designer.cs
  AppDbContextModelSnapshot.cs
 Models/
  Enums.cs
  Goal.cs
  PersonalList.cs
  PersonalListItem.cs
+ ShareInvite.cs
  SubTask.cs
  TaskItem.cs
  User.cs
@@ -95,9 +103,11 @@ Services/
  AiService.cs
  AuthService.cs
  GoalService.cs
+ GoogleCalendarService.cs
  Interfaces/
   IAuthService.cs
   IGoalService.cs
+  IGoogleCalendarService.cs
   IPersonalListService.cs
   ITaskService.cs
   IUserService.cs
@@ -417,9 +427,10 @@ Services/
  WindowsBase.dll
 <NUGET>/
  bcrypt.net-next/4.0.3/lib/net6.0/BCrypt.Net-Next.dll
- google.apis.auth/1.68.0/lib/net6.0/Google.Apis.Auth.dll
- google.apis.core/1.68.0/lib/net6.0/Google.Apis.Core.dll
- google.apis/1.68.0/lib/net6.0/Google.Apis.dll
+ google.apis.auth/1.74.0/lib/net6.0/Google.Apis.Auth.dll
+ google.apis.calendar.v3/1.74.0.4073/lib/net6.0/Google.Apis.Calendar.v3.dll
+ google.apis.core/1.74.0/lib/net6.0/Google.Apis.Core.dll
+ google.apis/1.74.0/lib/net6.0/Google.Apis.dll
  microsoft.aspnetcore.authentication.jwtbearer/9.0.4/lib/net9.0/Microsoft.AspNetCore.Authentication.JwtBearer.dll
  microsoft.entityframeworkcore.abstractions/9.0.4/lib/net8.0/Microsoft.EntityFrameworkCore.Abstractions.dll
  microsoft.entityframeworkcore.relational/9.0.4/lib/net8.0/Microsoft.EntityFrameworkCore.Relational.dll
@@ -431,7 +442,7 @@ Services/
  microsoft.identitymodel.protocols/8.0.1/lib/net9.0/Microsoft.IdentityModel.Protocols.dll
  microsoft.identitymodel.tokens/8.0.1/lib/net9.0/Microsoft.IdentityModel.Tokens.dll
  microsoft.openapi/1.6.22/lib/netstandard2.0/Microsoft.OpenApi.dll
- newtonsoft.json/13.0.3/lib/net6.0/Newtonsoft.Json.dll
+ newtonsoft.json/13.0.4/lib/net6.0/Newtonsoft.Json.dll
  npgsql.entityframeworkcore.postgresql/9.0.4/lib/net8.0/Npgsql.EntityFrameworkCore.PostgreSQL.dll
  npgsql/9.0.3/lib/net8.0/Npgsql.dll
  swashbuckle.aspnetcore.swagger/7.3.1/lib/net9.0/Swashbuckle.AspNetCore.Swagger.dll

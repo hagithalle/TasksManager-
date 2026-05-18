@@ -196,5 +196,20 @@
     "listTarget": "הוסף לרשימה",
     "newList": "רשימה חדשה",
     "newListName": "רשימה"
+  },
+  "share": {
+    "title": "שתף",
+    "button": "שתף",
+    "copyLink": "העתק קישור",
+    "copied": "הועתק!",
+    "linkInfo": "כל מי שיש לו את הקישור יוכל לצפות ולערוך",
+    "revokeBtn": "בטל שיתוף",
+    "revokeConfirm": "לבטל את שיתוף ה{{type}}?",
+    "sharedWith": "משותף עם {{name}}",
+    "pendingLink": "קישור ממתין לקבלה",
+    "sharedBadge": "משותף",
+    "typeList": "רשימה",
+    "typeTask": "משימה",
+    "typeGoal": "מטרה"
   }
 }

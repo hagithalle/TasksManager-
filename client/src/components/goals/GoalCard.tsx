@@ -1,10 +1,13 @@
 import { Card, CardActionArea, Box, Typography, LinearProgress, Chip, IconButton } from '@mui/material'
 import { useTranslation } from 'react-i18next'
+import { useState } from 'react'
 import { GoalType } from '../../types'
 import type { Goal } from '../../types'
 import GoalCategoryIcon from './GoalCategoryIcon'
 import EditRoundedIcon from '@mui/icons-material/EditRounded'
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded'
+import ShareRoundedIcon from '@mui/icons-material/ShareRounded'
+import ShareDialog from '../ShareDialog'
 
 interface Props {
   goal:    Goal
@@ -15,6 +18,7 @@ interface Props {
 
 export default function GoalCard({ goal, onClick, onEdit, onDelete }: Props) {
   const { t, i18n } = useTranslation()
+  const [shareOpen, setShareOpen] = useState(false)
 
   const isFinite = goal.goalType === GoalType.Finite
 
@@ -213,6 +217,28 @@ export default function GoalCard({ goal, onClick, onEdit, onDelete }: Props) {
           <DeleteRoundedIcon sx={{ fontSize: 16 }} />
         </IconButton>
       )}
-    </Card>
+      <IconButton
+        size="small"
+        onClick={(e) => { e.stopPropagation(); setShareOpen(true) }}
+        sx={{
+          position: 'absolute',
+          top: 8,
+          left: onDelete ? 72 : 40,
+          bgcolor: 'background.paper',
+          boxShadow: 1,
+          zIndex: 1,
+          '&:hover': { bgcolor: 'action.hover' },
+        }}
+      >
+        <ShareRoundedIcon sx={{ fontSize: 16 }} />
+      </IconButton>
+
+      <ShareDialog
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        resourceType="Goal"
+        resourceId={goal.id}
+        resourceTitle={goal.title}
+      />    </Card>
   )
 }

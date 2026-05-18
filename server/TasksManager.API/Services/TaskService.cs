@@ -14,12 +14,26 @@ public class TaskService : ITaskService
 
     public async Task<IEnumerable<TaskItemDto>> GetAllByUserAsync(Guid userId)
     {
-        var tasks = await _db.Tasks
+        var ownTasks = await _db.Tasks
             .AsNoTracking()
             .Where(t => t.UserId == userId)
             .Include(t => t.SubTasks)
             .ToListAsync();
-        return tasks.Select(ToDto);
+
+        var sharedIds = await _db.ShareInvites
+            .Where(s => s.AcceptedByUserId == userId && s.ResourceType == Models.ShareResourceType.Task)
+            .Select(s => s.ResourceId)
+            .ToListAsync();
+
+        var sharedTasks = sharedIds.Any()
+            ? await _db.Tasks
+                .AsNoTracking()
+                .Where(t => sharedIds.Contains(t.Id))
+                .Include(t => t.SubTasks)
+                .ToListAsync()
+            : new List<TaskItem>();
+
+        return ownTasks.Concat(sharedTasks).Select(ToDto);
     }
 
     public async Task<IEnumerable<TaskItemDto>> GetByGoalAsync(Guid goalId)

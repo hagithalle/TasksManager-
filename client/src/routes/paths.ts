@@ -1,5 +1,6 @@
 export enum AppRoute {
   Login     = '/login',
+  Join      = '/join/:token',
   Dashboard = '/',
   Tasks     = '/tasks',
   Goals     = '/goals',

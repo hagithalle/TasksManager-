@@ -40,7 +40,13 @@ export default function LoginPage() {
 
   const handleSuccess = (token: string, user: Parameters<typeof setAuth>[1]) => {
     setAuth(token, user)
-    navigate(AppRoute.Dashboard, { replace: true })
+    const pendingToken = sessionStorage.getItem('pendingJoinToken')
+    if (pendingToken) {
+      sessionStorage.removeItem('pendingJoinToken')
+      navigate(`/join/${pendingToken}`, { replace: true })
+    } else {
+      navigate(AppRoute.Dashboard, { replace: true })
+    }
   }
 
   const handleLogin = async (e: React.FormEvent) => {

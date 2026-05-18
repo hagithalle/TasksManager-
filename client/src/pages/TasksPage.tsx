@@ -13,6 +13,7 @@ import CalendarMonthRoundedIcon        from '@mui/icons-material/CalendarMonthRo
 import TodayRoundedIcon                from '@mui/icons-material/TodayRounded'
 import EditRoundedIcon                 from '@mui/icons-material/EditRounded'
 import DeleteRoundedIcon               from '@mui/icons-material/DeleteRounded'
+import ShareRoundedIcon                from '@mui/icons-material/ShareRounded'
 import type { SvgIconComponent }       from '@mui/icons-material'
 import { useTranslation }  from 'react-i18next'
 import { useNavigate }     from 'react-router-dom'
@@ -24,6 +25,7 @@ import { Priority }     from '../types'
 import type { TaskItem, Goal }         from '../types'
 import { Filter, TODAY, applyFilter, PRIORITY_COLOR } from '../utils'
 import AddTaskDialog from '../components/tasks/AddTaskDialog'
+import ShareDialog from '../components/ShareDialog'
 
 // ─── component ───────────────────────────────────────────────────────────────
 export default function TasksPage() {
@@ -377,7 +379,9 @@ interface TaskGroupProps {
 }
 
 function TaskGroup({ tasks, expanded, onToggleExpand, onToggleTask, onToggleSub, onEdit, onDelete, t, i18n }: TaskGroupProps) {
+  const [shareTask, setShareTask] = useState<TaskItem | null>(null)
   return (
+    <>
     <Box
       sx={{
         borderRadius: 3,
@@ -439,6 +443,9 @@ function TaskGroup({ tasks, expanded, onToggleExpand, onToggleTask, onToggleSub,
                         </IconButton>
                         <IconButton size="small" onClick={() => onDelete(task.id)} sx={{ p: 0.25 }}>
                           <DeleteRoundedIcon sx={{ fontSize: 15, color: 'text.disabled' }} />
+                        </IconButton>
+                        <IconButton size="small" onClick={() => setShareTask(task)} sx={{ p: 0.25 }}>
+                          <ShareRoundedIcon sx={{ fontSize: 15, color: 'text.disabled' }} />
                         </IconButton>
                         {hasSubs && (
                           <IconButton size="small" onClick={() => onToggleExpand(task.id)} sx={{ p: 0.25 }}>
@@ -512,5 +519,16 @@ function TaskGroup({ tasks, expanded, onToggleExpand, onToggleTask, onToggleSub,
         })}
       </List>
     </Box>
+
+    {shareTask && (
+      <ShareDialog
+        open={!!shareTask}
+        onClose={() => setShareTask(null)}
+        resourceType="Task"
+        resourceId={shareTask.id}
+        resourceTitle={shareTask.title}
+      />
+    )}
+  </>
   )
 }

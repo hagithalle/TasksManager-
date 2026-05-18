@@ -14,12 +14,28 @@ public class PersonalListService : IPersonalListService
 
     public async Task<IEnumerable<PersonalListDto>> GetAllByUserAsync(Guid userId)
     {
-        var lists = await _db.PersonalLists
+        // Own lists
+        var ownLists = await _db.PersonalLists
             .AsNoTracking()
             .Where(l => l.UserId == userId)
             .Include(l => l.Items)
             .ToListAsync();
-        return lists.Select(ToDto);
+
+        // Shared lists accepted by this user
+        var sharedIds = await _db.ShareInvites
+            .Where(s => s.AcceptedByUserId == userId && s.ResourceType == Models.ShareResourceType.List)
+            .Select(s => s.ResourceId)
+            .ToListAsync();
+
+        var sharedLists = sharedIds.Any()
+            ? await _db.PersonalLists
+                .AsNoTracking()
+                .Where(l => sharedIds.Contains(l.Id))
+                .Include(l => l.Items)
+                .ToListAsync()
+            : new List<PersonalList>();
+
+        return ownLists.Concat(sharedLists).Select(ToDto);
     }
 
     public async Task<PersonalListDto?> GetByIdAsync(Guid id)

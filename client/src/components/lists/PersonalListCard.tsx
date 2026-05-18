@@ -1,7 +1,10 @@
 import { Box, Card, CardActionArea, IconButton, LinearProgress, Typography } from '@mui/material'
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded'
+import ShareRoundedIcon from '@mui/icons-material/ShareRounded'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { PersonalList } from '../../types'
+import ShareDialog from '../ShareDialog'
 
 interface Props {
   list: PersonalList
@@ -11,6 +14,7 @@ interface Props {
 
 export default function PersonalListCard({ list, onClick, onDelete }: Props) {
   const { t } = useTranslation()
+  const [shareOpen, setShareOpen] = useState(false)
 
   const total   = list.items.length
   const done    = list.items.filter((i) => i.isCompleted).length
@@ -108,6 +112,30 @@ export default function PersonalListCard({ list, onClick, onDelete }: Props) {
           <DeleteRoundedIcon sx={{ fontSize: 16 }} />
         </IconButton>
       )}
+
+      <IconButton
+        size="small"
+        onClick={(e) => { e.stopPropagation(); setShareOpen(true) }}
+        sx={{
+          position: 'absolute',
+          top: 8,
+          left: onDelete ? 40 : 8,
+          bgcolor: 'background.paper',
+          boxShadow: 1,
+          zIndex: 1,
+          '&:hover': { bgcolor: 'action.hover' },
+        }}
+      >
+        <ShareRoundedIcon sx={{ fontSize: 16 }} />
+      </IconButton>
+
+      <ShareDialog
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        resourceType="List"
+        resourceId={list.id}
+        resourceTitle={list.title}
+      />
     </Card>
   )
 }

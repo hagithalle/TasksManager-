@@ -20,6 +20,7 @@ public class AppDbContext : DbContext
     public DbSet<SubTask> SubTasks => Set<SubTask>();
     public DbSet<PersonalList> PersonalLists => Set<PersonalList>();
     public DbSet<PersonalListItem> PersonalListItems => Set<PersonalListItem>();
+    public DbSet<ShareInvite> ShareInvites => Set<ShareInvite>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -115,6 +116,26 @@ public class AppDbContext : DbContext
              .WithMany(l => l.Items)
              .HasForeignKey(i => i.PersonalListId)
              .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ── ShareInvite ───────────────────────────────────────────────────────
+        modelBuilder.Entity<ShareInvite>(e =>
+        {
+            e.HasKey(s => s.Id);
+            e.Property(s => s.Token).IsRequired().HasMaxLength(64);
+            e.HasIndex(s => s.Token).IsUnique();
+            e.Property(s => s.ResourceType).HasConversion<string>();
+
+            e.HasOne(s => s.Owner)
+             .WithMany()
+             .HasForeignKey(s => s.OwnerId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(s => s.AcceptedByUser)
+             .WithMany()
+             .HasForeignKey(s => s.AcceptedByUserId)
+             .OnDelete(DeleteBehavior.NoAction)
+             .IsRequired(false);
         });
     }
 }

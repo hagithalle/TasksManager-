@@ -11,6 +11,7 @@ import GoalDetailPage from '../pages/GoalDetailPage'
 import ListsPage      from '../pages/ListsPage'
 import ListDetailPage from '../pages/ListDetailPage'
 import CalendarPage   from '../pages/CalendarPage'
+import JoinPage       from '../pages/JoinPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth()
@@ -21,6 +22,7 @@ export default function AppRoutes() {
   return (
     <Routes>
       <Route path={AppRoute.Login} element={<LoginPage />} />
+      <Route path={AppRoute.Join}  element={<JoinPage />} />
       <Route
         element={
           <ProtectedRoute>

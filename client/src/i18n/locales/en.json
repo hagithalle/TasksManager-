@@ -196,5 +196,20 @@
     "listTarget": "Add to list",
     "newList": "New list",
     "newListName": "List"
+  },
+  "share": {
+    "title": "Share",
+    "button": "Share",
+    "copyLink": "Copy link",
+    "copied": "Copied!",
+    "linkInfo": "Anyone with this link can view and edit",
+    "revokeBtn": "Revoke sharing",
+    "revokeConfirm": "Revoke sharing for this {{type}}?",
+    "sharedWith": "Shared with {{name}}",
+    "pendingLink": "Pending invite link",
+    "sharedBadge": "Shared",
+    "typeList": "list",
+    "typeTask": "task",
+    "typeGoal": "goal"
   }
 }
