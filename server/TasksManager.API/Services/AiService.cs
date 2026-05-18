@@ -1,5 +1,7 @@
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Caching.Memory;
 using TasksManager.API.DTOs;
 
 namespace TasksManager.API.Services;
@@ -8,16 +10,32 @@ public class AiService
 {
     private readonly IConfiguration _config;
     private readonly ILogger<AiService> _logger;
+    private readonly IMemoryCache _cache;
     private static readonly HttpClient _http = new();
+    private static readonly TimeSpan CacheDuration = TimeSpan.FromHours(1);
 
-    public AiService(IConfiguration config, ILogger<AiService> logger)
+    public AiService(IConfiguration config, ILogger<AiService> logger, IMemoryCache cache)
     {
         _config = config;
         _logger = logger;
+        _cache = cache;
+    }
+
+    private static string CacheKey(string text, string language)
+    {
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes($"{language}:{text}"));
+        return "ai:" + Convert.ToHexString(hash);
     }
 
     public async Task<AiParseResponseDto> ParseTextAsync(string text, string language = "he")
     {
+        var cacheKey = CacheKey(text, language);
+        if (_cache.TryGetValue(cacheKey, out AiParseResponseDto? cached) && cached is not null)
+        {
+            _logger.LogInformation("AI parse cache hit");
+            return cached;
+        }
+
         var apiKey = _config["OpenAI:ApiKey"]
             ?? throw new InvalidOperationException("OpenAI API key is not configured.");
 
@@ -124,12 +142,14 @@ Text to analyze:
         try
         {
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            var result = JsonSerializer.Deserialize<AiParseResponseDto>(generatedText, options);
-            return result ?? new AiParseResponseDto([], [], []);
+            var result = JsonSerializer.Deserialize<AiParseResponseDto>(generatedText, options)
+                         ?? new AiParseResponseDto([], [], []);
+            _cache.Set(cacheKey, result, CacheDuration);
+            return result;
         }
         catch (JsonException ex)
         {
-            _logger.LogError(ex, "Failed to parse Gemini response: {Text}", generatedText);
+            _logger.LogError(ex, "Failed to parse OpenAI response: {Text}", generatedText);
             return new AiParseResponseDto([], [], []);
         }
     }
