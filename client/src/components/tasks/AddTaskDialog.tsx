@@ -151,7 +151,7 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, goals, use
       } else {
         // ג”€ג”€ Create mode ג”€ג”€
         const task = await tasksApi.create({
-          userId,
+          userId: userId!,
           title:           title.trim(),
           goalId:          goalId || undefined,
           priority,
@@ -169,7 +169,7 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, goals, use
           })
           task.subTasks = [...(task.subTasks ?? []), sub]
         }
-        onAdd(task)
+        onAdd?.(task)
       }
     } finally {
       setLoading(false)
@@ -204,7 +204,7 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, goals, use
               label={t('nav.goals')}
             >
               <MenuItem value="">{t('task.noGoal')}</MenuItem>
-              {goals.map((g) => (
+              {(goals ?? []).map((g) => (
                 <MenuItem key={g.id} value={g.id}>{g.title}</MenuItem>
               ))}
             </Select>
