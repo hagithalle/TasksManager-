@@ -11,8 +11,13 @@ namespace TasksManager.API.Controllers;
 public class CalendarController : ControllerBase
 {
     private readonly IGoogleCalendarService _calendar;
+    private readonly ILogger<CalendarController> _logger;
 
-    public CalendarController(IGoogleCalendarService calendar) => _calendar = calendar;
+    public CalendarController(IGoogleCalendarService calendar, ILogger<CalendarController> logger)
+    {
+        _calendar = calendar;
+        _logger   = logger;
+    }
 
     // POST api/calendar/push
     [HttpPost("push")]
@@ -27,7 +32,12 @@ public class CalendarController : ControllerBase
         if (string.IsNullOrEmpty(dto.AccessToken))
             return BadRequest(new { code = "NO_ACCESS_TOKEN", message = "Access token is required." });
 
+        _logger.LogInformation("Calendar push requested for user {UserId}", uid);
+
         var result = await _calendar.PushToCalendarAsync(uid, dto.AccessToken);
+
+        _logger.LogInformation("Calendar push result: created={Created}, updated={Updated}, skipped={Skipped}, error={Error}",
+            result.Created, result.Updated, result.Skipped, result.Error);
 
         if (result.Error == "AUTH_ERROR")
             return StatusCode(503, new { code = "AUTH_ERROR", message = "Failed to authenticate with Google Calendar." });
