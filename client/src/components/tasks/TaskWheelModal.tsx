@@ -1,13 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
-  Box, Button, Dialog, DialogContent, DialogTitle,
-  FormControlLabel, IconButton, Switch, Typography,
+  Box, Button, Checkbox, Collapse, Dialog, DialogContent, DialogTitle,
+  Divider, FormControlLabel, IconButton, List, ListItem, ListItemText,
+  Switch, Tooltip, Typography,
 } from '@mui/material'
-import CloseRoundedIcon  from '@mui/icons-material/CloseRounded'
-import CasinoRoundedIcon from '@mui/icons-material/CasinoRounded'
-import { useTranslation } from 'react-i18next'
-import { useNavigate }    from 'react-router-dom'
-import { Difficulty, ExecutionType, Priority } from '../../types'
+import CloseRoundedIcon      from '@mui/icons-material/CloseRounded'
+import CasinoRoundedIcon     from '@mui/icons-material/CasinoRounded'
+import TuneRoundedIcon       from '@mui/icons-material/TuneRounded'
+import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded'
+import ExpandLessRoundedIcon from '@mui/icons-material/ExpandLessRounded'
+import { useTranslation }    from 'react-i18next'
+import { useNavigate }       from 'react-router-dom'
+import { Difficulty, ExecutionType } from '../../types'
 import type { TaskItem } from '../../types'
 
 // ─── Local types ──────────────────────────────────────────────────────────────
@@ -63,41 +67,59 @@ export default function TaskWheelModal({ open, onClose, tasks }: Props) {
   const [spinning,        setSpinning]        = useState(false)
   const [selected,        setSelected]        = useState<WheelItem | null>(null)
   const [showResult,      setShowResult]      = useState(false)
+  const [manageOpen,      setManageOpen]      = useState(false)
+  // null = auto mode (use defaults), Set<string> = manual selection of task ids
+  const [manualIds,       setManualIds]       = useState<Set<string> | null>(null)
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const today    = new Date().toISOString().slice(0, 10)
 
-  // Reset state each time the modal opens
+  // All incomplete tasks for manual selection list
+  const allIncomplete = useMemo(
+    () => tasks.filter((tk) => !tk.isCompleted),
+    [tasks],
+  )
+
+  // Auto-eligible: Quick OR Short execution, or Easy difficulty
+  const autoEligibleIds = useMemo(() => new Set(
+    allIncomplete
+      .filter((tk) =>
+        tk.executionType === ExecutionType.Quick ||
+        tk.executionType === ExecutionType.Short ||
+        tk.difficulty    === Difficulty.Easy,
+      )
+      .map((tk) => tk.id),
+  ), [allIncomplete])
+
+  // On open: reset spin state; init manualIds from auto-eligible if first open
   useEffect(() => {
     if (open) {
       setSelected(null)
       setShowResult(false)
       setSpinning(false)
+      if (manualIds === null) {
+        setManualIds(new Set(autoEligibleIds))
+      }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
+
+  // Active set of task ids for the wheel
+  const activeIds = manualIds ?? autoEligibleIds
 
   // ── Build eligible list ──────────────────────────────────────────────────
   const eligible = useMemo<WheelItem[]>(() => {
     const items: WheelItem[] = []
 
-    for (const tk of tasks) {
-      if (tk.isCompleted) continue
-      if (tk.dueDate && tk.dueDate !== today) continue
-      if (tk.priority === Priority.Critical || tk.priority === Priority.High) continue
+    for (const tk of allIncomplete) {
+      if (!activeIds.has(tk.id)) continue
 
-      const isEligible =
-        tk.executionType === ExecutionType.Quick ||
-        tk.difficulty    === Difficulty.Easy
-
-      if (isEligible) {
-        items.push({
-          id:        tk.id,
-          title:     tk.title,
-          isSubtask: false,
-          parentId:  tk.id,
-          duration:  tk.durationMinutes,
-        })
-      }
+      items.push({
+        id:        tk.id,
+        title:     tk.title,
+        isSubtask: false,
+        parentId:  tk.id,
+        duration:  tk.durationMinutes,
+      })
 
       if (includeSubtasks) {
         for (const sub of tk.subTasks ?? []) {
@@ -115,9 +137,30 @@ export default function TaskWheelModal({ open, onClose, tasks }: Props) {
     }
 
     return items
-  }, [tasks, includeSubtasks, today])
+  }, [allIncomplete, activeIds, includeSubtasks])
 
   const display = useMemo(() => eligible.slice(0, MAX_SEGMENTS), [eligible])
+
+  // ── Toggle task in manual selection ─────────────────────────────────────
+  const toggleTask = (id: string) => {
+    setManualIds((prev) => {
+      const base = prev ?? new Set(autoEligibleIds)
+      const next = new Set(base)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+    setShowResult(false)
+  }
+
+  const selectAll = () => {
+    setManualIds(new Set(allIncomplete.map((t) => t.id)))
+    setShowResult(false)
+  }
+
+  const clearAll = () => {
+    setManualIds(new Set())
+    setShowResult(false)
+  }
 
   // ── Spin ────────────────────────────────────────────────────────────────
   const spin = useCallback(() => {
@@ -170,8 +213,8 @@ export default function TaskWheelModal({ open, onClose, tasks }: Props) {
 
       <DialogContent sx={{ pt: 0, overflow: 'hidden' }}>
 
-        {/* Subtasks toggle */}
-        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
+        {/* Subtasks toggle + manage button */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
           <FormControlLabel
             control={
               <Switch
@@ -186,7 +229,61 @@ export default function TaskWheelModal({ open, onClose, tasks }: Props) {
               </Typography>
             }
           />
+          <Tooltip title={t('wheel.manageTasks')}>
+            <IconButton size="small" onClick={() => setManageOpen((v) => !v)} color={manageOpen ? 'primary' : 'default'}>
+              <TuneRoundedIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
         </Box>
+
+        {/* ── Manage panel ── */}
+        <Collapse in={manageOpen}>
+          <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, mb: 1.5, overflow: 'hidden' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 1.5, py: 0.75, bgcolor: 'action.hover' }}>
+              <Typography variant="caption" fontWeight={700} color="text.secondary">
+                {t('wheel.manageTasks')}
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 0.5 }}>
+                <Button size="small" variant="text" sx={{ fontSize: '0.65rem', minWidth: 0, py: 0, px: 0.75 }} onClick={selectAll}>
+                  {t('wheel.selectAll')}
+                </Button>
+                <Button size="small" variant="text" color="error" sx={{ fontSize: '0.65rem', minWidth: 0, py: 0, px: 0.75 }} onClick={clearAll}>
+                  {t('wheel.clearAll')}
+                </Button>
+              </Box>
+            </Box>
+            <Divider />
+            <List dense disablePadding sx={{ maxHeight: 200, overflowY: 'auto' }}>
+              {allIncomplete.length === 0 ? (
+                <ListItem><ListItemText secondary={t('wheel.noTasks')} /></ListItem>
+              ) : allIncomplete.map((tk) => (
+                <ListItem key={tk.id} disablePadding sx={{ px: 1 }}>
+                  <FormControlLabel
+                    sx={{ width: '100%', m: 0 }}
+                    control={
+                      <Checkbox
+                        size="small"
+                        checked={activeIds.has(tk.id)}
+                        onChange={() => toggleTask(tk.id)}
+                        sx={{ py: 0.5 }}
+                      />
+                    }
+                    label={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="caption" noWrap sx={{ flex: 1 }}>{tk.title}</Typography>
+                        {autoEligibleIds.has(tk.id) && (
+                          <Typography variant="caption" color="primary.main" sx={{ fontSize: '0.6rem', flexShrink: 0 }}>
+                            ⚡
+                          </Typography>
+                        )}
+                      </Box>
+                    }
+                  />
+                </ListItem>
+              ))}
+            </List>
+          </Box>
+        </Collapse>
 
         {display.length === 0 ? (
 

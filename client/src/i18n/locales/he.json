@@ -140,11 +140,15 @@
     "spin": "סובב גלגל",
     "spinning": "מסתובב...",
     "result": "המשימה שלך!",
-    "noTasks": "אין משימות מתאימות כרגע",
+    "noTasks": "אין משימות בגלגל — הוסף משימות למטה",
     "startNow": "התחל עכשיו",
     "pickAnother": "בחר אחרת",
     "close": "סגור",
-    "includeSubtasks": "כלול גם תת-משימות"
+    "includeSubtasks": "כלול גם תת-משימות",
+    "manageTasks": "ניהול משימות בגלגל",
+    "autoHint": "אוטומטי: כל משימות מהיר וקצר",
+    "selectAll": "בחר הכל",
+    "clearAll": "נקה הכל"
   },
   "calendar": {
     "daily": "יומי",

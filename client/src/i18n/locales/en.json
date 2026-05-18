@@ -140,11 +140,15 @@
     "spin": "Spin wheel",
     "spinning": "Spinning...",
     "result": "Your task!",
-    "noTasks": "No eligible tasks right now",
+    "noTasks": "No tasks in wheel — add tasks below",
     "startNow": "Start now",
     "pickAnother": "Pick another",
     "close": "Close",
-    "includeSubtasks": "Include subtasks"
+    "includeSubtasks": "Include subtasks",
+    "manageTasks": "Manage wheel tasks",
+    "autoHint": "Auto: all Quick & Short tasks",
+    "selectAll": "Select all",
+    "clearAll": "Clear all"
   },
   "calendar": {
     "daily": "Daily",
