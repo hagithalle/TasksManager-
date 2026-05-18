@@ -101,7 +101,6 @@ export default function GoalsPage() {
               </Box>
             ))}
           </Box>
-          </Box>
         </Box>
       )}
         </>
