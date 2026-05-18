@@ -20,6 +20,7 @@
     "priority": "Priority",
     "dueDate": "Due Date",
     "executionTime": "Execution Time",
+    "executionType": "Execution Type",
     "subtasks": "Subtasks",
     "addSubtask": "+ Add subtask",
     "noSubtasks": "No subtasks yet",
@@ -199,7 +200,9 @@
     "listItems": "List items",
     "listTarget": "Add to list",
     "newList": "New list",
-    "newListName": "List"
+    "newListName": "List",
+    "editHint": "Click ▼ to edit an item, add subtasks and more",
+    "quantity": "Quantity"
   },
   "share": {
     "title": "Share",

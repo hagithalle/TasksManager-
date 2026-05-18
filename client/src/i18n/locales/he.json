@@ -20,6 +20,7 @@
     "priority": "עדיפות",
     "dueDate": "תאריך יעד",
     "executionTime": "זמן ביצוע",
+    "executionType": "סוג ביצוע",
     "subtasks": "תת-משימות",
     "addSubtask": "+ הוסף תת-משימה",
     "noSubtasks": "אין תת-משימות עדיין",
@@ -199,7 +200,9 @@
     "listItems": "פריטי רשימה",
     "listTarget": "הוסף לרשימה",
     "newList": "רשימה חדשה",
-    "newListName": "רשימה"
+    "newListName": "רשימה",
+    "editHint": "לחץ על ▼ לעריכת פריט, הוספת תת-משימות ועוד",
+    "quantity": "כמות"
   },
   "share": {
     "title": "שתף",
