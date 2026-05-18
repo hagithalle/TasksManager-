@@ -7,12 +7,14 @@ import ChevronLeftRoundedIcon  from '@mui/icons-material/ChevronLeftRounded'
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded'
 import CheckCircleRoundedIcon  from '@mui/icons-material/CheckCircleRounded'
 import SyncRoundedIcon         from '@mui/icons-material/SyncRounded'
+import EditRoundedIcon         from '@mui/icons-material/EditRounded'
 import { useGoogleLogin }      from '@react-oauth/google'
 import { useTranslation } from 'react-i18next'
 import { tasksApi, calendarApi } from '../api'
 import { useAuth }   from '../contexts/AuthContext'
 import type { TaskItem } from '../types'
 import { TODAY, PRIORITY_STYLE, EXECUTION_STYLE } from '../utils'
+import { AddTaskDialog } from '../components'
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -146,6 +148,7 @@ export default function CalendarPage() {
   const [tasks,        setTasks]        = useState<TaskItem[]>([])
   const [syncing,      setSyncing]      = useState(false)
   const [snack,        setSnack]        = useState<{ msg: string; severity: 'success' | 'error' | 'warning' } | null>(null)
+  const [editTask,     setEditTask]     = useState<TaskItem | null>(null)
 
   const doSync = useCallback(async (accessToken: string) => {
     setSyncing(true)
@@ -347,7 +350,7 @@ export default function CalendarPage() {
       {/* ── Monthly grid or Day view ── */}
       {viewMode === 'monthly'
         ? <MonthView selectedDate={selectedDate} onSelectDay={(d) => { setSelectedDate(d); setViewMode('daily') }} tasks={tasks} />
-        : <DayView date={selectedDate} tasks={tasks} />}
+        : <DayView date={selectedDate} tasks={tasks} onEdit={setEditTask} />}
 
       <Snackbar
         open={!!snack}
@@ -359,6 +362,18 @@ export default function CalendarPage() {
           {snack?.msg}
         </Alert>
       </Snackbar>
+
+      {editTask && (
+        <AddTaskDialog
+          open={!!editTask}
+          onClose={() => setEditTask(null)}
+          editTask={editTask}
+          onEdit={(updated) => {
+            setTasks(prev => prev.map(t => t.id === updated.id ? updated : t))
+            setEditTask(null)
+          }}
+        />
+      )}
     </Box>
   )
 }
@@ -464,7 +479,7 @@ function MonthView({
 
 // ─── DayView ──────────────────────────────────────────────────────────────────
 
-function DayView({ date, tasks }: { date: string; tasks: TaskItem[] }) {
+function DayView({ date, tasks, onEdit }: { date: string; tasks: TaskItem[]; onEdit: (t: TaskItem) => void }) {
   const { t } = useTranslation()
   const { scheduled, unscheduled } = getTasksForDate(tasks, date)
 
@@ -484,7 +499,7 @@ function DayView({ date, tasks }: { date: string; tasks: TaskItem[] }) {
       {scheduled.map((tk, i) => (
         <Box key={tk.id}>
           {i > 0 && <Box sx={{ ml: 5.5, height: '1px', bgcolor: 'divider' }} />}
-          <TaskRow task={tk} />
+          <TaskRow task={tk} onEdit={onEdit} />
         </Box>
       ))}
 
@@ -503,7 +518,7 @@ function DayView({ date, tasks }: { date: string; tasks: TaskItem[] }) {
           {unscheduled.map((tk, i) => (
             <Box key={tk.id}>
               {i > 0 && <Box sx={{ ml: 5.5, height: '1px', bgcolor: 'divider' }} />}
-              <TaskRow task={tk} showTime={false} />
+              <TaskRow task={tk} showTime={false} onEdit={onEdit} />
             </Box>
           ))}
         </>
@@ -514,7 +529,7 @@ function DayView({ date, tasks }: { date: string; tasks: TaskItem[] }) {
 
 // ─── TaskRow ──────────────────────────────────────────────────────────────────
 
-function TaskRow({ task, showTime = true }: { task: TaskItem; showTime?: boolean }) {
+function TaskRow({ task, showTime = true, onEdit }: { task: TaskItem; showTime?: boolean; onEdit?: (t: TaskItem) => void }) {
   const { t } = useTranslation()
   const ps = PRIORITY_STYLE[task.priority]
   const es = EXECUTION_STYLE[task.executionType]
@@ -563,6 +578,11 @@ function TaskRow({ task, showTime = true }: { task: TaskItem; showTime?: boolean
           >
             {task.title}
           </Typography>
+          {onEdit && (
+            <IconButton size="small" onClick={() => onEdit(task)} sx={{ p: 0.25, opacity: 0.5, '&:hover': { opacity: 1 } }}>
+              <EditRoundedIcon sx={{ fontSize: 14 }} />
+            </IconButton>
+          )}
         </Box>
 
         {/* Chips */}

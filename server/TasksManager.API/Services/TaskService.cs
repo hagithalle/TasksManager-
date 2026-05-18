@@ -143,7 +143,8 @@ public class TaskService : ITaskService
     private static TaskItemDto ToDto(TaskItem t) => new(
         t.Id, t.UserId, t.Title, t.IsCompleted,
         t.Priority, t.ExecutionType, t.Difficulty,
-        t.DueDate, t.PlannedTime, t.DurationMinutes,
+        t.DueDate.HasValue ? t.DueDate.Value.ToString("yyyy-MM-dd") : null,
+        t.PlannedTime, t.DurationMinutes,
         t.GoalId, t.ListId,
         t.SubTasks.Select(ToSubDto),
         t.CreatedAt, t.UpdatedAt

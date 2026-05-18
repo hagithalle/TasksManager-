@@ -38,7 +38,7 @@ public record TaskItemDto(
     Priority Priority,
     ExecutionType ExecutionType,
     Difficulty? Difficulty,
-    DateTime? DueDate,
+    string? DueDate,
     string? PlannedTime,
     int? DurationMinutes,
     Guid? GoalId,
