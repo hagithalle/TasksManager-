@@ -92,8 +92,6 @@ export default function LoginPage() {
     },
     onError: () => setError(t('auth.errorGoogle')),
     scope: 'openid email profile https://www.googleapis.com/auth/calendar',
-    access_type: 'offline',
-    prompt: 'consent',
   })
 
   return (
