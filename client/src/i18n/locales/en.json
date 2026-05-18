@@ -35,6 +35,7 @@
     "noGoal": "No Goal",
     "minutesShort": "min",
     "durationLabel": "Duration (min)",
+    "plannedTime": "Time",
     "stats": {
       "completed": "Completed",
       "urgent": "Urgent",

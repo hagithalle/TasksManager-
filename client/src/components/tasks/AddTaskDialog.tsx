@@ -276,7 +276,7 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, goals, use
               InputLabelProps={{ shrink: true }}
             />
             <TextField
-              label={t('task.plannedTime', '׳©׳¢׳”')}
+              label={t('task.plannedTime')}
               type="time"
               value={plannedTime}
               onChange={(e) => setPlannedTime(e.target.value)}
