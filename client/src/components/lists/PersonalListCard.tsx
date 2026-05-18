@@ -29,7 +29,6 @@ export default function PersonalListCard({ list, onClick, onDelete }: Props) {
         borderColor: allDone ? 'rgba(76,175,80,0.25)' : 'rgba(124,92,255,0.10)',
         boxShadow: '0 2px 10px rgba(124,92,255,0.07)',
         transition: 'box-shadow 0.2s',
-        position: 'relative',
         '&:hover': { boxShadow: '0 4px 16px rgba(124,92,255,0.13)' },
       }}
     >
@@ -55,18 +54,28 @@ export default function PersonalListCard({ list, onClick, onDelete }: Props) {
 
           {/* Content */}
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            {/* Title + items count */}
+            {/* Title + actions + items count */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.75 }}>
               <Typography variant="subtitle2" fontWeight={700} noWrap sx={{ flex: 1 }}>
                 {list.title}
               </Typography>
-              <Typography
-                variant="caption"
-                fontWeight={700}
-                sx={{ ml: 1, flexShrink: 0, color: allDone ? '#4CAF50' : 'text.secondary' }}
-              >
-                {t('list.progress', { done, total })}
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, flexShrink: 0, ml: 1 }}>
+                {onDelete && (
+                  <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDelete(list.id) }} sx={{ p: 0.25 }}>
+                    <DeleteRoundedIcon sx={{ fontSize: 15, color: 'text.disabled' }} />
+                  </IconButton>
+                )}
+                <IconButton size="small" onClick={(e) => { e.stopPropagation(); setShareOpen(true) }} sx={{ p: 0.25 }}>
+                  <ShareRoundedIcon sx={{ fontSize: 15, color: 'text.disabled' }} />
+                </IconButton>
+                <Typography
+                  variant="caption"
+                  fontWeight={700}
+                  sx={{ color: allDone ? '#4CAF50' : 'text.secondary', mr: 0.5 }}
+                >
+                  {t('list.progress', { done, total })}
+                </Typography>
+              </Box>
             </Box>
 
             {/* Progress bar */}
@@ -94,40 +103,6 @@ export default function PersonalListCard({ list, onClick, onDelete }: Props) {
           </Box>
         </Box>
       </CardActionArea>
-
-      {onDelete && (
-        <IconButton
-          size="small"
-          onClick={(e) => { e.stopPropagation(); onDelete(list.id) }}
-          sx={{
-            position: 'absolute',
-            top: 8,
-            left: 8,
-            bgcolor: 'background.paper',
-            boxShadow: 1,
-            zIndex: 1,
-            '&:hover': { bgcolor: '#FFEBEE', color: 'error.main' },
-          }}
-        >
-          <DeleteRoundedIcon sx={{ fontSize: 16 }} />
-        </IconButton>
-      )}
-
-      <IconButton
-        size="small"
-        onClick={(e) => { e.stopPropagation(); setShareOpen(true) }}
-        sx={{
-          position: 'absolute',
-          top: 8,
-          left: onDelete ? 40 : 8,
-          bgcolor: 'background.paper',
-          boxShadow: 1,
-          zIndex: 1,
-          '&:hover': { bgcolor: 'action.hover' },
-        }}
-      >
-        <ShareRoundedIcon sx={{ fontSize: 16 }} />
-      </IconButton>
 
       <ShareDialog
         open={shareOpen}

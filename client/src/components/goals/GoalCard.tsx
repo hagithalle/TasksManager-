@@ -48,7 +48,6 @@ export default function GoalCard({ goal, onClick, onEdit, onDelete }: Props) {
         borderColor: 'rgba(124,92,255,0.12)',
         boxShadow: '0 2px 10px rgba(124,92,255,0.07)',
         transition: 'box-shadow 0.2s',
-        position: 'relative',
         '&:hover': { boxShadow: '0 4px 16px rgba(124,92,255,0.13)' },
       }}
     >
@@ -59,14 +58,14 @@ export default function GoalCard({ goal, onClick, onEdit, onDelete }: Props) {
 
           {/* Content */}
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            {/* Title + type badge */}
+            {/* Title + action buttons + type badge */}
             <Box
               sx={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 mb: 1,
-                gap: 1,
+                gap: 0.5,
               }}
             >
               <Typography
@@ -78,19 +77,34 @@ export default function GoalCard({ goal, onClick, onEdit, onDelete }: Props) {
                 {goal.title}
               </Typography>
 
-              <Chip
-                label={t(isFinite ? 'goal.finite' : 'goal.ongoing')}
-                size="small"
-                sx={{
-                  bgcolor: isFinite ? '#E3F2FD' : '#EDE9FF',
-                  color: isFinite ? '#1565C0' : '#5438CC',
-                  fontWeight: 600,
-                  fontSize: '0.68rem',
-                  height: 20,
-                  flexShrink: 0,
-                  '& .MuiChip-label': { px: 1 },
-                }}
-              />
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, flexShrink: 0 }}>
+                {onEdit && (
+                  <IconButton size="small" onClick={(e) => { e.stopPropagation(); onEdit(goal) }} sx={{ p: 0.25 }}>
+                    <EditRoundedIcon sx={{ fontSize: 15, color: 'text.disabled' }} />
+                  </IconButton>
+                )}
+                {onDelete && (
+                  <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDelete(goal.id) }} sx={{ p: 0.25 }}>
+                    <DeleteRoundedIcon sx={{ fontSize: 15, color: 'text.disabled' }} />
+                  </IconButton>
+                )}
+                <IconButton size="small" onClick={(e) => { e.stopPropagation(); setShareOpen(true) }} sx={{ p: 0.25 }}>
+                  <ShareRoundedIcon sx={{ fontSize: 15, color: 'text.disabled' }} />
+                </IconButton>
+                <Chip
+                  label={t(isFinite ? 'goal.finite' : 'goal.ongoing')}
+                  size="small"
+                  sx={{
+                    bgcolor: isFinite ? '#E3F2FD' : '#EDE9FF',
+                    color: isFinite ? '#1565C0' : '#5438CC',
+                    fontWeight: 600,
+                    fontSize: '0.68rem',
+                    height: 20,
+                    flexShrink: 0,
+                    '& .MuiChip-label': { px: 1 },
+                  }}
+                />
+              </Box>
             </Box>
 
             {/* ── Finite: overall progress ── */}
@@ -181,57 +195,6 @@ export default function GoalCard({ goal, onClick, onEdit, onDelete }: Props) {
           </Box>
         </Box>
       </CardActionArea>
-
-      {onEdit && (
-        <IconButton
-          size="small"
-          onClick={(e) => { e.stopPropagation(); onEdit(goal) }}
-          sx={{
-            position: 'absolute',
-            top: 8,
-            left: 8,
-            bgcolor: 'background.paper',
-            boxShadow: 1,
-            zIndex: 1,
-            '&:hover': { bgcolor: 'action.hover' },
-          }}
-        >
-          <EditRoundedIcon sx={{ fontSize: 16 }} />
-        </IconButton>
-      )}
-
-      {onDelete && (
-        <IconButton
-          size="small"
-          onClick={(e) => { e.stopPropagation(); onDelete(goal.id) }}
-          sx={{
-            position: 'absolute',
-            top: 8,
-            left: 40,
-            bgcolor: 'background.paper',
-            boxShadow: 1,
-            zIndex: 1,
-            '&:hover': { bgcolor: 'error.lighter', color: 'error.main' },
-          }}
-        >
-          <DeleteRoundedIcon sx={{ fontSize: 16 }} />
-        </IconButton>
-      )}
-      <IconButton
-        size="small"
-        onClick={(e) => { e.stopPropagation(); setShareOpen(true) }}
-        sx={{
-          position: 'absolute',
-          top: 8,
-          left: onDelete ? 72 : 40,
-          bgcolor: 'background.paper',
-          boxShadow: 1,
-          zIndex: 1,
-          '&:hover': { bgcolor: 'action.hover' },
-        }}
-      >
-        <ShareRoundedIcon sx={{ fontSize: 16 }} />
-      </IconButton>
 
       <ShareDialog
         open={shareOpen}
