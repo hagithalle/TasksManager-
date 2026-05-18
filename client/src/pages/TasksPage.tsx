@@ -388,20 +388,6 @@ function TaskGroup({ tasks, expanded, onToggleExpand, onToggleTask, onToggleSub,
               <ListItem
                 disablePadding
                 sx={{ px: 1.5, py: 1, alignItems: 'flex-start' }}
-                secondaryAction={
-                  <Box sx={{ display: 'flex', gap: 0 }}>
-                    <IconButton size="small" onClick={() => onEdit(task)}>
-                      <EditRoundedIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
-                    </IconButton>
-                    {hasSubs && (
-                      <IconButton size="small" edge="end" onClick={() => onToggleExpand(task.id)}>
-                        {isOpen
-                          ? <ExpandLessRoundedIcon fontSize="small" />
-                          : <ExpandMoreRoundedIcon fontSize="small" />}
-                      </IconButton>
-                    )}
-                  </Box>
-                }
               >
                 <ListItemIcon sx={{ minWidth: 36, mt: 0.25 }}>
                   <Checkbox
@@ -430,10 +416,24 @@ function TaskGroup({ tasks, expanded, onToggleExpand, onToggleTask, onToggleSub,
                         sx={{
                           textDecoration: task.isCompleted ? 'line-through' : 'none',
                           color: task.isCompleted ? 'text.disabled' : 'text.primary',
+                          flex: 1,
                         }}
                       >
                         {task.title}
                       </Typography>
+                      {/* Action buttons inline - no overlap */}
+                      <Box sx={{ display: 'flex', gap: 0, flexShrink: 0 }}>
+                        <IconButton size="small" onClick={() => onEdit(task)} sx={{ p: 0.25 }}>
+                          <EditRoundedIcon sx={{ fontSize: 15, color: 'text.disabled' }} />
+                        </IconButton>
+                        {hasSubs && (
+                          <IconButton size="small" onClick={() => onToggleExpand(task.id)} sx={{ p: 0.25 }}>
+                            {isOpen
+                              ? <ExpandLessRoundedIcon sx={{ fontSize: 15 }} />
+                              : <ExpandMoreRoundedIcon sx={{ fontSize: 15 }} />}
+                          </IconButton>
+                        )}
+                      </Box>
                     </Box>
                   }
                   secondary={

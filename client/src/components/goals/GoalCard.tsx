@@ -1,15 +1,17 @@
-import { Card, CardActionArea, Box, Typography, LinearProgress, Chip } from '@mui/material'
+import { Card, CardActionArea, Box, Typography, LinearProgress, Chip, IconButton } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { GoalType } from '../../types'
 import type { Goal } from '../../types'
 import GoalCategoryIcon from './GoalCategoryIcon'
+import EditRoundedIcon from '@mui/icons-material/EditRounded'
 
 interface Props {
-  goal: Goal
+  goal:    Goal
   onClick?: () => void
+  onEdit?: (goal: Goal) => void
 }
 
-export default function GoalCard({ goal, onClick }: Props) {
+export default function GoalCard({ goal, onClick, onEdit }: Props) {
   const { t, i18n } = useTranslation()
 
   const isFinite = goal.goalType === GoalType.Finite
@@ -40,6 +42,7 @@ export default function GoalCard({ goal, onClick }: Props) {
         borderColor: 'rgba(124,92,255,0.12)',
         boxShadow: '0 2px 10px rgba(124,92,255,0.07)',
         transition: 'box-shadow 0.2s',
+        position: 'relative',
         '&:hover': { boxShadow: '0 4px 16px rgba(124,92,255,0.13)' },
       }}
     >
@@ -172,6 +175,24 @@ export default function GoalCard({ goal, onClick }: Props) {
           </Box>
         </Box>
       </CardActionArea>
+
+      {onEdit && (
+        <IconButton
+          size="small"
+          onClick={(e) => { e.stopPropagation(); onEdit(goal) }}
+          sx={{
+            position: 'absolute',
+            top: 8,
+            left: 8,
+            bgcolor: 'background.paper',
+            boxShadow: 1,
+            zIndex: 1,
+            '&:hover': { bgcolor: 'action.hover' },
+          }}
+        >
+          <EditRoundedIcon sx={{ fontSize: 16 }} />
+        </IconButton>
+      )}
     </Card>
   )
 }

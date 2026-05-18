@@ -288,24 +288,6 @@ export default function GoalDetailPage() {
                   <ListItem
                     disablePadding
                     sx={{ py: 1.25, alignItems: 'flex-start' }}
-                    secondaryAction={
-                      <Box sx={{ display: 'flex', gap: 0, mt: 0.5 }}>
-                        <IconButton size="small" onClick={() => setEditTask(task)}>
-                          <EditRoundedIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
-                        </IconButton>
-                        {hasSubTasks && (
-                          <IconButton
-                            size="small"
-                            edge="end"
-                            onClick={() => toggleExpand(task.id)}
-                          >
-                            {isOpen
-                              ? <ExpandLessRoundedIcon fontSize="small" />
-                              : <ExpandMoreRoundedIcon fontSize="small" />}
-                          </IconButton>
-                        )}
-                      </Box>
-                    }
                   >
                     {/* Checkbox */}
                     <ListItemIcon sx={{ minWidth: 36, mt: 0.25 }}>
@@ -337,10 +319,24 @@ export default function GoalDetailPage() {
                               textDecoration: task.isCompleted ? 'line-through' : 'none',
                               color:          task.isCompleted ? 'text.disabled' : 'text.primary',
                               fontWeight: 500,
+                              flex: 1,
                             }}
                           >
                             {task.title}
                           </Typography>
+                          {/* Action buttons inline */}
+                          <Box sx={{ display: 'flex', gap: 0, flexShrink: 0 }}>
+                            <IconButton size="small" onClick={() => setEditTask(task)} sx={{ p: 0.25 }}>
+                              <EditRoundedIcon sx={{ fontSize: 15, color: 'text.disabled' }} />
+                            </IconButton>
+                            {hasSubTasks && (
+                              <IconButton size="small" onClick={() => toggleExpand(task.id)} sx={{ p: 0.25 }}>
+                                {isOpen
+                                  ? <ExpandLessRoundedIcon sx={{ fontSize: 15 }} />
+                                  : <ExpandMoreRoundedIcon sx={{ fontSize: 15 }} />}
+                              </IconButton>
+                            )}
+                          </Box>
                         </Box>
                       }
                       secondary={

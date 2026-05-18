@@ -1,6 +1,5 @@
-import { Box, Typography, Fab, CircularProgress, Alert, IconButton } from '@mui/material'
+import { Box, Typography, Fab, CircularProgress, Alert } from '@mui/material'
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
-import EditRoundedIcon from '@mui/icons-material/EditRounded'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
@@ -59,16 +58,12 @@ export default function GoalsPage() {
           </Typography>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
             {pinned.map((goal) => (
-              <Box key={goal.id} sx={{ position: 'relative' }}>
-                <GoalCard goal={goal} onClick={() => navigate(`/goals/${goal.id}`)} />
-                <IconButton
-                  size="small"
-                  onClick={(e) => { e.stopPropagation(); setEditGoal(goal) }}
-                  sx={{ position: 'absolute', top: 8, right: 8, bgcolor: 'background.paper', boxShadow: 1 }}
-                >
-                  <EditRoundedIcon sx={{ fontSize: 16 }} />
-                </IconButton>
-              </Box>
+              <GoalCard
+                key={goal.id}
+                goal={goal}
+                onClick={() => navigate(`/goals/${goal.id}`)}
+                onEdit={setEditGoal}
+              />
             ))}
           </Box>
         </Box>
@@ -89,16 +84,12 @@ export default function GoalsPage() {
           )}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
             {rest.map((goal) => (
-              <Box key={goal.id} sx={{ position: 'relative' }}>
-                <GoalCard goal={goal} onClick={() => navigate(`/goals/${goal.id}`)} />
-                <IconButton
-                  size="small"
-                  onClick={(e) => { e.stopPropagation(); setEditGoal(goal) }}
-                  sx={{ position: 'absolute', top: 8, right: 8, bgcolor: 'background.paper', boxShadow: 1 }}
-                >
-                  <EditRoundedIcon sx={{ fontSize: 16 }} />
-                </IconButton>
-              </Box>
+              <GoalCard
+                key={goal.id}
+                goal={goal}
+                onClick={() => navigate(`/goals/${goal.id}`)}
+                onEdit={setEditGoal}
+              />
             ))}
           </Box>
         </Box>
