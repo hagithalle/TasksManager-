@@ -18,8 +18,8 @@ public class AiService
 
     public async Task<AiParseResponseDto> ParseTextAsync(string text, string language = "he")
     {
-        var apiKey = _config["Gemini:ApiKey"]
-            ?? throw new InvalidOperationException("Gemini API key is not configured.");
+        var apiKey = _config["OpenAI:ApiKey"]
+            ?? throw new InvalidOperationException("OpenAI API key is not configured.");
 
         var today = DateTime.UtcNow.ToString("yyyy-MM-dd");
         var langInstruction = language == "he"
@@ -80,38 +80,37 @@ Text to analyze:
 
         var requestBody = new
         {
-            contents = new[]
+            model = "gpt-4o-mini",
+            temperature = 0.2,
+            max_tokens = 2048,
+            messages = new[]
             {
-                new { parts = new[] { new { text = prompt } } }
-            },
-            generationConfig = new
-            {
-                temperature = 0.2,
-                maxOutputTokens = 2048
+                new { role = "user", content = prompt }
             }
         };
 
-        var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={apiKey}";
-        var content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
+        var url = "https://api.openai.com/v1/chat/completions";
+        var request = new HttpRequestMessage(HttpMethod.Post, url);
+        request.Headers.Add("Authorization", $"Bearer {apiKey}");
+        request.Content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
 
-        var response = await _http.PostAsync(url, content);
+        var response = await _http.SendAsync(request);
         var responseText = await response.Content.ReadAsStringAsync();
 
         if (!response.IsSuccessStatusCode)
         {
-            _logger.LogError("Gemini API error: {Status} {Body}", response.StatusCode, responseText);
+            _logger.LogError("OpenAI API error: {Status} {Body}", response.StatusCode, responseText);
             if ((int)response.StatusCode == 429)
                 throw new InvalidOperationException("RATE_LIMIT");
             throw new InvalidOperationException("AI_ERROR");
         }
 
-        // Extract text from Gemini response
+        // Extract text from OpenAI response
         using var doc = JsonDocument.Parse(responseText);
         var generatedText = doc.RootElement
-            .GetProperty("candidates")[0]
+            .GetProperty("choices")[0]
+            .GetProperty("message")
             .GetProperty("content")
-            .GetProperty("parts")[0]
-            .GetProperty("text")
             .GetString() ?? "{}";
 
         // Clean markdown code blocks if present
