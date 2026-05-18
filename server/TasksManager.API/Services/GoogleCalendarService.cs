@@ -151,10 +151,21 @@ public class GoogleCalendarService : IGoogleCalendarService
 
         if (spec.Time is not null && TimeSpan.TryParse(spec.Time, out var t))
         {
-            var startDt = date.Add(t);
-            var endDt   = startDt.AddMinutes(spec.Duration);
-            start = new EventDateTime { DateTimeDateTimeOffset = startDt, TimeZone = "Asia/Jerusalem" };
-            end   = new EventDateTime { DateTimeDateTimeOffset = endDt,   TimeZone = "Asia/Jerusalem" };
+            var localDt = new DateTime(date.Year, date.Month, date.Day, t.Hours, t.Minutes, 0, DateTimeKind.Unspecified);
+            TimeSpan israelOffset;
+            try
+            {
+                TimeZoneInfo israelTz;
+                try   { israelTz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Jerusalem"); }
+                catch { israelTz = TimeZoneInfo.FindSystemTimeZoneById("Israel Standard Time"); }
+                israelOffset = israelTz.GetUtcOffset(localDt);
+            }
+            catch { israelOffset = TimeSpan.FromHours(3); }
+
+            var startDto = new DateTimeOffset(localDt, israelOffset);
+            var endDto   = startDto.AddMinutes(spec.Duration);
+            start = new EventDateTime { DateTimeDateTimeOffset = startDto, TimeZone = "Asia/Jerusalem" };
+            end   = new EventDateTime { DateTimeDateTimeOffset = endDto,   TimeZone = "Asia/Jerusalem" };
         }
         else
         {
