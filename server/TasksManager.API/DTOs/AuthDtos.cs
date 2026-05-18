@@ -18,5 +18,6 @@ public record AuthResponseDto(
 );
 
 public record GoogleLoginDto(
-    string IdToken
+    string IdToken,
+    string? RefreshToken = null
 );

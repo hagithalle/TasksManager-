@@ -11,8 +11,13 @@ namespace TasksManager.API.Controllers;
 public class AiController : ControllerBase
 {
     private readonly AiService _ai;
+    private readonly ILogger<AiController> _logger;
 
-    public AiController(AiService ai) => _ai = ai;
+    public AiController(AiService ai, ILogger<AiController> logger)
+    {
+        _ai = ai;
+        _logger = logger;
+    }
 
     // POST api/ai/parse
     [HttpPost("parse")]

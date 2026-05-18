@@ -33,6 +33,7 @@ builder.Services.AddScoped<IGoalService, GoalService>();
 builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<IPersonalListService, PersonalListService>();
 builder.Services.AddScoped<AiService>();
+builder.Services.AddScoped<IGoogleCalendarService, GoogleCalendarService>();
 
 // JWT Authentication
 var jwtSection = builder.Configuration.GetSection("Jwt");

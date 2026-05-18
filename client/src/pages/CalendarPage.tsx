@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react'
 import {
-  Box, Chip, Divider, IconButton,
+  Box, Chip, CircularProgress, Divider, IconButton, Snackbar, Alert,
   ToggleButton, ToggleButtonGroup, Typography,
 } from '@mui/material'
 import ChevronLeftRoundedIcon  from '@mui/icons-material/ChevronLeftRounded'
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded'
 import CheckCircleRoundedIcon  from '@mui/icons-material/CheckCircleRounded'
+import SyncRoundedIcon         from '@mui/icons-material/SyncRounded'
 import { useTranslation } from 'react-i18next'
-import { tasksApi } from '../api'
+import { tasksApi, calendarApi } from '../api'
 import { useAuth }   from '../contexts/AuthContext'
 import type { TaskItem } from '../types'
 import { TODAY, PRIORITY_STYLE, EXECUTION_STYLE } from '../utils'
@@ -142,6 +143,25 @@ export default function CalendarPage() {
   const [viewMode,     setViewMode]     = useState<'weekly' | 'daily' | 'monthly'>('weekly')
   const [selectedDate, setSelectedDate] = useState(TODAY)
   const [tasks,        setTasks]        = useState<TaskItem[]>([])
+  const [syncing,      setSyncing]      = useState(false)
+  const [snack,        setSnack]        = useState<{ msg: string; severity: 'success' | 'error' | 'warning' } | null>(null)
+
+  const handleSync = async () => {
+    setSyncing(true)
+    try {
+      const result = await calendarApi.push()
+      setSnack({ msg: t('calendar.syncSuccess', { created: result.created, updated: result.updated }), severity: 'success' })
+    } catch (err: any) {
+      const code = err?.response?.data?.code
+      if (code === 'NO_REFRESH_TOKEN') {
+        setSnack({ msg: t('calendar.syncNoToken'), severity: 'warning' })
+      } else {
+        setSnack({ msg: t('calendar.syncError'), severity: 'error' })
+      }
+    } finally {
+      setSyncing(false)
+    }
+  }
 
   useEffect(() => {
     if (!user) return
@@ -160,14 +180,19 @@ export default function CalendarPage() {
       }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
           <Typography variant="h3" fontWeight={700}>{t('nav.calendar')}</Typography>
-          {selectedDate !== TODAY && (
-            <Chip
-              label={t('calendar.today')}
-              size="small"
-              onClick={() => setSelectedDate(TODAY)}
-              sx={{ fontWeight: 700, bgcolor: 'primary.main', color: 'white', height: 26, cursor: 'pointer' }}
-            />
-          )}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {selectedDate !== TODAY && (
+              <Chip
+                label={t('calendar.today')}
+                size="small"
+                onClick={() => setSelectedDate(TODAY)}
+                sx={{ fontWeight: 700, bgcolor: 'primary.main', color: 'white', height: 26, cursor: 'pointer' }}
+              />
+            )}
+            <IconButton size="small" onClick={handleSync} disabled={syncing} title={t('calendar.syncGoogle')}>
+              {syncing ? <CircularProgress size={18} /> : <SyncRoundedIcon fontSize="small" />}
+            </IconButton>
+          </Box>
         </Box>
 
         <ToggleButtonGroup
@@ -319,6 +344,17 @@ export default function CalendarPage() {
       {viewMode === 'monthly'
         ? <MonthView selectedDate={selectedDate} onSelectDay={(d) => { setSelectedDate(d); setViewMode('daily') }} tasks={tasks} />
         : <DayView date={selectedDate} tasks={tasks} />}
+
+      <Snackbar
+        open={!!snack}
+        autoHideDuration={4000}
+        onClose={() => setSnack(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity={snack?.severity ?? 'info'} onClose={() => setSnack(null)} sx={{ width: '100%' }}>
+          {snack?.msg}
+        </Alert>
+      </Snackbar>
     </Box>
   )
 }

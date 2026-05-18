@@ -152,7 +152,12 @@
     "noTasks": "אין משימות ביום זה",
     "unscheduled": "ללא שעה קבועה",
     "allDay": "כל היום",
-    "monthly": "חודשי"
+    "monthly": "חודשי",
+    "syncGoogle": "סנכרן עם Google",
+    "syncing": "מסנכרן...",
+    "syncSuccess": "נוצרו {{created}}, עודכנו {{updated}}",
+    "syncNoToken": "התחבר מחדש עם Google כדי לאשר גישה ליומן",
+    "syncError": "שגיאה בסינכרון עם Google Calendar"
   },
   "auth": {
     "greeting": "שלום, {{name}}",

@@ -132,6 +132,14 @@ public class AuthService : IAuthService
             await _db.SaveChangesAsync();
         }
 
+        // Save refresh token if provided
+        if (!string.IsNullOrEmpty(dto.RefreshToken) && user.GoogleRefreshToken != dto.RefreshToken)
+        {
+            user.GoogleRefreshToken = dto.RefreshToken;
+            user.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+        }
+
         return new AuthResponseDto(GenerateToken(user), ToDto(user));
     }
 

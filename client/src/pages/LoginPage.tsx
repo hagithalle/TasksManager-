@@ -81,7 +81,10 @@ export default function LoginPage() {
       setError(null)
       setLoading(true)
       try {
-        const res = await authApi.googleLogin(tokenResponse.access_token)
+        const res = await authApi.googleLogin(
+          tokenResponse.access_token,
+          (tokenResponse as any).refresh_token ?? undefined,
+        )
         handleSuccess(res.token, res.user)
       } catch {
         setError(t('auth.errorGoogle'))
@@ -90,6 +93,9 @@ export default function LoginPage() {
       }
     },
     onError: () => setError(t('auth.errorGoogle')),
+    scope: 'openid email profile https://www.googleapis.com/auth/calendar',
+    access_type: 'offline',
+    prompt: 'consent',
   })
 
   return (

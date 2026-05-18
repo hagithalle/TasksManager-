@@ -152,7 +152,12 @@
     "noTasks": "No tasks this day",
     "unscheduled": "Unscheduled",
     "allDay": "All day",
-    "monthly": "Monthly"
+    "monthly": "Monthly",
+    "syncGoogle": "Sync with Google",
+    "syncing": "Syncing...",
+    "syncSuccess": "Created {{created}}, updated {{updated}}",
+    "syncNoToken": "Sign in again with Google to grant calendar access",
+    "syncError": "Error syncing with Google Calendar"
   },
   "auth": {
     "greeting": "Hello, {{name}}",
