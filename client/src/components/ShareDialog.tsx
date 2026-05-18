@@ -7,8 +7,8 @@ import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded'
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded'
 import { useTranslation } from 'react-i18next'
-import { shareApi } from '../../api'
-import type { ShareStatus } from '../../api'
+import { shareApi } from '../api'
+import type { ShareStatus } from '../api'
 
 interface Props {
   open:         boolean
