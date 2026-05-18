@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 using Google.Apis.Auth;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -66,48 +67,50 @@ public class AuthService : IAuthService
 
     public async Task<AuthResponseDto> LoginWithGoogleAsync(GoogleLoginDto dto)
     {
-        // Support both id_token (JWT) and access_token (opaque)
-        // Try id_token first, fall back to access_token via userinfo endpoint
-        string email, name, picture;
+        var clientId     = _config["Google:ClientId"]
+            ?? throw new InvalidOperationException("Google ClientId is not configured.");
+        var clientSecret = _config["Google:ClientSecret"]
+            ?? throw new InvalidOperationException("Google ClientSecret is not configured.");
 
-        // access_token is short (<512 chars), id_token is a long JWT (>512 chars)
-        if (dto.IdToken.Length > 512 && dto.IdToken.Contains('.'))
+        // Exchange authorization code for tokens
+        using var http = new System.Net.Http.HttpClient();
+        var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
         {
-            // Looks like a JWT — validate as id_token
-            var clientId = _config["Google:ClientId"]
-                ?? throw new InvalidOperationException("Google ClientId is not configured.");
-            GoogleJsonWebSignature.Payload payload;
-            try
-            {
-                payload = await GoogleJsonWebSignature.ValidateAsync(
-                    dto.IdToken,
-                    new GoogleJsonWebSignature.ValidationSettings { Audience = new[] { clientId } });
-            }
-            catch (InvalidJwtException)
-            {
-                throw new UnauthorizedAccessException("Invalid Google token.");
-            }
-            email   = payload.Email.Trim().ToLowerInvariant();
-            name    = payload.Name ?? email;
-            picture = payload.Picture ?? string.Empty;
+            ["code"]          = dto.Code,
+            ["client_id"]     = clientId,
+            ["client_secret"] = clientSecret,
+            ["redirect_uri"]  = "postmessage",
+            ["grant_type"]    = "authorization_code",
+        });
+
+        var tokenResponse = await http.PostAsync("https://oauth2.googleapis.com/token", tokenRequest);
+        var tokenJson     = await tokenResponse.Content.ReadAsStringAsync();
+
+        if (!tokenResponse.IsSuccessStatusCode)
+            throw new UnauthorizedAccessException("Failed to exchange Google authorization code.");
+
+        var tokens       = JsonDocument.Parse(tokenJson).RootElement;
+        var idTokenStr   = tokens.GetProperty("id_token").GetString()!;
+        var refreshToken = tokens.TryGetProperty("refresh_token", out var rt) ? rt.GetString() : null;
+
+        // Validate id_token and extract user info
+        GoogleJsonWebSignature.Payload payload;
+        try
+        {
+            payload = await GoogleJsonWebSignature.ValidateAsync(
+                idTokenStr,
+                new GoogleJsonWebSignature.ValidationSettings { Audience = new[] { clientId } });
         }
-        else
+        catch (InvalidJwtException)
         {
-            // Treat as access_token — verify via Google userinfo endpoint
-            using var http = new System.Net.Http.HttpClient();
-            http.DefaultRequestHeaders.Authorization =
-                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", dto.IdToken);
-            var response = await http.GetAsync("https://www.googleapis.com/oauth2/v3/userinfo");
-            if (!response.IsSuccessStatusCode)
-                throw new UnauthorizedAccessException("Invalid Google access token.");
-            var json = await response.Content.ReadAsStringAsync();
-            var info = System.Text.Json.JsonDocument.Parse(json).RootElement;
-            email   = (info.GetProperty("email").GetString() ?? "").Trim().ToLowerInvariant();
-            name    = info.TryGetProperty("name", out var n) ? n.GetString() ?? email : email;
-            picture = info.TryGetProperty("picture", out var p) ? p.GetString() ?? "" : "";
+            throw new UnauthorizedAccessException("Invalid Google id_token.");
         }
 
-        var user  = await _db.Users.FirstOrDefaultAsync(u => u.Email == email);
+        var email   = payload.Email.Trim().ToLowerInvariant();
+        var name    = payload.Name ?? email;
+        var picture = payload.Picture ?? string.Empty;
+
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == email);
 
         if (user is null)
         {
@@ -133,9 +136,9 @@ public class AuthService : IAuthService
         }
 
         // Save refresh token if provided
-        if (!string.IsNullOrEmpty(dto.RefreshToken) && user.GoogleRefreshToken != dto.RefreshToken)
+        if (!string.IsNullOrEmpty(refreshToken) && user.GoogleRefreshToken != refreshToken)
         {
-            user.GoogleRefreshToken = dto.RefreshToken;
+            user.GoogleRefreshToken = refreshToken;
             user.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
         }

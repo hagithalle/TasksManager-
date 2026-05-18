@@ -77,14 +77,12 @@ export default function LoginPage() {
   }
 
   const googleLogin = useGoogleLogin({
-    onSuccess: async tokenResponse => {
+    flow: 'auth-code',
+    onSuccess: async ({ code }) => {
       setError(null)
       setLoading(true)
       try {
-        const res = await authApi.googleLogin(
-          tokenResponse.access_token,
-          (tokenResponse as any).refresh_token ?? undefined,
-        )
+        const res = await authApi.googleLogin(code)
         handleSuccess(res.token, res.user)
       } catch {
         setError(t('auth.errorGoogle'))

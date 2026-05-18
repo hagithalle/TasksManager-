@@ -17,8 +17,8 @@ export const authApi = {
   login: (data: { email: string; password: string }) =>
     apiClient.post<AuthResponse>('/auth/login', data).then(r => r.data),
 
-  googleLogin: (idToken: string, refreshToken?: string) =>
-    apiClient.post<AuthResponse>('/auth/google', { idToken, refreshToken }).then(r => r.data),
+  googleLogin: (code: string) =>
+    apiClient.post<AuthResponse>('/auth/google', { code }).then(r => r.data),
 
   me: () => apiClient.get<User>('/auth/me').then(r => r.data),
 }
