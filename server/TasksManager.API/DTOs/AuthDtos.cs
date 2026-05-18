@@ -17,4 +17,4 @@ public record AuthResponseDto(
     UserDto User
 );
 
-public record GoogleLoginDto(string Code);
+public record GoogleLoginDto(string IdToken);

@@ -77,12 +77,11 @@ export default function LoginPage() {
   }
 
   const googleLogin = useGoogleLogin({
-    flow: 'auth-code',
-    onSuccess: async ({ code }) => {
+    onSuccess: async (tokenResponse) => {
       setError(null)
       setLoading(true)
       try {
-        const res = await authApi.googleLogin(code)
+        const res = await authApi.googleLogin(tokenResponse.access_token)
         handleSuccess(res.token, res.user)
       } catch {
         setError(t('auth.errorGoogle'))
@@ -91,7 +90,7 @@ export default function LoginPage() {
       }
     },
     onError: () => setError(t('auth.errorGoogle')),
-    scope: 'openid email profile https://www.googleapis.com/auth/calendar',
+    scope: 'openid email profile',
   })
 
   return (
