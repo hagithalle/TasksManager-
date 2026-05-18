@@ -2,8 +2,7 @@ namespace TasksManager.API.Services.Interfaces;
 
 public interface IGoogleCalendarService
 {
-    /// <summary>Push tasks/goals for a user to their Google Calendar.</summary>
-    Task<GoogleCalendarSyncResult> PushToCalendarAsync(Guid userId);
+    Task<GoogleCalendarSyncResult> PushToCalendarAsync(Guid userId, string accessToken);
 }
 
 public record GoogleCalendarSyncResult(int Created, int Updated, int Skipped, string? Error = null);

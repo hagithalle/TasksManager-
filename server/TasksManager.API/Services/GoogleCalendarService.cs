@@ -1,6 +1,4 @@
 using Google.Apis.Auth.OAuth2;
-using Google.Apis.Auth.OAuth2.Flows;
-using Google.Apis.Auth.OAuth2.Responses;
 using Google.Apis.Calendar.v3;
 using Google.Apis.Calendar.v3.Data;
 using Google.Apis.Services;
@@ -26,19 +24,16 @@ public class GoogleCalendarService : IGoogleCalendarService
         _logger = logger;
     }
 
-    public async Task<GoogleCalendarSyncResult> PushToCalendarAsync(Guid userId)
+    public async Task<GoogleCalendarSyncResult> PushToCalendarAsync(Guid userId, string accessToken)
     {
         var user = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
         if (user is null)
             return new GoogleCalendarSyncResult(0, 0, 0, "User not found.");
 
-        if (string.IsNullOrEmpty(user.GoogleRefreshToken))
-            return new GoogleCalendarSyncResult(0, 0, 0, "NO_REFRESH_TOKEN");
-
         CalendarService calService;
         try
         {
-            calService = BuildCalendarService(user.GoogleRefreshToken);
+            calService = BuildCalendarServiceFromAccessToken(accessToken);
         }
         catch (Exception ex)
         {
@@ -111,22 +106,9 @@ public class GoogleCalendarService : IGoogleCalendarService
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private CalendarService BuildCalendarService(string refreshToken)
+    private CalendarService BuildCalendarServiceFromAccessToken(string accessToken)
     {
-        var clientId     = _config["Google:ClientId"]
-            ?? throw new InvalidOperationException("Google:ClientId not configured");
-        var clientSecret = _config["Google:ClientSecret"]
-            ?? throw new InvalidOperationException("Google:ClientSecret not configured");
-
-        var flow = new GoogleAuthorizationCodeFlow(new GoogleAuthorizationCodeFlow.Initializer
-        {
-            ClientSecrets = new ClientSecrets { ClientId = clientId, ClientSecret = clientSecret },
-            Scopes        = new[] { CalendarService.Scope.Calendar },
-        });
-
-        var credential = new UserCredential(flow, "user",
-            new TokenResponse { RefreshToken = refreshToken });
-
+        var credential = GoogleCredential.FromAccessToken(accessToken);
         return new CalendarService(new BaseClientService.Initializer
         {
             HttpClientInitializer = credential,

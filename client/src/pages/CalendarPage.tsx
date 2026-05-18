@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   Box, Chip, CircularProgress, Divider, IconButton, Snackbar, Alert,
   ToggleButton, ToggleButtonGroup, Typography,
@@ -7,6 +7,7 @@ import ChevronLeftRoundedIcon  from '@mui/icons-material/ChevronLeftRounded'
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded'
 import CheckCircleRoundedIcon  from '@mui/icons-material/CheckCircleRounded'
 import SyncRoundedIcon         from '@mui/icons-material/SyncRounded'
+import { useGoogleLogin }      from '@react-oauth/google'
 import { useTranslation } from 'react-i18next'
 import { tasksApi, calendarApi } from '../api'
 import { useAuth }   from '../contexts/AuthContext'
@@ -146,22 +147,25 @@ export default function CalendarPage() {
   const [syncing,      setSyncing]      = useState(false)
   const [snack,        setSnack]        = useState<{ msg: string; severity: 'success' | 'error' | 'warning' } | null>(null)
 
-  const handleSync = async () => {
+  const doSync = useCallback(async (accessToken: string) => {
     setSyncing(true)
     try {
-      const result = await calendarApi.push()
+      const result = await calendarApi.push(accessToken)
       setSnack({ msg: t('calendar.syncSuccess', { created: result.created, updated: result.updated }), severity: 'success' })
     } catch (err: any) {
-      const code = err?.response?.data?.code
-      if (code === 'NO_REFRESH_TOKEN') {
-        setSnack({ msg: t('calendar.syncNoToken'), severity: 'warning' })
-      } else {
-        setSnack({ msg: t('calendar.syncError'), severity: 'error' })
-      }
+      setSnack({ msg: t('calendar.syncError'), severity: 'error' })
     } finally {
       setSyncing(false)
     }
-  }
+  }, [t])
+
+  const googleSync = useGoogleLogin({
+    onSuccess: ({ access_token }) => doSync(access_token),
+    onError:   () => setSnack({ msg: t('calendar.syncError'), severity: 'error' }),
+    scope: 'https://www.googleapis.com/auth/calendar.events',
+  })
+
+  const handleSync = () => { setSyncing(true); googleSync() }
 
   useEffect(() => {
     if (!user) return

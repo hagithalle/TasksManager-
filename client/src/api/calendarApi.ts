@@ -7,6 +7,6 @@ export interface CalendarSyncResult {
 }
 
 export const calendarApi = {
-  push: (): Promise<CalendarSyncResult> =>
-    apiClient.post<CalendarSyncResult>('/calendar/push').then(r => r.data),
+  push: (accessToken: string): Promise<CalendarSyncResult> =>
+    apiClient.post<CalendarSyncResult>('/calendar/push', { accessToken }).then(r => r.data),
 }
