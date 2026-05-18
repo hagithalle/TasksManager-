@@ -330,6 +330,7 @@ export default function TasksPage() {
       {/* ── Add Task FAB ── */}
       <Fab
         color="primary"
+        variant="extended"
         aria-label={t('task.new')}
         onClick={() => setAddOpen(true)}
         sx={{
@@ -338,9 +339,11 @@ export default function TasksPage() {
           right: { xs: 16, sm: 24 },
           left: 'auto',
           boxShadow: '0 4px 16px rgba(124,92,255,0.4)',
+          gap: 0.75,
         }}
       >
         <AddRoundedIcon />
+        {t('task.new')}
       </Fab>
 
       <AddTaskDialog

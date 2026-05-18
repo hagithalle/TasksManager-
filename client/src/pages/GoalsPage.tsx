@@ -109,6 +109,7 @@ export default function GoalsPage() {
       {/* ── FAB ── */}
       <Fab
         color="primary"
+        variant="extended"
         aria-label={t('goal.new')}
         onClick={() => setAddOpen(true)}
         sx={{
@@ -117,9 +118,11 @@ export default function GoalsPage() {
           right: { xs: 16, sm: 24 },
           left: 'auto',
           boxShadow: '0 4px 16px rgba(124,92,255,0.4)',
+          gap: 0.75,
         }}
       >
         <AddRoundedIcon />
+        {t('goal.new')}
       </Fab>
 
       <AddGoalDialog
