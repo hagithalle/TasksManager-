@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate }    from 'react-router-dom'
 import { tasksApi, goalsApi } from '../api'
 import { useAuth }        from '../contexts/AuthContext'
-import { GoalType, Priority } from '../types'
+import { ExecutionType, GoalType, Priority } from '../types'
 import type { TaskItem, Goal } from '../types'
 import GoalCategoryIcon  from '../components/goals/GoalCategoryIcon'
 import TaskWheelModal    from '../components/tasks/TaskWheelModal'
@@ -65,9 +65,12 @@ export default function DashboardPage() {
       .filter((tk) => !tk.isCompleted)
       .sort((a, b) => PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority])[0] ?? null
 
-  // Two-minute = tasks with duration <= 2 minutes, not completed
+  // Two-minute = Quick execution type OR duration <= 2 min, not completed
   const twoMinTasks = tasks.filter(
-    (tk) => !tk.isCompleted && tk.durationMinutes != null && tk.durationMinutes <= 2,
+    (tk) => !tk.isCompleted && (
+      tk.executionType === ExecutionType.Quick ||
+      (tk.durationMinutes != null && tk.durationMinutes <= 2)
+    ),
   )
 
   const stats = [
