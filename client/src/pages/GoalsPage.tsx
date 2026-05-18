@@ -29,6 +29,13 @@ export default function GoalsPage() {
       .finally(() => setLoading(false))
   }, [t, user])
 
+  const handleDeleteGoal = (id: string) => {
+    setGoals((prev) => prev.filter((g) => g.id !== id))
+    goalsApi.delete(id).catch(() => {
+      goalsApi.getByUser(user!.id).then(setGoals).catch(() => {})
+    })
+  }
+
   const pinned = goals.filter((g) => g.isPinned)
   const rest   = goals.filter((g) => !g.isPinned)
 
@@ -63,6 +70,7 @@ export default function GoalsPage() {
                 goal={goal}
                 onClick={() => navigate(`/goals/${goal.id}`)}
                 onEdit={setEditGoal}
+                onDelete={handleDeleteGoal}
               />
             ))}
           </Box>
@@ -89,6 +97,7 @@ export default function GoalsPage() {
                 goal={goal}
                 onClick={() => navigate(`/goals/${goal.id}`)}
                 onEdit={setEditGoal}
+                onDelete={handleDeleteGoal}
               />
             ))}
           </Box>

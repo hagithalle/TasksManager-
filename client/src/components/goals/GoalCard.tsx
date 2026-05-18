@@ -4,14 +4,16 @@ import { GoalType } from '../../types'
 import type { Goal } from '../../types'
 import GoalCategoryIcon from './GoalCategoryIcon'
 import EditRoundedIcon from '@mui/icons-material/EditRounded'
+import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded'
 
 interface Props {
   goal:    Goal
   onClick?: () => void
   onEdit?: (goal: Goal) => void
+  onDelete?: (id: string) => void
 }
 
-export default function GoalCard({ goal, onClick, onEdit }: Props) {
+export default function GoalCard({ goal, onClick, onEdit, onDelete }: Props) {
   const { t, i18n } = useTranslation()
 
   const isFinite = goal.goalType === GoalType.Finite
@@ -191,6 +193,24 @@ export default function GoalCard({ goal, onClick, onEdit }: Props) {
           }}
         >
           <EditRoundedIcon sx={{ fontSize: 16 }} />
+        </IconButton>
+      )}
+
+      {onDelete && (
+        <IconButton
+          size="small"
+          onClick={(e) => { e.stopPropagation(); onDelete(goal.id) }}
+          sx={{
+            position: 'absolute',
+            top: 8,
+            left: 40,
+            bgcolor: 'background.paper',
+            boxShadow: 1,
+            zIndex: 1,
+            '&:hover': { bgcolor: 'error.lighter', color: 'error.main' },
+          }}
+        >
+          <DeleteRoundedIcon sx={{ fontSize: 16 }} />
         </IconButton>
       )}
     </Card>

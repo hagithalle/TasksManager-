@@ -8,6 +8,7 @@ import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded'
 import CheckCircleRoundedIcon  from '@mui/icons-material/CheckCircleRounded'
 import SyncRoundedIcon         from '@mui/icons-material/SyncRounded'
 import EditRoundedIcon         from '@mui/icons-material/EditRounded'
+import DeleteRoundedIcon       from '@mui/icons-material/DeleteRounded'
 import { useGoogleLogin }      from '@react-oauth/google'
 import { useTranslation } from 'react-i18next'
 import { tasksApi, calendarApi } from '../api'
@@ -149,6 +150,13 @@ export default function CalendarPage() {
   const [syncing,      setSyncing]      = useState(false)
   const [snack,        setSnack]        = useState<{ msg: string; severity: 'success' | 'error' | 'warning' } | null>(null)
   const [editTask,     setEditTask]     = useState<TaskItem | null>(null)
+
+  const handleDeleteTask = useCallback((taskId: string) => {
+    setTasks((prev) => prev.filter((t) => t.id !== taskId))
+    tasksApi.delete(taskId).catch(() => {
+      if (user) tasksApi.getByUser(user.id).then(setTasks).catch(() => {})
+    })
+  }, [user])
 
   const doSync = useCallback(async (accessToken: string) => {
     setSyncing(true)
@@ -350,7 +358,7 @@ export default function CalendarPage() {
       {/* ── Monthly grid or Day view ── */}
       {viewMode === 'monthly'
         ? <MonthView selectedDate={selectedDate} onSelectDay={(d) => { setSelectedDate(d); setViewMode('daily') }} tasks={tasks} />
-        : <DayView date={selectedDate} tasks={tasks} onEdit={setEditTask} />}
+        : <DayView date={selectedDate} tasks={tasks} onEdit={setEditTask} onDelete={handleDeleteTask} />}
 
       <Snackbar
         open={!!snack}
@@ -479,7 +487,7 @@ function MonthView({
 
 // ─── DayView ──────────────────────────────────────────────────────────────────
 
-function DayView({ date, tasks, onEdit }: { date: string; tasks: TaskItem[]; onEdit: (t: TaskItem) => void }) {
+function DayView({ date, tasks, onEdit, onDelete }: { date: string; tasks: TaskItem[]; onEdit: (t: TaskItem) => void; onDelete: (id: string) => void }) {
   const { t } = useTranslation()
   const { scheduled, unscheduled } = getTasksForDate(tasks, date)
 
@@ -499,7 +507,7 @@ function DayView({ date, tasks, onEdit }: { date: string; tasks: TaskItem[]; onE
       {scheduled.map((tk, i) => (
         <Box key={tk.id}>
           {i > 0 && <Box sx={{ ml: 5.5, height: '1px', bgcolor: 'divider' }} />}
-          <TaskRow task={tk} onEdit={onEdit} />
+          <TaskRow task={tk} onEdit={onEdit} onDelete={onDelete} />
         </Box>
       ))}
 
@@ -518,7 +526,7 @@ function DayView({ date, tasks, onEdit }: { date: string; tasks: TaskItem[]; onE
           {unscheduled.map((tk, i) => (
             <Box key={tk.id}>
               {i > 0 && <Box sx={{ ml: 5.5, height: '1px', bgcolor: 'divider' }} />}
-              <TaskRow task={tk} showTime={false} onEdit={onEdit} />
+              <TaskRow task={tk} showTime={false} onEdit={onEdit} onDelete={onDelete} />
             </Box>
           ))}
         </>
@@ -529,7 +537,7 @@ function DayView({ date, tasks, onEdit }: { date: string; tasks: TaskItem[]; onE
 
 // ─── TaskRow ──────────────────────────────────────────────────────────────────
 
-function TaskRow({ task, showTime = true, onEdit }: { task: TaskItem; showTime?: boolean; onEdit?: (t: TaskItem) => void }) {
+function TaskRow({ task, showTime = true, onEdit, onDelete }: { task: TaskItem; showTime?: boolean; onEdit?: (t: TaskItem) => void; onDelete?: (id: string) => void }) {
   const { t } = useTranslation()
   const ps = PRIORITY_STYLE[task.priority]
   const es = EXECUTION_STYLE[task.executionType]
@@ -581,6 +589,11 @@ function TaskRow({ task, showTime = true, onEdit }: { task: TaskItem; showTime?:
           {onEdit && (
             <IconButton size="small" onClick={() => onEdit(task)} sx={{ p: 0.25, opacity: 0.5, '&:hover': { opacity: 1 } }}>
               <EditRoundedIcon sx={{ fontSize: 14 }} />
+            </IconButton>
+          )}
+          {onDelete && (
+            <IconButton size="small" onClick={() => onDelete(task.id)} sx={{ p: 0.25, opacity: 0.5, '&:hover': { opacity: 1, color: 'error.main' } }}>
+              <DeleteRoundedIcon sx={{ fontSize: 14 }} />
             </IconButton>
           )}
         </Box>

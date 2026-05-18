@@ -12,6 +12,7 @@ import ErrorRoundedIcon                from '@mui/icons-material/ErrorRounded'
 import CalendarMonthRoundedIcon        from '@mui/icons-material/CalendarMonthRounded'
 import TodayRoundedIcon                from '@mui/icons-material/TodayRounded'
 import EditRoundedIcon                 from '@mui/icons-material/EditRounded'
+import DeleteRoundedIcon               from '@mui/icons-material/DeleteRounded'
 import type { SvgIconComponent }       from '@mui/icons-material'
 import { useTranslation }  from 'react-i18next'
 import { useNavigate }     from 'react-router-dom'
@@ -78,6 +79,13 @@ export default function TasksPage() {
     setLocalTasks((prev) => prev.map((t) => t.id === task.id ? task : t))
     setEditTask(null)
   }, [])
+
+  const handleDeleteTask = useCallback((taskId: string) => {
+    setLocalTasks((prev) => prev.filter((t) => t.id !== taskId))
+    tasksApi.delete(taskId).catch(() => {
+      tasksApi.getByUser(user!.id).then(setLocalTasks).catch(() => {})
+    })
+  }, [user])
   // ── stats (always over the full data set) ──
   const statsCompleted = localTasks.filter((tk) => tk.isCompleted).length
   const statsUrgent    = localTasks.filter(
@@ -285,6 +293,7 @@ export default function TasksPage() {
             onToggleTask={toggleTaskComplete}
             onToggleSub={toggleSubComplete}
             onEdit={setEditTask}
+            onDelete={handleDeleteTask}
             i18n={i18n}
             t={t}
           />
@@ -309,6 +318,7 @@ export default function TasksPage() {
             onToggleTask={toggleTaskComplete}
             onToggleSub={toggleSubComplete}
             onEdit={setEditTask}
+            onDelete={handleDeleteTask}
             i18n={i18n}
             t={t}
           />
@@ -360,12 +370,13 @@ interface TaskGroupProps {
   onToggleTask:   (id: string) => void
   onToggleSub:    (taskId: string, subId: string) => void
   onEdit:         (task: TaskItem) => void
+  onDelete:       (id: string) => void
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   t:              (key: string, opts?: any) => string
   i18n:           { language: string }
 }
 
-function TaskGroup({ tasks, expanded, onToggleExpand, onToggleTask, onToggleSub, onEdit, t, i18n }: TaskGroupProps) {
+function TaskGroup({ tasks, expanded, onToggleExpand, onToggleTask, onToggleSub, onEdit, onDelete, t, i18n }: TaskGroupProps) {
   return (
     <Box
       sx={{
@@ -425,6 +436,9 @@ function TaskGroup({ tasks, expanded, onToggleExpand, onToggleTask, onToggleSub,
                       <Box sx={{ display: 'flex', gap: 0, flexShrink: 0 }}>
                         <IconButton size="small" onClick={() => onEdit(task)} sx={{ p: 0.25 }}>
                           <EditRoundedIcon sx={{ fontSize: 15, color: 'text.disabled' }} />
+                        </IconButton>
+                        <IconButton size="small" onClick={() => onDelete(task.id)} sx={{ p: 0.25 }}>
+                          <DeleteRoundedIcon sx={{ fontSize: 15, color: 'text.disabled' }} />
                         </IconButton>
                         {hasSubs && (
                           <IconButton size="small" onClick={() => onToggleExpand(task.id)} sx={{ p: 0.25 }}>

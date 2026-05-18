@@ -1,13 +1,15 @@
-import { Box, Card, CardActionArea, LinearProgress, Typography } from '@mui/material'
+import { Box, Card, CardActionArea, IconButton, LinearProgress, Typography } from '@mui/material'
+import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded'
 import { useTranslation } from 'react-i18next'
 import type { PersonalList } from '../../types'
 
 interface Props {
   list: PersonalList
   onClick?: () => void
+  onDelete?: (id: string) => void
 }
 
-export default function PersonalListCard({ list, onClick }: Props) {
+export default function PersonalListCard({ list, onClick, onDelete }: Props) {
   const { t } = useTranslation()
 
   const total   = list.items.length
@@ -23,6 +25,7 @@ export default function PersonalListCard({ list, onClick }: Props) {
         borderColor: allDone ? 'rgba(76,175,80,0.25)' : 'rgba(124,92,255,0.10)',
         boxShadow: '0 2px 10px rgba(124,92,255,0.07)',
         transition: 'box-shadow 0.2s',
+        position: 'relative',
         '&:hover': { boxShadow: '0 4px 16px rgba(124,92,255,0.13)' },
       }}
     >
@@ -87,6 +90,24 @@ export default function PersonalListCard({ list, onClick }: Props) {
           </Box>
         </Box>
       </CardActionArea>
+
+      {onDelete && (
+        <IconButton
+          size="small"
+          onClick={(e) => { e.stopPropagation(); onDelete(list.id) }}
+          sx={{
+            position: 'absolute',
+            top: 8,
+            left: 8,
+            bgcolor: 'background.paper',
+            boxShadow: 1,
+            zIndex: 1,
+            '&:hover': { bgcolor: '#FFEBEE', color: 'error.main' },
+          }}
+        >
+          <DeleteRoundedIcon sx={{ fontSize: 16 }} />
+        </IconButton>
+      )}
     </Card>
   )
 }

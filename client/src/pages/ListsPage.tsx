@@ -28,6 +28,13 @@ export default function ListsPage() {
       .finally(() => setLoading(false))
   }, [t, user])
 
+  const handleDeleteList = (id: string) => {
+    setLists((prev) => prev.filter((l) => l.id !== id))
+    listsApi.delete(id).catch(() => {
+      listsApi.getByUser(user!.id).then(setLists).catch(() => {})
+    })
+  }
+
   return (
     <Box sx={{ px: 2, pt: 2, pb: 4, position: 'relative' }}>
 
@@ -71,6 +78,7 @@ export default function ListsPage() {
               key={list.id}
               list={list}
               onClick={() => navigate(`/lists/${list.id}`)}
+              onDelete={handleDeleteList}
             />
           ))}
         </Box>
