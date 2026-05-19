@@ -1,19 +1,21 @@
-import { Box, Checkbox, IconButton, InputBase, Typography } from '@mui/material'
+import { Box, Checkbox, IconButton, InputBase, Tooltip, Typography } from '@mui/material'
 import CheckCircleRoundedIcon          from '@mui/icons-material/CheckCircleRounded'
 import RadioButtonUncheckedRoundedIcon from '@mui/icons-material/RadioButtonUncheckedRounded'
 import DeleteRoundedIcon               from '@mui/icons-material/DeleteRounded'
+import AddTaskRoundedIcon              from '@mui/icons-material/AddTaskRounded'
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { PersonalListItem } from '../../types'
 
 interface Props {
-  item:       PersonalListItem
-  onToggle:   (id: string) => void
-  onDelete:   (id: string) => void
-  onRename?:  (id: string, newTitle: string) => void
+  item:              PersonalListItem
+  onToggle:          (id: string) => void
+  onDelete:          (id: string) => void
+  onRename?:         (id: string, newTitle: string) => void
+  onConvertToTask?:  (item: PersonalListItem) => void
 }
 
-export default function ListItemRow({ item, onToggle, onDelete, onRename }: Props) {
+export default function ListItemRow({ item, onToggle, onDelete, onRename, onConvertToTask }: Props) {
   const { t } = useTranslation()
   const [editing, setEditing] = useState(false)
   const [draft,   setDraft]   = useState(item.title)
@@ -95,6 +97,26 @@ export default function ListItemRow({ item, onToggle, onDelete, onRename }: Prop
         >
           {item.title}
         </Typography>
+      )}
+
+      {/* Convert to task button */}
+      {onConvertToTask && (
+        <Tooltip title={t('list.convertToTask')}>
+          <IconButton
+            className="delete-btn"
+            size="small"
+            onClick={() => onConvertToTask(item)}
+            sx={{
+              opacity: { xs: 1, sm: 0 },
+              transition: 'opacity 0.15s',
+              color: 'text.disabled',
+              '&:hover': { color: 'primary.main', bgcolor: 'primary.light' },
+              flexShrink: 0,
+            }}
+          >
+            <AddTaskRoundedIcon sx={{ fontSize: 18 }} />
+          </IconButton>
+        </Tooltip>
       )}
 
       {/* Delete button */}

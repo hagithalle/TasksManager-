@@ -22,6 +22,9 @@ export interface TaskItem {
   /** User-facing title */
   title: string
 
+  /** Optional notes / description */
+  notes?: string
+
   isCompleted: boolean
 
   priority: Priority

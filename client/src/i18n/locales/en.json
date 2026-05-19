@@ -22,6 +22,8 @@
     "executionTime": "Execution Time",
     "executionType": "Execution Type",
     "subtasks": "Subtasks",
+    "notes": "Notes",
+    "notesPlaceholder": "Add a note...",
     "addSubtask": "+ Add subtask",
     "noSubtasks": "No subtasks yet",
     "subtaskPlaceholder": "New subtask...",
@@ -78,7 +80,8 @@
     "itemPlaceholder": "New item...",
     "deleteItem": "Delete item",
     "progress": "{{done}}/{{total}} done",
-    "items": "{{count}} items"
+    "items": "{{count}} items",
+    "convertToTask": "Convert to task"
   },
   "priority": {
     "low": "Low",
@@ -183,6 +186,7 @@
     "noTime": "No time",
     "showMore": "Show {{count}} more",
     "showLess": "Show less",
+    "tasksCompleted": "tasks completed",
     "overallProgress": "Overall",
     "weeklyProgress": "This week",
     "todayProgress": "Today"

@@ -6,20 +6,25 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { listsApi } from '../api'
-import type { PersonalList } from '../types'
+import { listsApi, goalsApi } from '../api'
+import { useAuth } from '../contexts/AuthContext'
+import type { Goal, PersonalList, PersonalListItem } from '../types'
 import ListItemRow from '../components/lists/ListItemRow'
+import AddTaskDialog from '../components/tasks/AddTaskDialog'
 
 // ─── page ─────────────────────────────────────────────────────────────────────
 
 export default function ListDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { t }  = useTranslation()
+  const { user } = useAuth()
 
   const [list,    setList]    = useState<PersonalList | null>(null)
   const [loading, setLoading] = useState(true)
   const [adding,   setAdding]   = useState(false)
   const [newTitle, setNewTitle] = useState('')
+  const [convertItem, setConvertItem] = useState<PersonalListItem | null>(null)
+  const [goals, setGoals] = useState<Goal[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -30,6 +35,11 @@ export default function ListDetailPage() {
       .then(setList)
       .finally(() => setLoading(false))
   }, [id])
+
+  useEffect(() => {
+    if (!user) return
+    goalsApi.getByUser(user.id).then(setGoals).catch(() => {})
+  }, [user])
 
   useEffect(() => {
     if (adding) inputRef.current?.focus()
@@ -83,6 +93,21 @@ export default function ListDetailPage() {
       ...prev,
       items: prev.items.map((i) => i.id === itemId ? updated : i),
     } : prev)
+  }
+
+  function handleConvertToTask(item: PersonalListItem) {
+    setConvertItem(item)
+  }
+
+  async function handleTaskCreated() {
+    if (!convertItem) return
+    // Remove from list
+    await listsApi.deleteItem(convertItem.id).catch(() => {})
+    setList((prev) => prev ? {
+      ...prev,
+      items: prev.items.filter((i) => i.id !== convertItem.id),
+    } : prev)
+    setConvertItem(null)
   }
 
   async function commitAdd() {
@@ -184,6 +209,7 @@ export default function ListDetailPage() {
                     onToggle={toggleItem}
                     onDelete={deleteItem}
                     onRename={renameItem}
+                    onConvertToTask={handleConvertToTask}
                   />
                 </Box>
               ))}
@@ -241,5 +267,15 @@ export default function ListDetailPage() {
         )}
       </Box>
     </Box>
+
+    {/* ── Convert item to task dialog ── */}
+    <AddTaskDialog
+      open={!!convertItem}
+      onClose={() => setConvertItem(null)}
+      onAdd={handleTaskCreated}
+      goals={goals}
+      userId={user?.id ?? ''}
+      defaultTitle={convertItem?.title ?? ''}
+    />
   )
 }

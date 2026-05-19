@@ -22,6 +22,8 @@
     "executionTime": "זמן ביצוע",
     "executionType": "סוג ביצוע",
     "subtasks": "תת-משימות",
+    "notes": "הערות",
+    "notesPlaceholder": "הוסף הערה...",
     "addSubtask": "+ הוסף תת-משימה",
     "noSubtasks": "אין תת-משימות עדיין",
     "subtaskPlaceholder": "תת-משימה חדשה...",
@@ -78,7 +80,8 @@
     "itemPlaceholder": "פריט חדש...",
     "deleteItem": "מחק פריט",
     "progress": "{{done}}/{{total}} הושלמו",
-    "items": "{{count}} פריטים"
+    "items": "{{count}} פריטים",
+    "convertToTask": "הפוך למשימה"
   },
   "priority": {
     "low": "נמוכה",
@@ -183,6 +186,7 @@
     "noTime": "ללא שעה",
     "showMore": "הצג עוד {{count}} משימות",
     "showLess": "הצג פחות",
+    "tasksCompleted": "משימות הושלמו",
     "overallProgress": "התקדמות כוללת",
     "weeklyProgress": "השבוע",
     "todayProgress": "היום"

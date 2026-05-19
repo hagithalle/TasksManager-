@@ -4,6 +4,7 @@ import type { TaskItem, SubTask } from '../types'
 export interface CreateTaskPayload {
   userId: string
   title: string
+  notes?: string
   priority: string
   executionType: string
   difficulty?: string
@@ -16,6 +17,7 @@ export interface CreateTaskPayload {
 
 export interface UpdateTaskPayload {
   title?: string
+  notes?: string
   isCompleted?: boolean
   priority?: string
   executionType?: string
@@ -60,6 +62,7 @@ function mapTask(raw: any): TaskItem {
   return {
     id:              raw.id,
     title:           raw.title,
+    notes:           raw.notes ?? undefined,
     isCompleted:     raw.isCompleted,
     priority:        raw.priority,
     executionType:   raw.executionType,

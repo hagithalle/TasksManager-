@@ -18,15 +18,17 @@ export interface AddTaskDialogProps {
   goals?:         Goal[]
   userId?:        string
   defaultGoalId?: string
+  defaultTitle?:  string
   editTask?:      TaskItem
   onEdit?:        (task: TaskItem) => void
 }
 
-export default function AddTaskDialog({ open, onClose, onAdd, onEdit, goals, userId, defaultGoalId, editTask }: AddTaskDialogProps) {
+export default function AddTaskDialog({ open, onClose, onAdd, onEdit, goals, userId, defaultGoalId, defaultTitle, editTask }: AddTaskDialogProps) {
   const { t } = useTranslation()
   const isEdit = !!editTask
 
   const [title,           setTitle]           = useState('')
+  const [notes,           setNotes]           = useState('')
   const [goalId,          setGoalId]          = useState<string>(defaultGoalId ?? '')
   const [priority,        setPriority]        = useState<Priority>(Priority.Medium)
   const [executionType,   setExecutionType]   = useState<ExecutionType>(ExecutionType.Short)
@@ -53,6 +55,7 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, goals, use
   useEffect(() => {
     if (open && editTask) {
       setTitle(editTask.title)
+      setNotes(editTask.notes ?? '')
       setGoalId(editTask.goalId ?? '')
       setPriority(editTask.priority)
       setExecutionType(editTask.executionType)
@@ -63,8 +66,26 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, goals, use
       setDeletedSubIds(new Set())
       setSubTasks([])
       setTitleError(false)
+    } else if (open && !editTask) {
+      setTitle(defaultTitle ?? '')
+      setNotes('')
+      setGoalId(defaultGoalId ?? '')
+      setPriority(Priority.Medium)
+      setExecutionType(ExecutionType.Short)
+      setDueDate('')
+      setPlannedTime('')
+      setDurationMinutes('')
+      setTitleError(false)
+      setSubTaskInput('')
+      setSubTaskExec('')
+      setSubTaskPriority('')
+      setSubTaskDuration('')
+      setSubTasks([])
+      setExistingSubs([])
+      setDeletedSubIds(new Set())
     } else if (!open) {
       setTitle('')
+      setNotes('')
       setGoalId(defaultGoalId ?? '')
       setPriority(Priority.Medium)
       setExecutionType(ExecutionType.Short)
@@ -80,7 +101,7 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, goals, use
       setExistingSubs([])
       setDeletedSubIds(new Set())
     }
-  }, [open, editTask, defaultGoalId])
+  }, [open, editTask, defaultGoalId, defaultTitle])
 
   function addSubTask() {
     const v = subTaskInput.trim()
@@ -118,6 +139,7 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, goals, use
         // ג”€ג”€ Edit mode ג”€ג”€
         const updated = await tasksApi.update(editTask.id, {
           title:           title.trim(),
+          notes:           notes.trim() || undefined,
           goalId:          goalId || undefined,
           priority,
           executionType,
@@ -153,6 +175,7 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, goals, use
         const task = await tasksApi.create({
           userId: userId!,
           title:           title.trim(),
+          notes:           notes.trim() || undefined,
           goalId:          goalId || undefined,
           priority,
           executionType,
@@ -193,6 +216,18 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, goals, use
             fullWidth
             autoFocus
             size="small"
+          />
+
+          {/* Notes */}
+          <TextField
+            label={t('task.notes')}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            fullWidth
+            multiline
+            minRows={2}
+            size="small"
+            placeholder={t('task.notesPlaceholder')}
           />
 
           {/* Goal */}

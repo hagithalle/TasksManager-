@@ -62,6 +62,7 @@ public class TaskService : ITaskService
             Id = Guid.NewGuid(),
             UserId = dto.UserId,
             Title = dto.Title,
+            Notes = dto.Notes,
             Priority = dto.Priority,
             ExecutionType = dto.ExecutionType,
             Difficulty = dto.Difficulty,
@@ -84,6 +85,7 @@ public class TaskService : ITaskService
         if (task is null) return null;
 
         if (dto.Title is not null)         task.Title         = dto.Title;
+        if (dto.Notes is not null)          task.Notes         = dto.Notes;
         if (dto.IsCompleted.HasValue)      task.IsCompleted   = dto.IsCompleted.Value;
         if (dto.Priority.HasValue)         task.Priority      = dto.Priority.Value;
         if (dto.ExecutionType.HasValue)    task.ExecutionType = dto.ExecutionType.Value;
@@ -155,7 +157,7 @@ public class TaskService : ITaskService
     // ── Mapping ───────────────────────────────────────────────────────────────
 
     private static TaskItemDto ToDto(TaskItem t) => new(
-        t.Id, t.UserId, t.Title, t.IsCompleted,
+        t.Id, t.UserId, t.Title, t.Notes, t.IsCompleted,
         t.Priority, t.ExecutionType, t.Difficulty,
         t.DueDate.HasValue ? t.DueDate.Value.ToString("yyyy-MM-dd") : null,
         t.PlannedTime, t.DurationMinutes,

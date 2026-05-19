@@ -34,6 +34,7 @@ public record TaskItemDto(
     Guid Id,
     Guid UserId,
     string Title,
+    string? Notes,
     bool IsCompleted,
     Priority Priority,
     ExecutionType ExecutionType,
@@ -51,6 +52,7 @@ public record TaskItemDto(
 public record CreateTaskItemDto(
     Guid UserId,
     string Title,
+    string? Notes,
     Priority Priority,
     ExecutionType ExecutionType,
     Difficulty? Difficulty,
@@ -63,6 +65,7 @@ public record CreateTaskItemDto(
 
 public record UpdateTaskItemDto(
     string? Title,
+    string? Notes,
     bool? IsCompleted,
     Priority? Priority,
     ExecutionType? ExecutionType,

@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate }    from 'react-router-dom'
 import { tasksApi, goalsApi } from '../api'
 import { useAuth }        from '../contexts/AuthContext'
-import { ExecutionType, GoalType, Priority } from '../types'
+import { ExecutionType, Priority } from '../types'
 import type { TaskItem, Goal } from '../types'
 import GoalCategoryIcon  from '../components/goals/GoalCategoryIcon'
 import TaskWheelModal    from '../components/tasks/TaskWheelModal'
@@ -326,13 +326,30 @@ export default function DashboardPage() {
             {twoMinTasks.map((tk, i) => (
               <Box key={tk.id}>
                 {i > 0 && <Divider sx={{ ml: 5 }} />}
-                <ListItem
-                  onClick={() => navigate('/tasks')}
-                  sx={{ px: 2, py: 0.75, cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
-                >
-                  <RadioButtonUncheckedRoundedIcon sx={{ fontSize: 18, color: 'text.disabled', mr: 1.5, flexShrink: 0 }} />
+                <ListItem sx={{ px: 2, py: 0.75, alignItems: 'center' }}>
+                  <Box
+                    component="span"
+                    onClick={() => toggleTask(tk.id)}
+                    sx={{ display: 'flex', alignItems: 'center', mr: 1.5, flexShrink: 0, cursor: 'pointer', borderRadius: '50%', '&:hover': { bgcolor: 'action.selected' }, p: 0.25 }}
+                  >
+                    {tk.isCompleted
+                      ? <CheckCircleRoundedIcon sx={{ fontSize: 22, color: 'primary.main' }} />
+                      : <RadioButtonUncheckedRoundedIcon sx={{ fontSize: 22, color: 'text.disabled' }} />
+                    }
+                  </Box>
                   <ListItemText
-                    primary={<Typography variant="body2" fontWeight={500}>{tk.title}</Typography>}
+                    primary={
+                      <Typography
+                        variant="body2"
+                        fontWeight={tk.isCompleted ? 400 : 500}
+                        sx={{
+                          textDecoration: tk.isCompleted ? 'line-through' : 'none',
+                          color:          tk.isCompleted ? 'text.disabled' : 'text.primary',
+                        }}
+                      >
+                        {tk.title}
+                      </Typography>
+                    }
                   />
                   {tk.durationMinutes && (
                     <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0, ml: 1 }}>
@@ -357,15 +374,12 @@ export default function DashboardPage() {
       />
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mb: 3 }}>
         {goals.map((goal) => {
-          const isFiniteGoal = goal.goalType === GoalType.Finite
-          const pct = isFiniteGoal
-            ? (goal.totalTasks > 0 ? Math.round((goal.completedTasks / goal.totalTasks) * 100) : 0)
-            : ((goal.weeklyTotal ?? 0) > 0
-                ? Math.round(((goal.weeklyCompleted ?? 0) / (goal.weeklyTotal ?? 1)) * 100)
-                : 0)
-          const subLabel = isFiniteGoal
-            ? `${t('dashboard.overallProgress')} · ${goal.completedTasks}/${goal.totalTasks}`
-            : `${t('dashboard.weeklyProgress')} · ${goal.weeklyCompleted ?? 0}/${goal.weeklyTotal ?? 0}`
+          // Derive progress live from tasks state
+          const goalTasks = tasks.filter((tk) => tk.goalId === goal.id)
+          const completedCount = goalTasks.filter((tk) => tk.isCompleted).length
+          const totalCount = goalTasks.length
+          const pct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
+          const subLabel = `${completedCount}/${totalCount} ${t('dashboard.tasksCompleted')}`
 
           return (
             <Card key={goal.id} sx={{ borderRadius: 3, border: '1px solid', borderColor: 'divider', boxShadow: '0 1px 6px rgba(124,92,255,0.05)' }}>
