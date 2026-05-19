@@ -155,16 +155,20 @@ export function useFocusCoach(tasks: TaskItem[]) {
     }).length + (ids.size > 0 ? 0 : 0) // suppress unused warning
   }, [tasks, eligibleTasks, settings, frogId])
 
-  const totalCount     = eligibleTasks.length + completedEligible
+  // Cap the incomplete list to the remaining slots so totalCount never exceeds dailyTaskTarget
+  const cappedSlots    = Math.max(0, settings.dailyTaskTarget - completedEligible)
+  const cappedEligible = eligibleTasks.slice(0, cappedSlots)
+
+  const totalCount     = cappedEligible.length + completedEligible
   const completedCount = completedEligible
   const progress       = Math.min(100, Math.round((completedCount / settings.dailyTaskTarget) * 100))
-  const nextTask       = eligibleTasks[0] ?? null
-  const secondTask     = eligibleTasks[1] ?? null
+  const nextTask       = cappedEligible[0] ?? null
+  const secondTask     = cappedEligible[1] ?? null
 
   return {
     settings,
     setSettings,
-    eligibleTasks,
+    eligibleTasks: cappedEligible,
     completedCount,
     totalCount,
     progress,
