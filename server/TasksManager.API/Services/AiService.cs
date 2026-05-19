@@ -231,10 +231,10 @@ Return ONLY valid JSON (no markdown):
 
 Rules:
 - Match tasks semantically — by urgency, type, duration, keywords, due date, etc.
-- "urgent"/"דחוף" → critical or high priority
-- "short"/"קצר"/"quick" → executionType quick or short
-- "week"/"שבוע"/"this week" → due within next 7 days
-- "frog"/"צפרדע" → heavy/critical tasks (long duration or critical priority)
+- 'urgent'/'דחוף' → critical or high priority
+- 'short'/'קצר'/'quick' → executionType quick or short
+- 'week'/'שבוע'/'this week' → due within next 7 days
+- 'frog'/'צפרדע' → heavy/critical tasks (long duration or critical priority)
 - Return empty array if no matches
 - Keep explanation concise (1 sentence)
 ";
