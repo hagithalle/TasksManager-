@@ -269,19 +269,26 @@ export default function ListDetailPage() {
             sx={{
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'center',
               gap: 0.75,
               mt: 1.5,
-              px: 1,
-              py: 0.75,
-              borderRadius: 2,
+              mx: 1,
+              px: 2,
+              py: 1.1,
+              borderRadius: 2.5,
               cursor: 'pointer',
+              border: '1.5px dashed',
+              borderColor: 'rgba(124,92,255,0.35)',
+              bgcolor: 'rgba(124,92,255,0.04)',
               color: 'primary.main',
-              '&:hover': { bgcolor: 'action.hover' },
+              transition: 'all 0.15s ease',
+              '&:hover': {
+                bgcolor: 'rgba(124,92,255,0.1)',
+                borderColor: 'primary.main',
+              },
             }}
           >
-            <IconButton size="small" sx={{ p: 0, color: 'primary.main' }} tabIndex={-1}>
-              <AddRoundedIcon fontSize="small" />
-            </IconButton>
+            <AddRoundedIcon sx={{ fontSize: 18 }} />
             <Typography variant="body2" fontWeight={600} color="primary.main">
               {t('list.addItem')}
             </Typography>

@@ -79,7 +79,7 @@
     "emptyTitle": "No lists yet",
     "emptySubtitle": "Create a shopping list, to-do list, or anything you want to track",
     "noItems": "No items yet",
-    "addItem": "+ Add item",
+    "addItem": "Add item",
     "itemPlaceholder": "New item...",
     "deleteItem": "Delete item",
     "progress": "{{done}}/{{total}} done",

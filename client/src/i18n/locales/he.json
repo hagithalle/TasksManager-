@@ -79,7 +79,7 @@
     "emptyTitle": "עדיין אין לך רשימות",
     "emptySubtitle": "צור רשימת קניות, מטלות בית או כל דבר שתרצי לעקוב אחריו",
     "noItems": "אין פריטים עדיין",
-    "addItem": "+ הוסף פריט",
+    "addItem": "הוסף פריט",
     "itemPlaceholder": "פריט חדש...",
     "deleteItem": "מחק פריט",
     "progress": "{{done}}/{{total}} הושלמו",
