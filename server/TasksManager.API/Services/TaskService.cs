@@ -142,6 +142,26 @@ public class TaskService : ITaskService
         if (dto.LinkedListId.HasValue)         sub.LinkedListId    = dto.LinkedListId;
 
         await _db.SaveChangesAsync();
+
+        // Auto-complete parent task when all subtasks are done
+        if (dto.IsCompleted == true)
+        {
+            var allSiblings = await _db.SubTasks
+                .Where(s => s.TaskItemId == sub.TaskItemId)
+                .ToListAsync();
+
+            if (allSiblings.Count > 0 && allSiblings.All(s => s.IsCompleted))
+            {
+                var parent = await _db.Tasks.FirstOrDefaultAsync(t => t.Id == sub.TaskItemId);
+                if (parent is not null && !parent.IsCompleted)
+                {
+                    parent.IsCompleted = true;
+                    parent.UpdatedAt   = DateTime.UtcNow;
+                    await _db.SaveChangesAsync();
+                }
+            }
+        }
+
         return ToSubDto(sub);
     }
 

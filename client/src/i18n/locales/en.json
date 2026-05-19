@@ -164,6 +164,7 @@
     "filterFrog": "Frog — today's top priority",
     "filterTwoMin": "Quick tasks (under 2 min)",
     "filterEasy": "Easy tasks",
+    "dailyTarget": "Daily task target:",
     "noTasks": "I'm here to help you reach your goals"
   },
   "dashboard": {

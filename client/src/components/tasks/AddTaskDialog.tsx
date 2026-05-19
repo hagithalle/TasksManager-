@@ -317,9 +317,7 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
                 >{t('common.add')}</Button>
               </Box>
             </Box>
-          )
-          }
-          </FormControl>
+          )}
 
           {/* Priority */}
           <Box>

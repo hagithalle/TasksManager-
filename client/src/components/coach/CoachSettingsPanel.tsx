@@ -45,6 +45,24 @@ export default function CoachSettingsPanel({ open, settings, onChange }: Props) 
           />
         </Box>
 
+        {/* Daily task target */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ flexShrink: 0 }}>
+            {t('coach.dailyTarget')}
+          </Typography>
+          <TextField
+            type="number"
+            size="small"
+            value={settings.dailyTaskTarget}
+            onChange={e => {
+              const val = Math.max(1, Math.min(50, Number(e.target.value)))
+              onChange({ dailyTaskTarget: val })
+            }}
+            inputProps={{ min: 1, max: 50 }}
+            sx={{ width: 80 }}
+          />
+        </Box>
+
         {/* Filter checkboxes */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
           {FILTER_KEYS.map(({ key, i18n: label }) => (

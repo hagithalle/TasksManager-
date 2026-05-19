@@ -84,6 +84,8 @@ Migrations/
  20260518065645_AddGoogleRefreshToken.Designer.cs
  20260518092406_AddShareInvites.cs
  20260518092406_AddShareInvites.Designer.cs
+ 20260519125043_AddTaskNotes.cs
+ 20260519125043_AddTaskNotes.Designer.cs
  AppDbContextModelSnapshot.cs
 Models/
  Enums.cs

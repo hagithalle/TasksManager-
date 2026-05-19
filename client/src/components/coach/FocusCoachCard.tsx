@@ -71,7 +71,7 @@ export default function FocusCoachCard({ tasks, onRefresh }: Props) {
                   {t('coach.headline', { count: remaining, time: settings.targetTime })}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {t('coach.subline', { done: completedCount, total: totalCount })}
+                  {t('coach.subline', { done: completedCount, total: settings.dailyTaskTarget })}
                 </Typography>
 
                 {/* Progress bar */}

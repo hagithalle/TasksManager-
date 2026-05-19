@@ -18,6 +18,8 @@ export interface CoachSettings {
   includeTwoMin: boolean
   /** Include tasks with difficulty === Easy */
   includeEasy: boolean
+  /** Target number of tasks to complete per day */
+  dailyTaskTarget: number
 }
 
 export const DEFAULT_SETTINGS: CoachSettings = {
@@ -27,6 +29,7 @@ export const DEFAULT_SETTINGS: CoachSettings = {
   includeFrog:             true,
   includeTwoMin:           true,
   includeEasy:             false,
+  dailyTaskTarget:         5,
 }
 
 const STORAGE_KEY = 'focusCoachSettings'
@@ -154,7 +157,7 @@ export function useFocusCoach(tasks: TaskItem[]) {
 
   const totalCount     = eligibleTasks.length + completedEligible
   const completedCount = completedEligible
-  const progress       = totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100)
+  const progress       = Math.min(100, Math.round((completedCount / settings.dailyTaskTarget) * 100))
   const nextTask       = eligibleTasks[0] ?? null
   const secondTask     = eligibleTasks[1] ?? null
 
