@@ -1,5 +1,6 @@
-import { Box, Card, Chip, Typography } from '@mui/material'
+import { Box, Card, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import type { DayStatus } from '../../hooks/useStreak'
 
 interface Props {
@@ -7,7 +8,7 @@ interface Props {
   last7:  DayStatus[]
 }
 
-function streakMessage(streak: number, t: (k: string, o?: object) => string): string {
+function streakMessage(streak: number, t: TFunction): string {
   if (streak === 0) return t('streak.msgZero')
   if (streak === 1) return t('streak.msgOne')
   if (streak < 4)  return t('streak.msgFew',  { count: streak })
