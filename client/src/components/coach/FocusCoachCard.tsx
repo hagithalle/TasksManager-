@@ -1,17 +1,18 @@
 import { useState } from 'react'
 import {
-  Box, Button, Card, Chip, IconButton, LinearProgress,
+  Box, Button, Card, Chip, Collapse, IconButton, LinearProgress,
   Tooltip, Typography,
 } from '@mui/material'
-import RefreshRoundedIcon  from '@mui/icons-material/RefreshRounded'
-import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded'
-import BoltRoundedIcon     from '@mui/icons-material/BoltRounded'
+import RefreshRoundedIcon       from '@mui/icons-material/RefreshRounded'
+import SettingsRoundedIcon      from '@mui/icons-material/SettingsRounded'
+import BoltRoundedIcon          from '@mui/icons-material/BoltRounded'
+import KeyboardArrowDownRounded from '@mui/icons-material/KeyboardArrowDownRounded'
 import { useTranslation }  from 'react-i18next'
 import { useNavigate }     from 'react-router-dom'
 import { useFocusCoach }   from '../../hooks/useFocusCoach'
 import CoachSettingsPanel  from './CoachSettingsPanel'
 import type { TaskItem }   from '../../types'
-import { ExecutionType }   from '../../types'
+import { ExecutionType, Priority } from '../../types'
 
 interface Props {
   tasks:     TaskItem[]
@@ -23,13 +24,22 @@ function taskEmoji(task: TaskItem): string {
   return '🐸'
 }
 
+const PRIORITY_COLOR: Record<Priority, string> = {
+  [Priority.Critical]: '#ef4444',
+  [Priority.High]:     '#f97316',
+  [Priority.Medium]:   '#7c5cff',
+  [Priority.Low]:      '#94a3b8',
+}
+
 export default function FocusCoachCard({ tasks, onRefresh }: Props) {
   const { t }    = useTranslation()
   const navigate = useNavigate()
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [listOpen,     setListOpen]     = useState(false)
 
   const {
     settings, setSettings,
+    eligibleTasks,
     totalCount, completedCount, progress,
     nextTask, secondTask,
   } = useFocusCoach(tasks)
@@ -175,6 +185,89 @@ export default function FocusCoachCard({ tasks, onRefresh }: Props) {
                 {secondTask.title}
               </Typography>
             </Box>
+          </Box>
+        )}
+
+        {/* ── Scrollable full task list ── */}
+        {eligibleTasks.length > 2 && (
+          <Box sx={{ mt: 1.25 }}>
+            <Box
+              onClick={() => setListOpen(o => !o)}
+              sx={{
+                display: 'flex', alignItems: 'center', gap: 0.5,
+                cursor: 'pointer', px: 0.5, py: 0.5, borderRadius: 1.5,
+                '&:hover': { bgcolor: 'rgba(124,92,255,0.06)' },
+              }}
+            >
+              <Typography variant="caption" fontWeight={700} color="primary.main">
+                {t('coach.allTasks', { count: eligibleTasks.length })}
+              </Typography>
+              <KeyboardArrowDownRounded
+                sx={{
+                  fontSize: 16, color: 'primary.main',
+                  transition: 'transform 0.2s',
+                  transform: listOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                }}
+              />
+            </Box>
+
+            <Collapse in={listOpen}>
+              <Box
+                sx={{
+                  mt: 0.75,
+                  maxHeight: 220,
+                  overflowY: 'auto',
+                  borderRadius: 2,
+                  bgcolor: 'rgba(255,255,255,0.55)',
+                  border: '1px solid rgba(124,92,255,0.12)',
+                  '&::-webkit-scrollbar': { width: 4 },
+                  '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(124,92,255,0.25)', borderRadius: 4 },
+                }}
+              >
+                {eligibleTasks.map((tk, i) => (
+                  <Box
+                    key={tk.id}
+                    sx={{
+                      display: 'flex', alignItems: 'center', gap: 1,
+                      px: 1.25, py: 0.75,
+                      borderBottom: i < eligibleTasks.length - 1 ? '1px solid rgba(124,92,255,0.07)' : 'none',
+                    }}
+                  >
+                    {/* Priority dot */}
+                    <Box sx={{
+                      width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
+                      bgcolor: PRIORITY_COLOR[tk.priority],
+                    }} />
+
+                    {/* Time */}
+                    {tk.plannedTime && (
+                      <Typography variant="caption" fontWeight={700} color="primary.main" sx={{ minWidth: 34, fontSize: '0.62rem' }}>
+                        {tk.plannedTime}
+                      </Typography>
+                    )}
+
+                    {/* Duration chip */}
+                    {tk.durationMinutes && (
+                      <Chip
+                        label={`${tk.durationMinutes}m`}
+                        size="small"
+                        sx={{ height: 16, fontSize: '0.58rem', bgcolor: 'rgba(124,92,255,0.08)', color: 'primary.main', '& .MuiChip-label': { px: 0.6 } }}
+                      />
+                    )}
+
+                    {/* Title */}
+                    <Typography
+                      variant="caption"
+                      fontWeight={i === 0 ? 700 : 500}
+                      sx={{ flex: 1, minWidth: 0, lineHeight: 1.4, color: i === 0 ? 'text.primary' : 'text.secondary' }}
+                      noWrap
+                    >
+                      {tk.title}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+            </Collapse>
           </Box>
         )}
       </Box>

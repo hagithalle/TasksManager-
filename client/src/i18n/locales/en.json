@@ -168,7 +168,8 @@
     "filterTwoMin": "Quick tasks (under 2 min)",
     "filterEasy": "Easy tasks",
     "dailyTarget": "Daily task target:",
-    "noTasks": "I'm here to help you reach your goals"
+    "noTasks": "I'm here to help you reach your goals",
+    "allTasks": "All tasks ({{count}})"
   },
   "dashboard": {
     "totalToday": "Today",
