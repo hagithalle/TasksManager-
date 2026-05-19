@@ -20,6 +20,10 @@ public class TaskItem
     public Guid? GoalId { get; set; }
     public Guid? ListId { get; set; }
 
+    public DateTime? ReminderAt { get; set; }
+    public RecurrenceType RecurrenceType { get; set; } = RecurrenceType.None;
+    public int RecurrenceInterval { get; set; } = 1;
+
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 

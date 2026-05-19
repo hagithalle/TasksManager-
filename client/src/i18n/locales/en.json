@@ -67,7 +67,9 @@
     "all": "All Goals",
     "emptyTitle": "No goals yet",
     "emptySubtitle": "Goals help you stay focused. Add your first goal!",
-    "createNew": "New goal"
+    "createNew": "New goal",
+    "createTask": "Also create a task for this goal",
+    "customCategory": "Other…"
   },
   "list": {
     "new": "New List",
@@ -279,5 +281,17 @@
     "typeList": "list",
     "typeTask": "task",
     "typeGoal": "goal"
+  },
+  "recurrence": {
+    "label": "Repeat",
+    "none": "No recurrence",
+    "daily": "Daily",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "interval": "Every {{n}}"
+  },
+  "reminder": {
+    "label": "Reminder",
+    "none": "No reminder"
   }
 }

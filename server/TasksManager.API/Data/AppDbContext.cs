@@ -42,7 +42,7 @@ public class AppDbContext : DbContext
         {
             e.HasKey(g => g.Id);
             e.Property(g => g.Title).IsRequired().HasMaxLength(200);
-            e.Property(g => g.Category).HasConversion<string>();
+            e.Property(g => g.Category).HasMaxLength(100);
             e.Property(g => g.GoalType).HasConversion<string>();
 
             e.HasOne(g => g.User)
@@ -60,6 +60,8 @@ public class AppDbContext : DbContext
             e.Property(t => t.ExecutionType).HasConversion<string>();
             e.Property(t => t.Difficulty).HasConversion<string>();
             e.Property(t => t.PlannedTime).HasMaxLength(5); // "HH:mm"
+            e.Property(t => t.RecurrenceType).HasConversion<string>();
+            e.Property(t => t.RecurrenceInterval).HasDefaultValue(1);
 
             e.HasOne(t => t.User)
              .WithMany(u => u.Tasks)

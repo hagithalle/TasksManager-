@@ -1,4 +1,4 @@
-import { Priority, ExecutionType, Difficulty } from './enums'
+import { Priority, ExecutionType, Difficulty, RecurrenceType } from './enums'
 
 export interface SubTask {
   id: string
@@ -49,6 +49,15 @@ export interface TaskItem {
   listId?: string
 
   subTasks?: SubTask[]
+
+  /** UTC datetime string for a one-time reminder notification */
+  reminderAt?: string
+
+  /** How often this task recurs after completion */
+  recurrenceType?: RecurrenceType
+
+  /** Recurrence interval (e.g. every 2 days/weeks/months) */
+  recurrenceInterval?: number
 
   createdAt: string
   updatedAt: string

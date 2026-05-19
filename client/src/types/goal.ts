@@ -1,4 +1,4 @@
-import { GoalCategory, GoalType } from './enums'
+import { GoalType } from './enums'
 
 export interface Goal {
   id: string

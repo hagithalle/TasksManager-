@@ -70,7 +70,7 @@ public class GoalService : IGoalService
         if (goal is null) return null;
 
         if (dto.Title is not null)    goal.Title    = dto.Title;
-        if (dto.Category is not null) goal.Category = dto.Category.Value;
+        if (dto.Category is not null) goal.Category = dto.Category;
         if (dto.GoalType is not null) goal.GoalType = dto.GoalType.Value;
         if (dto.DueDate.HasValue)     goal.DueDate  = dto.DueDate;
         if (dto.IsPinned.HasValue)    goal.IsPinned = dto.IsPinned.Value;

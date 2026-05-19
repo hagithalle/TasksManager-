@@ -6,7 +6,7 @@ public record GoalDto(
     Guid Id,
     Guid UserId,
     string Title,
-    GoalCategory Category,
+    string Category,
     GoalType GoalType,
     DateTime? DueDate,
     bool IsPinned,
@@ -19,7 +19,7 @@ public record GoalDto(
 public record CreateGoalDto(
     Guid UserId,
     string Title,
-    GoalCategory Category,
+    string Category,
     GoalType GoalType,
     DateTime? DueDate,
     bool IsPinned = false
@@ -27,7 +27,7 @@ public record CreateGoalDto(
 
 public record UpdateGoalDto(
     string? Title,
-    GoalCategory? Category,
+    string? Category,
     GoalType? GoalType,
     DateTime? DueDate,
     bool? IsPinned

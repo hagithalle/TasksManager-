@@ -46,7 +46,10 @@ public record TaskItemDto(
     Guid? ListId,
     IEnumerable<SubTaskDto> SubTasks,
     DateTime CreatedAt,
-    DateTime UpdatedAt
+    DateTime UpdatedAt,
+    DateTime? ReminderAt,
+    string RecurrenceType,
+    int RecurrenceInterval
 );
 
 public record CreateTaskItemDto(
@@ -60,7 +63,10 @@ public record CreateTaskItemDto(
     string? PlannedTime,
     int? DurationMinutes,
     Guid? GoalId,
-    Guid? ListId
+    Guid? ListId,
+    DateTime? ReminderAt = null,
+    string RecurrenceType = "none",
+    int RecurrenceInterval = 1
 );
 
 public record UpdateTaskItemDto(
@@ -74,5 +80,8 @@ public record UpdateTaskItemDto(
     string? PlannedTime,
     int? DurationMinutes,
     Guid? GoalId,
-    Guid? ListId
+    Guid? ListId,
+    DateTime? ReminderAt = null,
+    string? RecurrenceType = null,
+    int? RecurrenceInterval = null
 );

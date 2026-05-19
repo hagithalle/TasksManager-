@@ -57,6 +57,9 @@ public class TaskService : ITaskService
 
     public async Task<TaskItemDto> CreateAsync(CreateTaskItemDto dto)
     {
+        var recurrence = Enum.TryParse<RecurrenceType>(dto.RecurrenceType, true, out var rt)
+            ? rt : RecurrenceType.None;
+
         var task = new TaskItem
         {
             Id = Guid.NewGuid(),
@@ -71,6 +74,9 @@ public class TaskService : ITaskService
             DurationMinutes = dto.DurationMinutes,
             GoalId = dto.GoalId,
             ListId = dto.ListId,
+            ReminderAt = dto.ReminderAt,
+            RecurrenceType = recurrence,
+            RecurrenceInterval = dto.RecurrenceInterval,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -95,9 +101,53 @@ public class TaskService : ITaskService
         if (dto.DurationMinutes.HasValue)  task.DurationMinutes = dto.DurationMinutes;
         if (dto.GoalId.HasValue)           task.GoalId        = dto.GoalId;
         if (dto.ListId.HasValue)           task.ListId        = dto.ListId;
+        if (dto.ReminderAt.HasValue)       task.ReminderAt    = dto.ReminderAt;
+        if (dto.RecurrenceType is not null &&
+            Enum.TryParse<RecurrenceType>(dto.RecurrenceType, true, out var rt))
+            task.RecurrenceType = rt;
+        if (dto.RecurrenceInterval.HasValue) task.RecurrenceInterval = dto.RecurrenceInterval.Value;
         task.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
+
+        // Auto-create next occurrence when a recurring task is completed
+        if (dto.IsCompleted == true && task.RecurrenceType != RecurrenceType.None && task.DueDate.HasValue)
+        {
+            var interval = task.RecurrenceInterval < 1 ? 1 : task.RecurrenceInterval;
+            var nextDue = task.RecurrenceType switch
+            {
+                RecurrenceType.Daily   => task.DueDate.Value.AddDays(interval),
+                RecurrenceType.Weekly  => task.DueDate.Value.AddDays(7 * interval),
+                RecurrenceType.Monthly => task.DueDate.Value.AddMonths(interval),
+                _                      => (DateTime?)null
+            };
+
+            if (nextDue.HasValue)
+            {
+                var next = new TaskItem
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = task.UserId,
+                    Title = task.Title,
+                    Notes = task.Notes,
+                    Priority = task.Priority,
+                    ExecutionType = task.ExecutionType,
+                    Difficulty = task.Difficulty,
+                    DueDate = nextDue,
+                    PlannedTime = task.PlannedTime,
+                    DurationMinutes = task.DurationMinutes,
+                    GoalId = task.GoalId,
+                    ListId = task.ListId,
+                    RecurrenceType = task.RecurrenceType,
+                    RecurrenceInterval = task.RecurrenceInterval,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                _db.Tasks.Add(next);
+                await _db.SaveChangesAsync();
+            }
+        }
+
         return ToDto(task);
     }
 
@@ -183,7 +233,10 @@ public class TaskService : ITaskService
         t.PlannedTime, t.DurationMinutes,
         t.GoalId, t.ListId,
         t.SubTasks.Select(ToSubDto),
-        t.CreatedAt, t.UpdatedAt
+        t.CreatedAt, t.UpdatedAt,
+        t.ReminderAt,
+        t.RecurrenceType.ToString().ToLower(),
+        t.RecurrenceInterval
     );
 
     private static SubTaskDto ToSubDto(SubTask s) =>

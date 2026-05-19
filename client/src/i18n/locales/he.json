@@ -67,7 +67,9 @@
     "all": "כל המטרות",
     "emptyTitle": "עדיין אין לך מטרות",
     "emptySubtitle": "מטרות יעזרו לך לארגן ולהתמקד. הוסף את המטרה הראשונה שלך!",
-    "createNew": "מטרה חדשה"
+    "createNew": "מטרה חדשה",
+    "createTask": "צור גם משימה מהמטרה",
+    "customCategory": "אחר…"
   },
   "list": {
     "new": "רשימה חדשה",
@@ -279,5 +281,17 @@
     "typeList": "רשימה",
     "typeTask": "משימה",
     "typeGoal": "מטרה"
+  },
+  "recurrence": {
+    "label": "חזרה",
+    "none": "ללא חזרה",
+    "daily": "יומי",
+    "weekly": "שבועי",
+    "monthly": "חודשי",
+    "interval": "כל {{n}}"
+  },
+  "reminder": {
+    "label": "תזכורת",
+    "none": "ללא תזכורת"
   }
 }

@@ -7,7 +7,7 @@ import AddRoundedIcon    from '@mui/icons-material/AddRounded'
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded'
 import { useTranslation } from 'react-i18next'
 import { tasksApi, goalsApi } from '../../api'
-import { ExecutionType, GoalCategory, GoalType, Priority } from '../../types'
+import { ExecutionType, GoalCategory, GoalType, Priority, RecurrenceType } from '../../types'
 import type { Goal, TaskItem, SubTask } from '../../types'
 import { PRIORITY_STYLE, EXECUTION_STYLE } from '../../utils'
 
@@ -42,6 +42,9 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
   const [dueDate,         setDueDate]         = useState('')
   const [plannedTime,     setPlannedTime]     = useState('')
   const [durationMinutes, setDurationMinutes] = useState('')
+  const [reminderAt,      setReminderAt]      = useState('')
+  const [recurrenceType,  setRecurrenceType]  = useState<RecurrenceType>(RecurrenceType.None)
+  const [recurrenceInterval, setRecurrenceInterval] = useState(1)
   const [titleError,      setTitleError]      = useState(false)
   const [loading,         setLoading]         = useState(false)
 
@@ -69,6 +72,9 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
       setDueDate(editTask.dueDate ?? '')
       setPlannedTime(editTask.plannedTime ?? '')
       setDurationMinutes(editTask.durationMinutes?.toString() ?? '')
+      setReminderAt(editTask.reminderAt ? editTask.reminderAt.slice(0, 16) : '')
+      setRecurrenceType(editTask.recurrenceType ?? RecurrenceType.None)
+      setRecurrenceInterval(editTask.recurrenceInterval ?? 1)
       setExistingSubs(editTask.subTasks ?? [])
       setDeletedSubIds(new Set())
       setSubTasks([])
@@ -85,6 +91,9 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
       setDueDate('')
       setPlannedTime('')
       setDurationMinutes('')
+      setReminderAt('')
+      setRecurrenceType(RecurrenceType.None)
+      setRecurrenceInterval(1)
       setTitleError(false)
       setSubTaskInput('')
       setSubTaskExec('')
@@ -102,6 +111,9 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
       setDueDate('')
       setPlannedTime('')
       setDurationMinutes('')
+      setReminderAt('')
+      setRecurrenceType(RecurrenceType.None)
+      setRecurrenceInterval(1)
       setTitleError(false)
       setSubTaskInput('')
       setSubTaskExec('')
@@ -148,14 +160,17 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
       if (isEdit && editTask) {
         // ג”€ג”€ Edit mode ג”€ג”€
         const updated = await tasksApi.update(editTask.id, {
-          title:           title.trim(),
-          notes:           notes.trim() || undefined,
-          goalId:          goalId || undefined,
+          title:              title.trim(),
+          notes:              notes.trim() || undefined,
+          goalId:             goalId || undefined,
           priority,
           executionType,
-          dueDate:         dueDate || undefined,
-          plannedTime:     plannedTime || undefined,
-          durationMinutes: durationMinutes ? Number(durationMinutes) : undefined,
+          dueDate:            dueDate || undefined,
+          plannedTime:        plannedTime || undefined,
+          durationMinutes:    durationMinutes ? Number(durationMinutes) : undefined,
+          reminderAt:         reminderAt || undefined,
+          recurrenceType:     recurrenceType,
+          recurrenceInterval: recurrenceInterval,
         })
         // Delete removed sub-tasks
         for (const id of deletedSubIds) {
@@ -184,14 +199,17 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
         // ג”€ג”€ Create mode ג”€ג”€
         const task = await tasksApi.create({
           userId: userId!,
-          title:           title.trim(),
-          notes:           notes.trim() || undefined,
-          goalId:          goalId || undefined,
+          title:              title.trim(),
+          notes:              notes.trim() || undefined,
+          goalId:             goalId || undefined,
           priority,
           executionType,
-          dueDate:         dueDate || undefined,
-          plannedTime:     plannedTime || undefined,
-          durationMinutes: durationMinutes ? Number(durationMinutes) : undefined,
+          dueDate:            dueDate || undefined,
+          plannedTime:        plannedTime || undefined,
+          durationMinutes:    durationMinutes ? Number(durationMinutes) : undefined,
+          reminderAt:         reminderAt || undefined,
+          recurrenceType:     recurrenceType,
+          recurrenceInterval: recurrenceInterval,
         })
         for (const st of subTasks) {
           const sub = await tasksApi.addSubTask(task.id, {
@@ -402,6 +420,55 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
               sx={{ width: 100 }}
               inputProps={{ min: 1, max: 480 }}
             />
+          </Box>
+
+          {/* Reminder */}
+          <Box>
+            <Typography variant="caption" color="text.secondary" sx={{ mb: 0.75, display: 'block' }}>
+              {t('reminder.label', 'תזכורת')}
+            </Typography>
+            <TextField
+              type="datetime-local"
+              value={reminderAt}
+              onChange={(e) => setReminderAt(e.target.value)}
+              size="small"
+              sx={{ width: '100%' }}
+              InputLabelProps={{ shrink: true }}
+            />
+          </Box>
+
+          {/* Recurrence */}
+          <Box>
+            <Typography variant="caption" color="text.secondary" sx={{ mb: 0.75, display: 'block' }}>
+              {t('recurrence.label', 'חזרה')}
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', mb: 1 }}>
+              {([RecurrenceType.None, RecurrenceType.Daily, RecurrenceType.Weekly, RecurrenceType.Monthly] as RecurrenceType[]).map((rt) => (
+                <Chip
+                  key={rt}
+                  label={t(`recurrence.${rt}`, rt)}
+                  onClick={() => setRecurrenceType(rt)}
+                  sx={{
+                    fontWeight: 700,
+                    bgcolor:   recurrenceType === rt ? 'primary.main' : 'transparent',
+                    color:     recurrenceType === rt ? 'white' : 'text.primary',
+                    border:    '1.5px solid',
+                    borderColor: recurrenceType === rt ? 'primary.main' : 'divider',
+                  }}
+                />
+              ))}
+            </Box>
+            {recurrenceType !== RecurrenceType.None && (
+              <TextField
+                label={t('recurrence.interval', 'כל')}
+                type="number"
+                value={recurrenceInterval}
+                onChange={(e) => setRecurrenceInterval(Math.max(1, Number(e.target.value)))}
+                size="small"
+                sx={{ width: 100 }}
+                inputProps={{ min: 1, max: 365 }}
+              />
+            )}
           </Box>
 
           {/* Sub-tasks */}

@@ -6,15 +6,12 @@ public enum GoalType
     Ongoing = 1
 }
 
-public enum GoalCategory
+public enum RecurrenceType
 {
-    Home = 0,
-    Work = 1,
-    Health = 2,
-    Business = 3,
-    Python = 4,
-    Hobby = 5,
-    Personal = 6
+    None    = 0,
+    Daily   = 1,
+    Weekly  = 2,
+    Monthly = 3
 }
 
 public enum Priority

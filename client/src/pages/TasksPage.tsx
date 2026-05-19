@@ -21,7 +21,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth }                     from '../contexts/AuthContext'
 import { tasksApi, goalsApi }          from '../api'
-import { Priority }     from '../types'
+import { Priority, RecurrenceType } from '../types'
 import type { TaskItem, Goal }         from '../types'
 import { Filter, TODAY, applyFilter, PRIORITY_COLOR } from '../utils'
 import AddTaskDialog from '../components/tasks/AddTaskDialog'
@@ -49,6 +49,31 @@ export default function TasksPage() {
     tasksApi.getByUser(user.id).then(setLocalTasks).catch(() => {})
     goalsApi.getByUser(user.id).then(setGoals).catch(() => {})
   }, [user])
+
+  // Request notification permission and schedule near-future reminders
+  useEffect(() => {
+    if (!('Notification' in window)) return
+    if (Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {})
+    }
+  }, [])
+
+  useEffect(() => {
+    if (Notification.permission !== 'granted') return
+    const now = Date.now()
+    const HOUR_MS = 60 * 60 * 1000
+    localTasks.forEach((task) => {
+      if (!task.reminderAt || task.isCompleted) return
+      const remTime = new Date(task.reminderAt).getTime()
+      const delay = remTime - now
+      if (delay > 0 && delay <= HOUR_MS) {
+        const tid = setTimeout(() => {
+          new Notification(task.title, { body: '⏰ ' + task.title, icon: '/favicon.ico' })
+        }, delay)
+        return () => clearTimeout(tid)
+      }
+    })
+  }, [localTasks])
 
   const toggleTaskComplete = useCallback((taskId: string) => {
     const task = localTasks.find((t) => t.id === taskId)
@@ -499,6 +524,16 @@ function TaskGroup({ tasks, expanded, onToggleExpand, onToggleTask, onToggleSub,
                       {hasSubs && (
                         <Typography component="span" variant="caption" color="text.secondary">
                           {t('task.subtasks')}: {task.subTasks!.filter((s) => s.isCompleted).length}/{task.subTasks!.length}
+                        </Typography>
+                      )}
+                      {task.recurrenceType && task.recurrenceType !== RecurrenceType.None && (
+                        <Typography component="span" variant="caption" color="primary.main" sx={{ fontWeight: 600 }}>
+                          🔁 {t(`recurrence.${task.recurrenceType}`, task.recurrenceType)}
+                        </Typography>
+                      )}
+                      {task.reminderAt && (
+                        <Typography component="span" variant="caption" color="text.secondary">
+                          🔔 {new Date(task.reminderAt).toLocaleString(i18n.language, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
                         </Typography>
                       )}
                     </Box>

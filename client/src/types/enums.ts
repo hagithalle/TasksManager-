@@ -58,3 +58,14 @@ export enum ExecutionType {
   /** 30+ minutes */
   Long   = 'long',
 }
+
+/**
+ * How a task should repeat after completion.
+ * Maps to translation key `recurrence.<value>`.
+ */
+export enum RecurrenceType {
+  None    = 'none',
+  Daily   = 'daily',
+  Weekly  = 'weekly',
+  Monthly = 'monthly',
+}

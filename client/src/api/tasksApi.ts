@@ -13,6 +13,9 @@ export interface CreateTaskPayload {
   durationMinutes?: number
   goalId?: string
   listId?: string
+  reminderAt?: string
+  recurrenceType?: string
+  recurrenceInterval?: number
 }
 
 export interface UpdateTaskPayload {
@@ -27,6 +30,9 @@ export interface UpdateTaskPayload {
   durationMinutes?: number
   goalId?: string
   listId?: string
+  reminderAt?: string
+  recurrenceType?: string
+  recurrenceInterval?: number
 }
 
 export interface CreateSubTaskPayload {
@@ -72,9 +78,12 @@ function mapTask(raw: any): TaskItem {
     durationMinutes: raw.durationMinutes ?? undefined,
     goalId:          raw.goalId ?? undefined,
     listId:          raw.listId ?? undefined,
-    subTasks:        (raw.subTasks ?? []).map(mapSubTask),
-    createdAt:       raw.createdAt,
-    updatedAt:       raw.updatedAt,
+    subTasks:          (raw.subTasks ?? []).map(mapSubTask),
+    reminderAt:        raw.reminderAt ?? undefined,
+    recurrenceType:    raw.recurrenceType ?? undefined,
+    recurrenceInterval: raw.recurrenceInterval ?? undefined,
+    createdAt:         raw.createdAt,
+    updatedAt:         raw.updatedAt,
   }
 }
 

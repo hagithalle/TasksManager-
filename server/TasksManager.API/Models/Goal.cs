@@ -6,7 +6,7 @@ public class Goal
     public Guid UserId { get; set; }
 
     public string Title { get; set; } = string.Empty;
-    public GoalCategory Category { get; set; }
+    public string Category { get; set; } = string.Empty;
     public GoalType GoalType { get; set; }
 
     public DateTime? DueDate { get; set; }

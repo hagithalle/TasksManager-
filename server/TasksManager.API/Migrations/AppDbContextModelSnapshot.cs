@@ -30,7 +30,8 @@ namespace TasksManager.API.Migrations
 
                     b.Property<string>("Category")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp without time zone");
@@ -240,6 +241,18 @@ namespace TasksManager.API.Migrations
                     b.Property<string>("Priority")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("RecurrenceInterval")
+                        .HasDefaultValue(1)
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RecurrenceType")
+                        .IsRequired()
+                        .HasDefaultValue("None")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ReminderAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Title")
                         .IsRequired()
