@@ -41,4 +41,70 @@ public class AiController : ControllerBase
             return StatusCode(500, new { code = "AI_ERROR" });
         }
     }
+
+    // POST api/ai/day-analysis
+    [HttpPost("day-analysis")]
+    public async Task<IActionResult> AnalyzeDay(AiDayAnalysisRequestDto dto)
+    {
+        if (dto.Tasks == null || dto.Tasks.Count == 0)
+            return Ok(new AiDayAnalysisDto("light", "", "", []));
+
+        try
+        {
+            var result = await _ai.AnalyzeDayAsync(dto.Tasks, dto.Language ?? "he");
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(503, new { code = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected AI error in day-analysis");
+            return StatusCode(500, new { code = "AI_ERROR" });
+        }
+    }
+
+    // POST api/ai/search
+    [HttpPost("search")]
+    public async Task<IActionResult> Search(AiSearchRequestDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Query))
+            return BadRequest(new { message = "Query is required." });
+
+        try
+        {
+            var result = await _ai.SearchTasksAsync(dto.Query, dto.Tasks ?? [], dto.Language ?? "he");
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(503, new { code = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected AI error in search");
+            return StatusCode(500, new { code = "AI_ERROR" });
+        }
+    }
+
+    // POST api/ai/insights
+    [HttpPost("insights")]
+    public async Task<IActionResult> GetInsights(AiInsightsRequestDto dto)
+    {
+        try
+        {
+            var result = await _ai.GetInsightsAsync(dto);
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(503, new { code = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected AI error in insights");
+            return StatusCode(500, new { code = "AI_ERROR" });
+        }
+    }
 }

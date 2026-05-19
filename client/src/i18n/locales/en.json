@@ -171,6 +171,27 @@
     "noTasks": "I'm here to help you reach your goals",
     "allTasks": "All tasks ({{count}})"
   },
+  "ai": {
+    "title": "AI Assistant",
+    "dayTitle": "TODAY'S OVERVIEW",
+    "tasksToday": "tasks today",
+    "moveSuggestion": "Consider moving to tomorrow:",
+    "moveTomorrow": "Move to tomorrow",
+    "moved": "Moved",
+    "noTodayTasks": "No tasks due today — great!",
+    "load": {
+      "light": "Light day 🌿",
+      "moderate": "Moderate day ☕",
+      "heavy": "Heavy day 🔥",
+      "overloaded": "Overloaded! 🚨"
+    },
+    "searchTitle": "SMART TASK SEARCH",
+    "searchPlaceholder": "e.g. urgent tasks this week, short tasks, frog...",
+    "searchBtn": "Search",
+    "searchExamples": ["urgent this week", "short tasks", "frog tasks", "overdue"],
+    "noResults": "No matching tasks found",
+    "insightsTitle": "BEHAVIOR INSIGHTS"
+  },
   "dashboard": {
     "totalToday": "Today",
     "completedToday": "Done",

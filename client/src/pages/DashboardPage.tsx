@@ -27,6 +27,7 @@ import FocusCoachCard    from '../components/coach/FocusCoachCard'
 import StreakCard        from '../components/streak/StreakCard'
 import DailyInsightCard from '../components/streak/DailyInsightCard'
 import { useStreak }    from '../hooks/useStreak'
+import AiAssistantPanel from '../components/AiAssistantPanel'
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -477,6 +478,17 @@ export default function DashboardPage() {
         onCreated={(newTasks, newGoals) => {
           setTasks(prev => [...newTasks, ...prev])
           setGoals(prev => [...newGoals, ...prev])
+        }}
+      />
+
+      {/* ── AI Assistant floating panel ── */}
+      <AiAssistantPanel
+        tasks={tasks}
+        onTaskMoved={(id) => {
+          // Refresh task list after moving a task to tomorrow
+          setTasks(prev => prev.map(tk =>
+            tk.id === id ? { ...tk, dueDate: new Date(Date.now() + 86400000).toISOString().slice(0, 10) } : tk
+          ))
         }}
       />
     </Box>

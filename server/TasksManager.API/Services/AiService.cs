@@ -153,4 +153,204 @@ Text to analyze:
             return new AiParseResponseDto([], [], []);
         }
     }
+
+    // ── Day Analysis ─────────────────────────────────────────────────────────
+
+    public async Task<AiDayAnalysisDto> AnalyzeDayAsync(List<AiTaskSummaryDto> tasks, string language = "he")
+    {
+        var apiKey = _config["OpenAI:ApiKey"]
+            ?? throw new InvalidOperationException("OpenAI API key is not configured.");
+
+        var langHe = language == "he";
+        var taskLines = tasks.Select(t =>
+            $"- ID:{t.Id} | {t.Title} | priority:{t.Priority} | type:{t.ExecutionType}" +
+            (t.DurationMinutes.HasValue ? $" | {t.DurationMinutes}min" : "") +
+            (t.PlannedTime != null ? $" | at:{t.PlannedTime}" : ""));
+
+        var prompt = $@"
+You are a personal productivity coach. Analyze today's task list and respond in {(langHe ? "Hebrew" : "English")}.
+
+Task list ({tasks.Count} tasks):
+{string.Join('\n', taskLines)}
+
+Return ONLY valid JSON (no markdown):
+{{
+  ""loadLevel"": ""light""|""moderate""|""heavy""|""overloaded"",
+  ""message"": ""short friendly assessment of the day in {(langHe ? "Hebrew" : "English")}"",
+  ""encouragement"": ""one motivating sentence in {(langHe ? "Hebrew" : "English")}"",
+  ""tasksToMove"": [
+    {{ ""id"": ""task-id"", ""reason"": ""brief reason in {(langHe ? "Hebrew" : "English")}"" }}
+  ]
+}}
+
+Rules:
+- loadLevel: light (≤4 tasks), moderate (5-7), heavy (8-10), overloaded (>10 or >4 critical/high)
+- tasksToMove: suggest 2-4 low-priority or deferrable tasks if day is heavy/overloaded, otherwise []
+- Keep messages warm and friendly
+- Respond in {(langHe ? "Hebrew (עברית)" : "English")}
+";
+
+        var generated = await CallGptAsync(apiKey, prompt, 512);
+        try
+        {
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            return JsonSerializer.Deserialize<AiDayAnalysisDto>(generated, opts)
+                   ?? new AiDayAnalysisDto("moderate", langHe ? "יום רגיל" : "Regular day", langHe ? "בהצלחה!" : "Good luck!", []);
+        }
+        catch
+        {
+            return new AiDayAnalysisDto("moderate", langHe ? "יום רגיל" : "Regular day", langHe ? "בהצלחה!" : "Good luck!", []);
+        }
+    }
+
+    // ── Natural Language Search ───────────────────────────────────────────────
+
+    public async Task<AiSearchResponseDto> SearchTasksAsync(string query, List<AiTaskSummaryDto> tasks, string language = "he")
+    {
+        var apiKey = _config["OpenAI:ApiKey"]
+            ?? throw new InvalidOperationException("OpenAI API key is not configured.");
+
+        var langHe = language == "he";
+        var taskLines = tasks.Select(t =>
+            $"ID:{t.Id} | {t.Title} | priority:{t.Priority} | type:{t.ExecutionType}" +
+            (t.DurationMinutes.HasValue ? $" | {t.DurationMinutes}min" : "") +
+            (t.DueDate != null ? $" | due:{t.DueDate}" : ""));
+
+        var prompt = $@"
+You are a task search assistant. The user searches in natural language.
+User query: ""{query}""
+
+Tasks:
+{string.Join('\n', taskLines)}
+
+Return ONLY valid JSON (no markdown):
+{{
+  ""taskIds"": [""id1"", ""id2""],
+  ""explanation"": ""brief explanation of search results in {(langHe ? "Hebrew" : "English")}""
+}}
+
+Rules:
+- Match tasks semantically — by urgency, type, duration, keywords, due date, etc.
+- "urgent"/"דחוף" → critical or high priority
+- "short"/"קצר"/"quick" → executionType quick or short
+- "week"/"שבוע"/"this week" → due within next 7 days
+- "frog"/"צפרדע" → heavy/critical tasks (long duration or critical priority)
+- Return empty array if no matches
+- Keep explanation concise (1 sentence)
+";
+
+        var generated = await CallGptAsync(apiKey, prompt, 512);
+        try
+        {
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            return JsonSerializer.Deserialize<AiSearchResponseDto>(generated, opts)
+                   ?? new AiSearchResponseDto([], langHe ? "לא נמצאו תוצאות" : "No results found");
+        }
+        catch
+        {
+            return new AiSearchResponseDto([], langHe ? "לא נמצאו תוצאות" : "No results found");
+        }
+    }
+
+    // ── Behavior Insights ────────────────────────────────────────────────────
+
+    public async Task<AiInsightsResponseDto> GetInsightsAsync(AiInsightsRequestDto req)
+    {
+        var apiKey = _config["OpenAI:ApiKey"]
+            ?? throw new InvalidOperationException("OpenAI API key is not configured.");
+
+        var langHe = (req.Language ?? "he") == "he";
+        var completionRate = req.TotalTasks > 0
+            ? Math.Round((double)req.CompletedTasks / req.TotalTasks * 100, 0) : 0;
+        var frogRate = req.FrogTasksTotal > 0
+            ? Math.Round((double)req.FrogTasksCompleted / req.FrogTasksTotal * 100, 0) : 0;
+        var weekSummary = string.Join(", ", req.Last7Days.Select(d => $"{d.Date}: {d.Completed}/{d.Total}"));
+
+        var prompt = $@"
+You are a behavioral productivity coach analyzing user task data.
+
+Stats:
+- Total tasks: {req.TotalTasks}, Completed: {req.CompletedTasks} ({completionRate}%)
+- Overdue tasks: {req.OverdueTasks}
+- Frog tasks completed: {req.FrogTasksCompleted}/{req.FrogTasksTotal} ({frogRate}%)
+- Last 7 days (date: completed/total): {weekSummary}
+
+Return ONLY valid JSON (no markdown):
+{{
+  ""overallMessage"": ""2-3 sentence personalized message in {(langHe ? "Hebrew" : "English")}"",
+  ""patterns"": [
+    {{
+      ""type"": ""procrastination""|""overload""|""strength""|""tip"",
+      ""message"": ""observation in {(langHe ? "Hebrew" : "English")}"",
+      ""suggestion"": ""actionable suggestion or null"",
+      ""emoji"": ""single emoji""
+    }}
+  ]
+}}
+
+Rules:
+- Return 2-4 patterns based on what you observe
+- If frog completion < 40%: procrastination pattern on frog tasks, suggest breaking into sub-tasks
+- If completion rate < 50%: overload pattern, suggest reducing daily load
+- If overdue > 5: suggest reviewing overdue tasks
+- If streak days (consecutive completions): strength pattern
+- Always end with at least one ""tip"" pattern with a practical suggestion
+- Respond entirely in {(langHe ? "Hebrew (עברית)" : "English")}
+";
+
+        var generated = await CallGptAsync(apiKey, prompt, 700);
+        try
+        {
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            return JsonSerializer.Deserialize<AiInsightsResponseDto>(generated, opts)
+                   ?? new AiInsightsResponseDto(langHe ? "המשך כך!" : "Keep it up!", []);
+        }
+        catch
+        {
+            return new AiInsightsResponseDto(langHe ? "המשך כך!" : "Keep it up!", []);
+        }
+    }
+
+    // ── Shared GPT helper ────────────────────────────────────────────────────
+
+    private async Task<string> CallGptAsync(string apiKey, string prompt, int maxTokens)
+    {
+        var requestBody = new
+        {
+            model = "gpt-4o-mini",
+            temperature = 0.3,
+            max_tokens = maxTokens,
+            messages = new[] { new { role = "user", content = prompt } }
+        };
+
+        var url = "https://api.openai.com/v1/chat/completions";
+        var request = new HttpRequestMessage(HttpMethod.Post, url);
+        request.Headers.Add("Authorization", $"Bearer {apiKey}");
+        request.Content = new StringContent(JsonSerializer.Serialize(requestBody), System.Text.Encoding.UTF8, "application/json");
+
+        var response = await _http.SendAsync(request);
+        var responseText = await response.Content.ReadAsStringAsync();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError("OpenAI API error: {Status} {Body}", response.StatusCode, responseText);
+            if ((int)response.StatusCode == 429) throw new InvalidOperationException("RATE_LIMIT");
+            throw new InvalidOperationException("AI_ERROR");
+        }
+
+        using var doc = JsonDocument.Parse(responseText);
+        var text = doc.RootElement
+            .GetProperty("choices")[0]
+            .GetProperty("message")
+            .GetProperty("content")
+            .GetString() ?? "{}";
+
+        text = text.Trim();
+        if (text.StartsWith("```"))
+        {
+            var lines = text.Split('\n');
+            text = string.Join('\n', lines.Skip(1).Take(lines.Length - 2));
+        }
+        return text;
+    }
 }

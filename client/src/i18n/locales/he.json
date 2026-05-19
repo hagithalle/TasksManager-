@@ -171,6 +171,27 @@
     "noTasks": "אני כאן כדי לעזור לך להשיג את המטרות שלך",
     "allTasks": "כל המשימות ({{count}})"
   },
+  "ai": {
+    "title": "עוזר AI",
+    "dayTitle": "סקירת יום",
+    "tasksToday": "משימות היום",
+    "moveSuggestion": "שקלי להעביר למחר:",
+    "moveTomorrow": "העבר למחר",
+    "moved": "הועבר",
+    "noTodayTasks": "אין משימות להיום — כל הכבוד!",
+    "load": {
+      "light": "יום קל 🌿",
+      "moderate": "יום בינוני ☕",
+      "heavy": "יום עמוס 🔥",
+      "overloaded": "עומס יתר! 🚨"
+    },
+    "searchTitle": "חיפוש חכם",
+    "searchPlaceholder": "לדוגמה: משימות דחופות השבוע, משימות קצרות, צפרדע...",
+    "searchBtn": "חפש",
+    "searchExamples": ["דחופות השבוע", "משימות קצרות", "משימות צפרדע", "באיחור"],
+    "noResults": "לא נמצאו משימות מתאימות",
+    "insightsTitle": "תובנות התנהגות"
+  },
   "dashboard": {
     "totalToday": "היום",
     "completedToday": "הושלמו",
