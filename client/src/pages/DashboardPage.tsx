@@ -23,6 +23,7 @@ import AddGoalDialog     from '../components/goals/AddGoalDialog'
 import AiParseDialog     from '../components/AiParseDialog'
 import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded'
 import { TODAY, PRIORITY_STYLE } from '../utils'
+import FocusCoachCard  from '../components/coach/FocusCoachCard'
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -113,6 +114,15 @@ export default function DashboardPage() {
           </Box>
         ))}
       </Box>
+
+      {/* ── Focus Coach ── */}
+      <FocusCoachCard
+        tasks={tasks}
+        onRefresh={() => {
+          if (!user) return
+          tasksApi.getByUser(user.id).then(setTasks).catch(() => {})
+        }}
+      />
 
       {/* ── Task Wheel ── */}
       <Card

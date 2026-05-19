@@ -117,6 +117,24 @@
     "placeholder": "This page is coming soon",
     "back": "Back"
   },
+  "coach": {
+    "title": "My Focus Coach",
+    "headline": "You have {{count}} tasks before {{time}}",
+    "subline": "{{done}} of {{total}} completed",
+    "nextLabel": "Best next action:",
+    "afterLabel": "Then:",
+    "start": "Start now",
+    "refresh": "Refresh",
+    "settings": "Settings",
+    "settingsTitle": "Which tasks to include",
+    "targetTime": "Target time:",
+    "filterBeforeTime": "Tasks scheduled before target time",
+    "filterUrgent": "Urgent tasks (Critical/High)",
+    "filterFrog": "Frog — today's top priority",
+    "filterTwoMin": "Quick tasks (under 2 min)",
+    "filterEasy": "Easy tasks",
+    "noTasks": "I'm here to help you reach your goals"
+  },
   "dashboard": {
     "totalToday": "Today",
     "completedToday": "Done",

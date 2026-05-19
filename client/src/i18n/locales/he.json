@@ -117,6 +117,24 @@
     "placeholder": "הדף יהיה זמין בקרוב",
     "back": "חזרה"
   },
+  "coach": {
+    "title": "מאמן היום שלי",
+    "headline": "יש לך {{count}} משימות עד {{time}}",
+    "subline": "סיימת {{done}} מתוך {{total}}",
+    "nextLabel": "הכי כדאי עכשיו:",
+    "afterLabel": "אחר כך:",
+    "start": "התחל עכשיו",
+    "refresh": "רענן",
+    "settings": "הגדרות",
+    "settingsTitle": "אילו משימות לכלול",
+    "targetTime": "שעת יעד:",
+    "filterBeforeTime": "משימות מתוכננות לפני שעת היעד",
+    "filterUrgent": "משימות דחופות (Critical/High)",
+    "filterFrog": "צפרדע — המשימה הישיבית ביותר",
+    "filterTwoMin": "משימות מהירות (עד 2 דקות)",
+    "filterEasy": "משימות קלות",
+    "noTasks": "אני כאן כדי לעזור לך להשיג את המטרות שלך"
+  },
   "dashboard": {
     "totalToday": "היום",
     "completedToday": "הושלמו",
