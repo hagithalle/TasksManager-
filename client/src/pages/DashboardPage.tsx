@@ -23,7 +23,10 @@ import AddGoalDialog     from '../components/goals/AddGoalDialog'
 import AiParseDialog     from '../components/AiParseDialog'
 import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded'
 import { TODAY, PRIORITY_STYLE } from '../utils'
-import FocusCoachCard  from '../components/coach/FocusCoachCard'
+import FocusCoachCard    from '../components/coach/FocusCoachCard'
+import StreakCard        from '../components/streak/StreakCard'
+import DailyInsightCard from '../components/streak/DailyInsightCard'
+import { useStreak }    from '../hooks/useStreak'
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -51,6 +54,8 @@ export default function DashboardPage() {
     tasksApi.getByUser(user.id).then(setTasks).catch(() => {})
     goalsApi.getByUser(user.id).then(setGoals).catch(() => {})
   }, [user])
+
+  const { streak, last7 } = useStreak(tasks)
 
   // ── Derived data ────────────────────────────────────────────────────────────
   const todayTasks     = tasks.filter((tk) => tk.dueDate?.startsWith(TODAY))
@@ -313,6 +318,12 @@ export default function DashboardPage() {
           </List>
         </Card>
       )}
+
+      {/* ── Streak + Daily Insight ── */}
+      <Box sx={{ display: 'flex', gap: 1.5, mb: 3 }}>
+        <StreakCard streak={streak} last7={last7} />
+        <DailyInsightCard />
+      </Box>
 
       <TaskWheelModal open={wheelOpen} onClose={() => setWheelOpen(false)} tasks={tasks} />
 

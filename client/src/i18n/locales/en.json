@@ -117,6 +117,26 @@
     "placeholder": "This page is coming soon",
     "back": "Back"
   },
+  "streak": {
+    "title": "Active Day Streak",
+    "days": "days in a row!",
+    "msgZero": "Start fresh today — build a new streak!",
+    "msgOne": "Great start — day one done ♥",
+    "msgFew": "Keep going! {{count}} days in a row",
+    "msgWeek": "One full week! {{count}} days ♥",
+    "msgLong": "Amazing! {{count}} days on fire 🔥"
+  },
+  "insight": {
+    "title": "Daily Insight",
+    "q0": "Small progress every day leads to big results ♥",
+    "q1": "You don't have to do it all — just one step forward",
+    "q2": "The day you start again is the best day to begin",
+    "q3": "You did something today your future self will thank you for",
+    "q4": "Facing hard things builds your character",
+    "q5": "Every completed task is a step forward into tomorrow",
+    "q6": "You don't need to feel motivated to act. Act now, feel it later",
+    "q7": "The best time to do it was long ago\u2026 the second best is right now!"
+  },
   "coach": {
     "title": "My Focus Coach",
     "headline": "You have {{count}} tasks before {{time}}",
