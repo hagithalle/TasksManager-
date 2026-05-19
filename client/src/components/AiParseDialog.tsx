@@ -243,7 +243,7 @@ export default function AiParseDialog({ open, onClose, userId, onCreated }: Prop
       PaperProps={{ sx: { borderRadius: 3 } }}>
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, pb: 1 }}>
         <AutoAwesomeRoundedIcon color="primary" />
-        <Typography variant="h6" fontWeight={700} flex={1}>{t('ai.title')}</Typography>
+        <Typography variant="h6" fontWeight={700} flex={1}>{t('ai.parseTitle')}</Typography>
         <IconButton onClick={handleClose} size="small"><CloseRoundedIcon /></IconButton>
       </DialogTitle>
 
@@ -379,7 +379,7 @@ export default function AiParseDialog({ open, onClose, userId, onCreated }: Prop
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                   <EmojiObjectsRoundedIcon fontSize="small" color="warning" />
                   <Typography variant="subtitle2" fontWeight={700}>
-                    {t('ai.goals')} ({editedGoals.length})
+                    {t('ai.goalsLabel')} ({editedGoals.length})
                   </Typography>
                 </Box>
                 <List dense disablePadding>
@@ -465,7 +465,7 @@ export default function AiParseDialog({ open, onClose, userId, onCreated }: Prop
             )}
 
             {!editedTasks.length && !editedGoals.length && !editedListItems.length && (
-              <Alert severity="info">{t('ai.noResults')}</Alert>
+              <Alert severity="info">{t('ai.parseNoResults')}</Alert>
             )}
 
             {error && <Alert severity="error" sx={{ mt: 1 }}>{error}</Alert>}
