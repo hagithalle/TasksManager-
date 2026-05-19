@@ -122,6 +122,7 @@ export default function ListDetailPage() {
   // ── render ──────────────────────────────────────────────────────────────────
 
   return (
+    <>
     <Box sx={{ pb: 4 }}>
 
       {/* ── Hero header ── */}
@@ -277,5 +278,6 @@ export default function ListDetailPage() {
       userId={user?.id ?? ''}
       defaultTitle={convertItem?.title ?? ''}
     />
+    </>
   )
 }
