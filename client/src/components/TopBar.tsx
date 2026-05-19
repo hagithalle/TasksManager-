@@ -4,6 +4,7 @@ import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRound
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded'
 import NotificationsNoneRoundedIcon from '@mui/icons-material/NotificationsNoneRounded'
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded'
+import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded'
 import { useTranslation } from 'react-i18next'
 import LanguageSwitcher from './LanguageSwitcher'
 import { AppRoute } from '../routes/paths'
@@ -128,7 +129,7 @@ export default function TopBar() {
                 <NotificationsNoneRoundedIcon fontSize="small" />
               </IconButton>
               <IconButton size="small" onClick={handleLogout} sx={{ color: 'text.secondary' }}>
-                <MenuRoundedIcon fontSize="small" />
+                <LogoutRoundedIcon fontSize="small" />
               </IconButton>
             </>
           ) : isDetail ? (
