@@ -16,7 +16,7 @@ public class TaskService : ITaskService
     {
         var ownTasks = await _db.Tasks
             .AsNoTracking()
-            .Where(t => t.UserId == userId)
+            .Where(t => t.UserId == userId && t.DeletedAt == null)
             .Include(t => t.SubTasks)
             .ToListAsync();
 
@@ -40,7 +40,7 @@ public class TaskService : ITaskService
     {
         var tasks = await _db.Tasks
             .AsNoTracking()
-            .Where(t => t.GoalId == goalId)
+            .Where(t => t.GoalId == goalId && t.DeletedAt == null)
             .Include(t => t.SubTasks)
             .ToListAsync();
         return tasks.Select(ToDto);
@@ -92,7 +92,14 @@ public class TaskService : ITaskService
 
         if (dto.Title is not null)         task.Title         = dto.Title;
         if (dto.Notes is not null)          task.Notes         = dto.Notes;
-        if (dto.IsCompleted.HasValue)      task.IsCompleted   = dto.IsCompleted.Value;
+        if (dto.IsCompleted.HasValue)
+        {
+            task.IsCompleted = dto.IsCompleted.Value;
+            if (dto.IsCompleted.Value && task.CompletedAt is null)
+                task.CompletedAt = DateTime.UtcNow;
+            else if (!dto.IsCompleted.Value)
+                task.CompletedAt = null;
+        }
         if (dto.Priority.HasValue)         task.Priority      = dto.Priority.Value;
         if (dto.ExecutionType.HasValue)    task.ExecutionType = dto.ExecutionType.Value;
         if (dto.Difficulty.HasValue)       task.Difficulty    = dto.Difficulty;
@@ -153,9 +160,9 @@ public class TaskService : ITaskService
 
     public async Task<bool> DeleteAsync(Guid id)
     {
-        var task = await _db.Tasks.FirstOrDefaultAsync(t => t.Id == id);
+        var task = await _db.Tasks.FirstOrDefaultAsync(t => t.Id == id && t.DeletedAt == null);
         if (task is null) return false;
-        _db.Tasks.Remove(task);
+        task.DeletedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
         return true;
     }
@@ -227,7 +234,7 @@ public class TaskService : ITaskService
     // ── Mapping ───────────────────────────────────────────────────────────────
 
     private static TaskItemDto ToDto(TaskItem t) => new(
-        t.Id, t.UserId, t.Title, t.Notes, t.IsCompleted,
+        t.Id, t.UserId, t.Title, t.Notes, t.IsCompleted, t.CompletedAt,
         t.Priority, t.ExecutionType, t.Difficulty,
         t.DueDate.HasValue ? t.DueDate.Value.ToString("yyyy-MM-dd") : null,
         t.PlannedTime, t.DurationMinutes,

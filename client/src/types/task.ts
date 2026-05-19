@@ -27,6 +27,9 @@ export interface TaskItem {
 
   isCompleted: boolean
 
+  /** UTC timestamp when the task was completed */
+  completedAt?: string
+
   priority: Priority
   executionType: ExecutionType
 

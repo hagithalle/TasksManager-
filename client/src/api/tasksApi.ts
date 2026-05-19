@@ -70,6 +70,7 @@ function mapTask(raw: any): TaskItem {
     title:           raw.title,
     notes:           raw.notes ?? undefined,
     isCompleted:     raw.isCompleted,
+    completedAt:     raw.completedAt ?? undefined,
     priority:        raw.priority,
     executionType:   raw.executionType,
     difficulty:      raw.difficulty ?? undefined,

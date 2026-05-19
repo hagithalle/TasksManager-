@@ -36,6 +36,7 @@ public record TaskItemDto(
     string Title,
     string? Notes,
     bool IsCompleted,
+    DateTime? CompletedAt,
     Priority Priority,
     ExecutionType ExecutionType,
     Difficulty? Difficulty,
