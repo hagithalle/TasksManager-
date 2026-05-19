@@ -243,12 +243,12 @@ export default function AiAssistantPanel({ tasks, onTaskMoved }: Props) {
             </Typography>
 
             {/* Tasks to move */}
-            {dayAnalysis.tasksToMove.length > 0 && (
+            {(dayAnalysis.tasksToMove ?? []).length > 0 && (
               <Box sx={{ mt: 1.5 }}>
                 <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}>
                   {t('ai.moveSuggestion')}
                 </Typography>
-                {dayAnalysis.tasksToMove.map(tm => {
+                {(dayAnalysis.tasksToMove ?? []).map(tm => {
                   const task = tasks.find(tk => tk.id === tm.id)
                   if (!task) return null
                   const moved = movedIds.has(tm.id)
@@ -327,7 +327,7 @@ export default function AiAssistantPanel({ tasks, onTaskMoved }: Props) {
 
         {/* Search examples */}
         <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', mb: 1.5 }}>
-          {(t('ai.searchExamples', { returnObjects: true }) as string[]).map((ex: string) => (
+          {(Array.isArray(t('ai.searchExamples', { returnObjects: true })) ? t('ai.searchExamples', { returnObjects: true }) as string[] : []).map((ex: string) => (
             <Chip
               key={ex}
               label={ex}
@@ -393,7 +393,7 @@ export default function AiAssistantPanel({ tasks, onTaskMoved }: Props) {
             <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, lineHeight: 1.6 }}>
               {insights.overallMessage}
             </Typography>
-            {insights.patterns.map((p, i) => (
+            {(insights.patterns ?? []).map((p, i) => (
               <Box
                 key={i}
                 sx={{

@@ -150,7 +150,7 @@ export default function GoalsAgentDialog({ open, onClose, goals }: Props) {
             {/* Status summary chips */}
             <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', mb: 2 }}>
               {(['completed', 'on-track', 'at-risk', 'stalled'] as GoalStatus[]).map(s => {
-                const count = result.goals.filter(g => g.status === s).length
+                const count = (result.goals ?? []).filter(g => g.status === s).length
                 if (count === 0) return null
                 const cfg = STATUS_PROPS[s]
                 return (
@@ -167,7 +167,7 @@ export default function GoalsAgentDialog({ open, onClose, goals }: Props) {
             <Divider sx={{ mb: 2 }} />
 
             {/* Per-goal cards */}
-            {result.goals.map(gr => {
+            {(result.goals ?? []).map(gr => {
               const goal = goals.find(g => g.id === gr.id)
               if (!goal) return null
               const cfg = STATUS_PROPS[gr.status] ?? STATUS_PROPS['on-track']

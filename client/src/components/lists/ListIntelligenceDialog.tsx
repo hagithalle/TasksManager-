@@ -186,13 +186,13 @@ export default function ListIntelligenceDialog({ open, onClose, lists, onAddItem
             </Box>
 
             {/* Weekly staples */}
-            {result.weeklyStaples.length > 0 && (
+            {(result.weeklyStaples ?? []).length > 0 && (
               <Box sx={{ mb: 2 }}>
                 <Typography variant="caption" fontWeight={800} color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', mb: 0.75 }}>
                   🔁 {t('ai.lists.weeklyStaples')}
                 </Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
-                  {result.weeklyStaples.map(item => (
+                  {(result.weeklyStaples ?? []).map(item => (
                     <ItemChip key={item} title={item} added={added.has(item)} canAdd={!!onAddItemsToList} onAdd={() => handleAddItem(item)} />
                   ))}
                 </Box>
@@ -200,13 +200,13 @@ export default function ListIntelligenceDialog({ open, onClose, lists, onAddItem
             )}
 
             {/* Might need soon */}
-            {result.mightNeedSoon.length > 0 && (
+            {(result.mightNeedSoon ?? []).length > 0 && (
               <Box sx={{ mb: 2 }}>
                 <Typography variant="caption" fontWeight={800} color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', mb: 0.75 }}>
                   ⏰ {t('ai.lists.mightNeedSoon')}
                 </Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
-                  {result.mightNeedSoon.map(item => (
+                  {(result.mightNeedSoon ?? []).map(item => (
                     <ItemChip key={item} title={item} added={added.has(item)} canAdd={!!onAddItemsToList} onAdd={() => handleAddItem(item)} />
                   ))}
                 </Box>
@@ -216,7 +216,7 @@ export default function ListIntelligenceDialog({ open, onClose, lists, onAddItem
             <Divider sx={{ my: 2 }} />
 
             {/* Smart template by category */}
-            {result.smartTemplate.length > 0 && (
+            {(result.smartTemplate ?? []).length > 0 && (
               <Box>
                 <Typography variant="caption" fontWeight={800} color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', mb: 1 }}>
                   📋 {t('ai.lists.smartTemplate')}
@@ -227,7 +227,7 @@ export default function ListIntelligenceDialog({ open, onClose, lists, onAddItem
                   )}
                 </Typography>
 
-                {result.smartTemplate.map((cat: AiListCategory) => {
+                {(result.smartTemplate ?? []).map((cat: AiListCategory) => {
                   const allAdded = cat.items.every(i => added.has(i))
                   return (
                     <Box key={cat.name} sx={{ mb: 1.5 }}>
@@ -248,7 +248,7 @@ export default function ListIntelligenceDialog({ open, onClose, lists, onAddItem
                         )}
                       </Box>
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                        {cat.items.map(item => (
+                        {(cat.items ?? []).map(item => (
                           <ItemChip key={item} title={item} added={added.has(item)} canAdd={!!onAddItemsToList} onAdd={() => handleAddItem(item)} />
                         ))}
                       </Box>
