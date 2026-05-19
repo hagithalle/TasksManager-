@@ -169,7 +169,28 @@
     "filterEasy": "Easy tasks",
     "dailyTarget": "Daily task target:",
     "noTasks": "I'm here to help you reach your goals",
-    "allTasks": "All tasks ({{count}})"
+    "allTasks": "All tasks ({{count}})",
+    "insight": {
+      "morning":         "Good morning! {{count}} tasks to finish today",
+      "morningTip":      "The first frog matters most — eat it before the rest of the day",
+      "afternoon":       "Still time! {{count}} tasks waiting for you",
+      "afternoonTip":    "No motivation? Just start with 2 minutes",
+      "evening":         "Evening — {{count}} tasks still waiting",
+      "eveningTip":      "Even one task makes a difference",
+      "started":         "Moving! {{done}} of {{total}} done 🚀",
+      "startedTip":      "You're in the flow — keep going!",
+      "halfway":         "Halfway! {{done}} of {{total}} ✅",
+      "halfwayTip":      "Momentum is everything — a bit more!",
+      "almostDone":      "Almost there! {{remaining}} more and you're done ⭐",
+      "almostDoneTip":   "The finish line is in sight!",
+      "done":            "Perfect day! You finished all your tasks 🎉",
+      "doneTip":         "Time to look at what's coming tomorrow"
+    },
+    "pattern": {
+      "morning":   "🧠 {{count}} recent completions: you're most productive in the morning",
+      "afternoon": "🧠 {{count}} recent completions: you're most productive in the afternoon",
+      "evening":   "🧠 {{count}} recent completions: you're most productive in the evening"
+    }
   },
   "ai": {
     "title": "AI Assistant",

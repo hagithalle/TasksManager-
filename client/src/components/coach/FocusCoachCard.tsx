@@ -11,6 +11,7 @@ import { useTranslation }  from 'react-i18next'
 import { useNavigate }     from 'react-router-dom'
 import { useFocusCoach }   from '../../hooks/useFocusCoach'
 import CoachSettingsPanel  from './CoachSettingsPanel'
+import DailyInsightBanner  from './DailyInsightBanner'
 import type { TaskItem }   from '../../types'
 import { ExecutionType, Priority } from '../../types'
 
@@ -54,9 +55,20 @@ export default function FocusCoachCard({ tasks, onRefresh }: Props) {
         background: 'linear-gradient(135deg, #EDE9FF 0%, #F5F0FF 100%)',
         border: '1.5px solid rgba(124,92,255,0.2)',
         boxShadow: '0 2px 16px rgba(124,92,255,0.1)',
-        overflow: 'visible',
+        overflow: 'hidden',
       }}
     >
+      {/* ── Daily motivation banner ── */}
+      {totalCount > 0 && (
+        <DailyInsightBanner
+          progress={progress}
+          completedCount={completedCount}
+          remaining={remaining}
+          dailyTarget={settings.dailyTaskTarget}
+          tasks={tasks}
+        />
+      )}
+
       {/* ── Header ── */}
       <Box sx={{ px: 2, pt: 2, pb: 1.5 }}>
         <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
