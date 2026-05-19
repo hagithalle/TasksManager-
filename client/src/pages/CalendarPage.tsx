@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import {
   Box, Chip, CircularProgress, Divider, IconButton, Snackbar, Alert,
   ToggleButton, ToggleButtonGroup, Typography,
@@ -9,6 +9,7 @@ import CheckCircleRoundedIcon  from '@mui/icons-material/CheckCircleRounded'
 import SyncRoundedIcon         from '@mui/icons-material/SyncRounded'
 import EditRoundedIcon         from '@mui/icons-material/EditRounded'
 import DeleteRoundedIcon       from '@mui/icons-material/DeleteRounded'
+import RepeatRoundedIcon       from '@mui/icons-material/RepeatRounded'
 import { useGoogleLogin }      from '@react-oauth/google'
 import { useTranslation } from 'react-i18next'
 import { tasksApi, calendarApi } from '../api'
@@ -137,6 +138,41 @@ function getTasksForDate(tasks: TaskItem[], date: string) {
   return { scheduled, unscheduled }
 }
 
+// ─── recurring task expansion ─────────────────────────────────────────────────
+
+function advanceDate(isoDate: string, type: string, interval: number): string {
+  const d = new Date(isoDate + 'T12:00:00')
+  if (type === 'daily')   d.setDate(d.getDate() + interval)
+  if (type === 'weekly')  d.setDate(d.getDate() + 7 * interval)
+  if (type === 'monthly') d.setMonth(d.getMonth() + interval)
+  return d.toISOString().slice(0, 10)
+}
+
+/** Generate virtual future occurrences of recurring tasks within [rangeStart, rangeEnd]. */
+function expandRecurringTasks(tasks: TaskItem[], rangeStart: string, rangeEnd: string): TaskItem[] {
+  const expanded: TaskItem[] = [...tasks]
+  for (const task of tasks) {
+    if (!task.dueDate || !task.recurrenceType || task.recurrenceType === 'none') continue
+    if (task.isCompleted) continue
+    const interval = task.recurrenceInterval ?? 1
+    let nextDate = advanceDate(task.dueDate, task.recurrenceType, interval)
+    let safety = 0
+    while (nextDate <= rangeEnd && safety++ < 90) {
+      if (nextDate >= rangeStart) {
+        // Only add if no real task already exists for this date+title (avoid duplicates)
+        const alreadyExists = tasks.some(
+          (t) => t.title === task.title && t.dueDate === nextDate && !t.id.startsWith('virtual_')
+        )
+        if (!alreadyExists) {
+          expanded.push({ ...task, id: `virtual_${task.id}_${nextDate}`, dueDate: nextDate })
+        }
+      }
+      nextDate = advanceDate(nextDate, task.recurrenceType, interval)
+    }
+  }
+  return expanded
+}
+
 // ─── page ─────────────────────────────────────────────────────────────────────
 
 export default function CalendarPage() {
@@ -184,6 +220,21 @@ export default function CalendarPage() {
   }, [user])
 
   const weekDays = getWeekDays(selectedDate)
+
+  // Expand recurring tasks to fill the visible date range
+  const visibleTasks = useMemo(() => {
+    let start: string, end: string
+    if (viewMode === 'daily') {
+      start = end = selectedDate
+    } else if (viewMode === 'weekly') {
+      const days = getWeekDays(selectedDate)
+      start = days[0]; end = days[6]
+    } else {
+      const cells = getMonthDays(selectedDate).filter(Boolean)
+      start = cells[0] ?? selectedDate; end = cells[cells.length - 1] ?? selectedDate
+    }
+    return expandRecurringTasks(tasks, start, end)
+  }, [tasks, viewMode, selectedDate])
 
   return (
     <Box sx={{ pb: 6 }}>
@@ -251,7 +302,7 @@ export default function CalendarPage() {
               const d          = new Date(day + 'T12:00:00')
               const weekday    = d.toLocaleDateString(locale, { weekday: 'short' })
               const dayNum     = d.getDate()
-              const { scheduled, unscheduled } = getTasksForDate(tasks, day)
+              const { scheduled, unscheduled } = getTasksForDate(visibleTasks, day)
               const count      = scheduled.length + unscheduled.length
               const isSelected = day === selectedDate
               const isToday    = day === TODAY
@@ -357,8 +408,8 @@ export default function CalendarPage() {
 
       {/* ── Monthly grid or Day view ── */}
       {viewMode === 'monthly'
-        ? <MonthView selectedDate={selectedDate} onSelectDay={(d) => { setSelectedDate(d); setViewMode('daily') }} tasks={tasks} />
-        : <DayView date={selectedDate} tasks={tasks} onEdit={setEditTask} onDelete={handleDeleteTask} />}
+        ? <MonthView selectedDate={selectedDate} onSelectDay={(d) => { setSelectedDate(d); setViewMode('daily') }} tasks={visibleTasks} />
+        : <DayView date={selectedDate} tasks={visibleTasks} onEdit={setEditTask} onDelete={handleDeleteTask} />}
 
       <Snackbar
         open={!!snack}
@@ -541,6 +592,7 @@ function TaskRow({ task, showTime = true, onEdit, onDelete }: { task: TaskItem; 
   const { t } = useTranslation()
   const ps = PRIORITY_STYLE[task.priority]
   const es = EXECUTION_STYLE[task.executionType]
+  const isVirtual = task.id.startsWith('virtual_')
 
   return (
     <Box sx={{ display: 'flex', gap: 1.5, py: 1.25, alignItems: 'flex-start' }}>
@@ -566,14 +618,17 @@ function TaskRow({ task, showTime = true, onEdit, onDelete }: { task: TaskItem; 
         flex: 1, minWidth: 0,
         borderRadius: 2.5,
         border: '1px solid',
-        borderColor: task.isCompleted ? 'divider' : 'rgba(124,92,255,0.15)',
-        bgcolor: task.isCompleted ? 'rgba(0,0,0,0.02)' : 'background.paper',
+        borderColor: isVirtual ? 'rgba(124,92,255,0.25)' : task.isCompleted ? 'divider' : 'rgba(124,92,255,0.15)',
+        bgcolor: isVirtual ? 'rgba(124,92,255,0.04)' : task.isCompleted ? 'rgba(0,0,0,0.02)' : 'background.paper',
         px: 1.5, py: 1,
-        boxShadow: task.isCompleted ? 'none' : '0 1px 6px rgba(124,92,255,0.07)',
+        boxShadow: (isVirtual || task.isCompleted) ? 'none' : '0 1px 6px rgba(124,92,255,0.07)',
       }}>
         <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.75 }}>
           {task.isCompleted && (
             <CheckCircleRoundedIcon sx={{ fontSize: 16, color: 'primary.main', flexShrink: 0, mt: 0.2 }} />
+          )}
+          {isVirtual && (
+            <RepeatRoundedIcon sx={{ fontSize: 14, color: 'primary.light', flexShrink: 0, mt: 0.3, opacity: 0.7 }} />
           )}
           <Typography
             variant="body2"
@@ -581,17 +636,17 @@ function TaskRow({ task, showTime = true, onEdit, onDelete }: { task: TaskItem; 
             sx={{
               flex: 1, lineHeight: 1.45,
               textDecoration: task.isCompleted ? 'line-through' : 'none',
-              color:          task.isCompleted ? 'text.disabled' : 'text.primary',
+              color: isVirtual ? 'text.secondary' : task.isCompleted ? 'text.disabled' : 'text.primary',
             }}
           >
             {task.title}
           </Typography>
-          {onEdit && (
+          {onEdit && !isVirtual && (
             <IconButton size="small" onClick={() => onEdit(task)} sx={{ p: 0.25, opacity: 0.5, '&:hover': { opacity: 1 } }}>
               <EditRoundedIcon sx={{ fontSize: 14 }} />
             </IconButton>
           )}
-          {onDelete && (
+          {onDelete && !isVirtual && (
             <IconButton size="small" onClick={() => onDelete(task.id)} sx={{ p: 0.25, opacity: 0.5, '&:hover': { opacity: 1, color: 'error.main' } }}>
               <DeleteRoundedIcon sx={{ fontSize: 14 }} />
             </IconButton>

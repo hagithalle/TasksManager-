@@ -14,6 +14,7 @@ import TaskAltRoundedIcon       from '@mui/icons-material/TaskAltRounded'
 import FlagRoundedIcon          from '@mui/icons-material/FlagRounded'
 import ListRoundedIcon          from '@mui/icons-material/ListRounded'
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded'
+import SettingsRoundedIcon      from '@mui/icons-material/SettingsRounded'
 import { useTranslation } from 'react-i18next'
 import { AppRoute } from '../routes/paths'
 
@@ -23,6 +24,7 @@ const NAV_ITEMS = [
   { labelKey: 'nav.goals',     Icon: FlagRoundedIcon,          path: AppRoute.Goals     },
   { labelKey: 'nav.lists',     Icon: ListRoundedIcon,          path: AppRoute.Lists     },
   { labelKey: 'nav.calendar',  Icon: CalendarMonthRoundedIcon, path: AppRoute.Calendar  },
+  { labelKey: 'nav.settings',  Icon: SettingsRoundedIcon,      path: AppRoute.Settings  },
 ]
 
 /**

@@ -8,4 +8,5 @@ export enum AppRoute {
   Lists     = '/lists',
   ListDetail = '/lists/:id',
   Calendar  = '/calendar',
+  Settings  = '/settings',
 }

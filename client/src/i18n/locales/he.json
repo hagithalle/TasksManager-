@@ -123,6 +123,7 @@
     "goals": "מטרות",
     "lists": "רשימות",
     "calendar": "יומן",
+    "settings": "הגדרות",
     "goalDetail": "פרטי מטרה",
     "listDetail": "פרטי רשימה"
   },
@@ -293,5 +294,32 @@
   "reminder": {
     "label": "תזכורת",
     "none": "ללא תזכורת"
+  },
+  "settings": {
+    "title": "הגדרות",
+    "saved": "ההגדרות נשמרו",
+    "saveError": "שגיאה בשמירת ההגדרות",
+    "language": "שפה",
+    "firstDayOfWeek": "יום ראשון בשבוע",
+    "sunday": "ראשון",
+    "monday": "שני",
+    "goalCategories": "קטגוריות מטרות",
+    "goalCategoriesHint": "אלו הקטגוריות שתוכל להקצות למטרות שלך",
+    "newCategory": "קטגוריה חדשה...",
+    "coachTitle": "מאמן אישי",
+    "coachHint": "התאם אישית את אופן התקשורת של המאמן",
+    "coachTone": "טון",
+    "toneEncouraging": "מעודד",
+    "toneDirect": "ישיר",
+    "toneStrict": "מחמיר",
+    "coachFrequency": "תדירות",
+    "freqDaily": "יומי",
+    "freqWeekly": "שבועי",
+    "freqAsNeeded": "לפי צורך",
+    "workingHours": "שעות עבודה",
+    "workingHoursHint": "השעות הפעילות שלך — המאמן יתזמן לפיהן",
+    "notifications": "התראות",
+    "pushNotifications": "התראות Push",
+    "defaultReminderMinutes": "תזכורת ברירת מחדל לפני הזמן"
   }
 }

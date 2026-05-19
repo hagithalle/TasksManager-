@@ -12,6 +12,7 @@ import ListsPage      from '../pages/ListsPage'
 import ListDetailPage from '../pages/ListDetailPage'
 import CalendarPage   from '../pages/CalendarPage'
 import JoinPage       from '../pages/JoinPage'
+import SettingsPage   from '../pages/SettingsPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth()
@@ -37,6 +38,7 @@ export default function AppRoutes() {
         <Route path={AppRoute.Lists}      element={<ListsPage />}      />
         <Route path={AppRoute.ListDetail} element={<ListDetailPage />} />
         <Route path={AppRoute.Calendar}   element={<CalendarPage />}   />
+        <Route path={AppRoute.Settings}   element={<SettingsPage />}   />
         <Route path="*" element={<Navigate to={AppRoute.Dashboard} replace />} />
       </Route>
     </Routes>

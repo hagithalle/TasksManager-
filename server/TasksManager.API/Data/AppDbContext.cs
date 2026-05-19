@@ -20,7 +20,8 @@ public class AppDbContext : DbContext
     public DbSet<SubTask> SubTasks => Set<SubTask>();
     public DbSet<PersonalList> PersonalLists => Set<PersonalList>();
     public DbSet<PersonalListItem> PersonalListItems => Set<PersonalListItem>();
-    public DbSet<ShareInvite> ShareInvites => Set<ShareInvite>();
+    public DbSet<ShareInvite>   ShareInvites   => Set<ShareInvite>();
+    public DbSet<UserSettings>  UserSettings   => Set<UserSettings>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -138,6 +139,21 @@ public class AppDbContext : DbContext
              .HasForeignKey(s => s.AcceptedByUserId)
              .OnDelete(DeleteBehavior.NoAction)
              .IsRequired(false);
+        });
+
+        // ── UserSettings ──────────────────────────────────────────────────────
+        modelBuilder.Entity<UserSettings>(e =>
+        {
+            e.HasKey(s => s.UserId);
+            e.Property(s => s.GoalCategoriesJson).HasDefaultValue("[\"home\",\"work\",\"health\",\"personal\"]");
+            e.Property(s => s.CoachTone).HasMaxLength(20).HasDefaultValue("encouraging");
+            e.Property(s => s.CoachFrequency).HasMaxLength(20).HasDefaultValue("daily");
+            e.Property(s => s.Language).HasMaxLength(10).HasDefaultValue("en");
+
+            e.HasOne(s => s.User)
+             .WithOne()
+             .HasForeignKey<UserSettings>(s => s.UserId)
+             .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

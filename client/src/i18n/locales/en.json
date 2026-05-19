@@ -123,6 +123,7 @@
     "goals": "Goals",
     "lists": "Lists",
     "calendar": "Calendar",
+    "settings": "Settings",
     "goalDetail": "Goal Details",
     "listDetail": "List Details"
   },
@@ -293,5 +294,32 @@
   "reminder": {
     "label": "Reminder",
     "none": "No reminder"
+  },
+  "settings": {
+    "title": "Settings",
+    "saved": "Settings saved",
+    "saveError": "Failed to save settings",
+    "language": "Language",
+    "firstDayOfWeek": "First day of the week",
+    "sunday": "Sunday",
+    "monday": "Monday",
+    "goalCategories": "Goal Categories",
+    "goalCategoriesHint": "These are the categories you can assign to goals",
+    "newCategory": "New category...",
+    "coachTitle": "Personal Coach",
+    "coachHint": "Customize how your coach communicates with you",
+    "coachTone": "Tone",
+    "toneEncouraging": "Encouraging",
+    "toneDirect": "Direct",
+    "toneStrict": "Strict",
+    "coachFrequency": "Frequency",
+    "freqDaily": "Daily",
+    "freqWeekly": "Weekly",
+    "freqAsNeeded": "As Needed",
+    "workingHours": "Working Hours",
+    "workingHoursHint": "Your active hours — the coach will schedule around these",
+    "notifications": "Notifications",
+    "pushNotifications": "Push notifications",
+    "defaultReminderMinutes": "Default reminder before due time"
   }
 }
