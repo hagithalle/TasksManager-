@@ -12,17 +12,10 @@ namespace TasksManager.API.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             // Normalize Goal.Category to lowercase (was stored as PascalCase enum name)
-            migrationBuilder.Sql(@"UPDATE ""Goals"" SET ""Category"" = LOWER(""Category"") WHERE ""Category"" ~ '[A-Z]'");
+            migrationBuilder.Sql(@"UPDATE ""Goals"" SET ""Category"" = LOWER(""Category"")");
 
-            // Alter Category column to allow any string (no constraint change needed – already varchar)
-            migrationBuilder.AlterColumn<string>(
-                name: "Category",
-                table: "Goals",
-                type: "character varying(100)",
-                maxLength: 100,
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "text");
+            // Alter Category column: text → varchar(100)
+            migrationBuilder.Sql(@"ALTER TABLE ""Goals"" ALTER COLUMN ""Category"" TYPE character varying(100) USING ""Category""::character varying(100)");
 
             // Add ReminderAt to Tasks
             migrationBuilder.AddColumn<DateTime>(
@@ -55,14 +48,7 @@ namespace TasksManager.API.Migrations
             migrationBuilder.DropColumn(name: "RecurrenceType",      table: "Tasks");
             migrationBuilder.DropColumn(name: "RecurrenceInterval",  table: "Tasks");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Category",
-                table: "Goals",
-                type: "text",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "character varying(100)",
-                oldMaxLength: 100);
+            migrationBuilder.Sql(@"ALTER TABLE ""Goals"" ALTER COLUMN ""Category"" TYPE text USING ""Category""::text");
         }
     }
 }
