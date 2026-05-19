@@ -6,7 +6,7 @@ export interface Goal {
   /** User-facing title — stored as plain text; no translation key needed */
   title: string
 
-  category: GoalCategory
+  category: string
   goalType: GoalType
 
   /** 0–100 percentage; derived from completedTasks / totalTasks */
