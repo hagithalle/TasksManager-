@@ -190,7 +190,32 @@
     "searchBtn": "Search",
     "searchExamples": ["urgent this week", "short tasks", "frog tasks", "overdue"],
     "noResults": "No matching tasks found",
-    "insightsTitle": "BEHAVIOR INSIGHTS"
+    "insightsTitle": "BEHAVIOR INSIGHTS",
+    "goals": {
+      "title": "Goals Analysis Agent",
+      "subtitle": "Analyzing {{count}} goals",
+      "description": "I'll analyze your goals, identify what's on track or at risk, and give you personalized recommendations.",
+      "analyzeBtn": "Analyze my goals",
+      "analyzing": "Analyzing your goals...",
+      "reanalyze": "Re-analyze",
+      "error": "Failed to analyze goals. Please try again."
+    },
+    "lists": {
+      "title": "Smart List Assistant",
+      "subtitle": "Learning from {{count}} lists",
+      "description": "I'll scan your list history, detect recurring items, and suggest a smart template based on your habits.",
+      "analyzeBtn": "Smart suggestions",
+      "analyzing": "Learning your patterns...",
+      "reanalyze": "Re-analyze",
+      "error": "Failed to analyze lists. Please try again.",
+      "needMoreLists": "Add at least 2 lists to enable pattern learning.",
+      "recurringPreview": "ITEMS YOU BUY REGULARLY",
+      "weeklyStaples": "YOUR WEEKLY MUST-HAVES",
+      "mightNeedSoon": "MIGHT BE RUNNING LOW",
+      "smartTemplate": "SMART LIST TEMPLATE",
+      "addAll": "Add all",
+      "allAdded": "Added ✓"
+    }
   },
   "dashboard": {
     "totalToday": "Today",

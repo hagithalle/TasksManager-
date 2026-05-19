@@ -67,6 +67,66 @@ public record AiInsightsResponseDto(
     List<AiPatternDto> Patterns
 );
 
+// ── Goals Analysis Agent ──────────────────────────────────────────────────────
+
+public record AiGoalSummaryDto(
+    string Id,
+    string Title,
+    string Category,
+    string? DueDate,
+    int TotalTasks,
+    int CompletedTasks,
+    DateTime CreatedAt
+);
+
+public record AiGoalAnalysisRequestDto(
+    List<AiGoalSummaryDto> Goals,
+    string? Language = "he"
+);
+
+public record AiGoalResultDto(
+    string Id,
+    string Status,          // "on-track"|"at-risk"|"completed"|"stalled"
+    string Assessment,      // 1-2 sentence analysis
+    string? Recommendation  // actionable suggestion
+);
+
+public record AiGoalAnalysisResponseDto(
+    string OverallMessage,
+    List<AiGoalResultDto> Goals,
+    string? Strategy        // overall strategy suggestion
+);
+
+// ── Shopping List Intelligence Agent ─────────────────────────────────────────
+
+public record AiListItemStatDto(
+    string Title,
+    int Occurrences,
+    string? LastSeenDate
+);
+
+public record AiListIntelligenceRequestDto(
+    int TotalLists,
+    int OldestListDaysAgo,
+    List<AiListItemStatDto> RecurringItems,  // items seen in 2+ lists
+    List<string> RecentListTitles,
+    string? Language = "he"
+);
+
+public record AiListCategoryDto(
+    string Name,            // e.g. "ירקות ופירות", "ניקיון"
+    string Emoji,
+    List<string> Items
+);
+
+public record AiListIntelligenceResponseDto(
+    string OverallMessage,
+    List<AiListCategoryDto> SmartTemplate,  // suggested list template by category
+    List<string> WeeklyStaples,             // buy every week
+    List<string> MightNeedSoon,             // not seen recently but likely needed
+    string? ShoppingPattern                 // e.g. "You shop weekly, usually ~15 items"
+);
+
 public record AiParsedTaskDto(
     string Title,
     string? DueDate,       // "YYYY-MM-DD" or null

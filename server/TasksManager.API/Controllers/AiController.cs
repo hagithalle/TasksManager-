@@ -107,4 +107,50 @@ public class AiController : ControllerBase
             return StatusCode(500, new { code = "AI_ERROR" });
         }
     }
+
+    // POST api/ai/goal-analysis
+    [HttpPost("goal-analysis")]
+    public async Task<IActionResult> AnalyzeGoals(AiGoalAnalysisRequestDto dto)
+    {
+        if (dto.Goals == null || dto.Goals.Count == 0)
+            return BadRequest(new { message = "No goals provided." });
+
+        try
+        {
+            var result = await _ai.AnalyzeGoalsAsync(dto);
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(503, new { code = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected AI error in goal-analysis");
+            return StatusCode(500, new { code = "AI_ERROR" });
+        }
+    }
+
+    // POST api/ai/list-intelligence
+    [HttpPost("list-intelligence")]
+    public async Task<IActionResult> AnalyzeLists(AiListIntelligenceRequestDto dto)
+    {
+        if (dto.TotalLists < 2)
+            return BadRequest(new { message = "Need at least 2 lists to detect patterns." });
+
+        try
+        {
+            var result = await _ai.AnalyzeListsAsync(dto);
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(503, new { code = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected AI error in list-intelligence");
+            return StatusCode(500, new { code = "AI_ERROR" });
+        }
+    }
 }

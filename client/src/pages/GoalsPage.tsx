@@ -1,5 +1,6 @@
-import { Box, Typography, Fab, CircularProgress, Alert } from '@mui/material'
+import { Box, Typography, Fab, CircularProgress, Alert, Button } from '@mui/material'
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
+import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
@@ -8,6 +9,7 @@ import { useAuth } from '../contexts/AuthContext'
 import type { Goal } from '../types'
 import GoalCard from '../components/goals/GoalCard'
 import AddGoalDialog from '../components/goals/AddGoalDialog'
+import GoalsAgentDialog from '../components/goals/GoalsAgentDialog'
 
 export default function GoalsPage() {
   const { t } = useTranslation()
@@ -17,8 +19,9 @@ export default function GoalsPage() {
   const [goals, setGoals]   = useState<Goal[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError]   = useState<string | null>(null)
-  const [addOpen, setAddOpen] = useState(false)
-  const [editGoal, setEditGoal] = useState<Goal | null>(null)
+  const [addOpen,      setAddOpen]      = useState(false)
+  const [editGoal,     setEditGoal]     = useState<Goal | null>(null)
+  const [agentOpen,    setAgentOpen]    = useState(false)
 
   useEffect(() => {
     if (!user) return
@@ -123,6 +126,26 @@ export default function GoalsPage() {
         </>
       )}
 
+      {/* ── AI Agent button (shown only when there are goals) ── */}
+      {goals.length > 0 && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+          <Button
+            variant="outlined"
+            startIcon={<AutoAwesomeRoundedIcon />}
+            onClick={() => setAgentOpen(true)}
+            sx={{
+              borderRadius: 3, fontWeight: 700, fontSize: '0.78rem',
+              borderColor: 'primary.main', color: 'primary.main',
+              background: 'linear-gradient(135deg, rgba(124,92,255,0.06) 0%, rgba(124,92,255,0.03) 100%)',
+              '&:hover': { bgcolor: 'rgba(124,92,255,0.1)' },
+              px: 2.5,
+            }}
+          >
+            {t('ai.goals.analyzeBtn')}
+          </Button>
+        </Box>
+      )}
+
       {/* ── FAB ── */}
       <Fab
         color="primary"
@@ -161,6 +184,12 @@ export default function GoalsPage() {
         editGoal={editGoal ?? undefined}
         userId={user?.id ?? ''}
         createGoal={goalsApi.create}
+      />
+
+      <GoalsAgentDialog
+        open={agentOpen}
+        onClose={() => setAgentOpen(false)}
+        goals={goals}
       />
     </Box>
   )

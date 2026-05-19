@@ -1,8 +1,9 @@
 import {
   Box, CircularProgress, Divider, IconButton, InputBase,
-  LinearProgress, List, Typography,
+  LinearProgress, List, Tooltip, Typography,
 } from '@mui/material'
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
+import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded'
 import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -11,6 +12,7 @@ import { useAuth } from '../contexts/AuthContext'
 import type { Goal, PersonalList, PersonalListItem } from '../types'
 import ListItemRow from '../components/lists/ListItemRow'
 import AddTaskDialog from '../components/tasks/AddTaskDialog'
+import ListIntelligenceDialog from '../components/lists/ListIntelligenceDialog'
 
 // ─── page ─────────────────────────────────────────────────────────────────────
 
@@ -19,13 +21,20 @@ export default function ListDetailPage() {
   const { t }  = useTranslation()
   const { user } = useAuth()
 
-  const [list,    setList]    = useState<PersonalList | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [adding,   setAdding]   = useState(false)
-  const [newTitle, setNewTitle] = useState('')
+  const [list,       setList]       = useState<PersonalList | null>(null)
+  const [loading,    setLoading]    = useState(true)
+  const [adding,     setAdding]     = useState(false)
+  const [newTitle,   setNewTitle]   = useState('')
   const [convertItem, setConvertItem] = useState<PersonalListItem | null>(null)
-  const [goals, setGoals] = useState<Goal[]>([])
+  const [goals,      setGoals]      = useState<Goal[]>([])
+  const [allLists,   setAllLists]   = useState<PersonalList[]>([])
+  const [aiOpen,     setAiOpen]     = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!user) return
+    listsApi.getByUser(user.id).then(setAllLists).catch(() => {})
+  }, [user])
 
   useEffect(() => {
     if (!id) return
@@ -154,6 +163,18 @@ export default function ListDetailPage() {
               {t('list.items', { count: total })}
             </Typography>
           </Box>
+          {/* AI button */}
+          {allLists.length >= 2 && (
+            <Tooltip title={t('ai.lists.analyzeBtn')}>
+              <IconButton
+                size="small"
+                onClick={() => setAiOpen(true)}
+                sx={{ bgcolor: 'rgba(124,92,255,0.08)', '&:hover': { bgcolor: 'rgba(124,92,255,0.15)' } }}
+              >
+                <AutoAwesomeRoundedIcon sx={{ fontSize: 18, color: 'primary.main' }} />
+              </IconButton>
+            </Tooltip>
+          )}
         </Box>
 
         {/* Progress bar + label */}
@@ -277,6 +298,21 @@ export default function ListDetailPage() {
       goals={goals}
       userId={user?.id ?? ''}
       defaultTitle={convertItem?.title ?? ''}
+    />
+
+    {/* ── List Intelligence dialog ── */}
+    <ListIntelligenceDialog
+      open={aiOpen}
+      onClose={() => setAiOpen(false)}
+      lists={allLists}
+      currentListTitle={list?.title}
+      onAddItemsToList={async (items) => {
+        if (!id) return
+        for (const title of items) {
+          const newItem = await listsApi.addItem(id, { title }).catch(() => null)
+          if (newItem) setList(prev => prev ? { ...prev, items: [...prev.items, newItem] } : prev)
+        }
+      }}
     />
     </>
   )
