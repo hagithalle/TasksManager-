@@ -71,16 +71,21 @@ export default function GoalDetailPage() {
     const sub  = task?.subTasks?.find((s) => s.id === subId)
     if (!sub) return
     const next = !sub.isCompleted
+    const newSubs = (task!.subTasks ?? []).map((s) => s.id === subId ? { ...s, isCompleted: next } : s)
+    const allDone = newSubs.length > 0 && newSubs.every((s) => s.isCompleted)
     setLocalTasks((prev) => prev.map((t) => {
       if (t.id !== taskId) return t
-      return { ...t, subTasks: (t.subTasks ?? []).map((s) => s.id === subId ? { ...s, isCompleted: next } : s) }
+      return { ...t, subTasks: newSubs, isCompleted: allDone ? true : t.isCompleted }
     }))
     try {
       await tasksApi.updateSubTask(subId, { isCompleted: next })
+      if (allDone && !task!.isCompleted) {
+        await tasksApi.update(taskId, { isCompleted: true })
+      }
     } catch {
       setLocalTasks((prev) => prev.map((t) => {
         if (t.id !== taskId) return t
-        return { ...t, subTasks: (t.subTasks ?? []).map((s) => s.id === subId ? { ...s, isCompleted: sub.isCompleted } : s) }
+        return { ...t, subTasks: (t.subTasks ?? []).map((s) => s.id === subId ? { ...s, isCompleted: sub.isCompleted } : s), isCompleted: t.isCompleted }
       }))
     }
   }, [localTasks])

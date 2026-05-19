@@ -1,20 +1,23 @@
 import { useEffect, useRef, useState } from 'react'
 import {
-  Box, Button, Checkbox, Chip, Dialog, DialogActions, DialogContent, DialogTitle,
+  Box, Button, Checkbox, Chip, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle,
   FormControl, IconButton, InputLabel, MenuItem, Select, TextField, Typography,
 } from '@mui/material'
 import AddRoundedIcon    from '@mui/icons-material/AddRounded'
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded'
 import { useTranslation } from 'react-i18next'
-import { tasksApi } from '../../api'
-import { ExecutionType, Priority } from '../../types'
+import { tasksApi, goalsApi } from '../../api'
+import { ExecutionType, GoalCategory, GoalType, Priority } from '../../types'
 import type { Goal, TaskItem, SubTask } from '../../types'
 import { PRIORITY_STYLE, EXECUTION_STYLE } from '../../utils'
+
+const NEW_GOAL_SENTINEL = '__new__'
 
 export interface AddTaskDialogProps {
   open:           boolean
   onClose:        () => void
   onAdd?:         (task: TaskItem) => void
+  onGoalCreated?: (goal: Goal) => void
   goals?:         Goal[]
   userId?:        string
   defaultGoalId?: string
@@ -23,13 +26,17 @@ export interface AddTaskDialogProps {
   onEdit?:        (task: TaskItem) => void
 }
 
-export default function AddTaskDialog({ open, onClose, onAdd, onEdit, goals, userId, defaultGoalId, defaultTitle, editTask }: AddTaskDialogProps) {
+export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCreated, goals, userId, defaultGoalId, defaultTitle, editTask }: AddTaskDialogProps) {
   const { t } = useTranslation()
   const isEdit = !!editTask
 
   const [title,           setTitle]           = useState('')
   const [notes,           setNotes]           = useState('')
   const [goalId,          setGoalId]          = useState<string>(defaultGoalId ?? '')
+  const [newGoalMode,     setNewGoalMode]     = useState(false)
+  const [newGoalTitle,    setNewGoalTitle]    = useState('')
+  const [newGoalCategory, setNewGoalCategory] = useState<GoalCategory>(GoalCategory.Personal)
+  const [newGoalSaving,   setNewGoalSaving]   = useState(false)
   const [priority,        setPriority]        = useState<Priority>(Priority.Medium)
   const [executionType,   setExecutionType]   = useState<ExecutionType>(ExecutionType.Short)
   const [dueDate,         setDueDate]         = useState('')
@@ -70,6 +77,9 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, goals, use
       setTitle(defaultTitle ?? '')
       setNotes('')
       setGoalId(defaultGoalId ?? '')
+      setNewGoalMode(false)
+      setNewGoalTitle('')
+      setNewGoalCategory(GoalCategory.Personal)
       setPriority(Priority.Medium)
       setExecutionType(ExecutionType.Short)
       setDueDate('')
@@ -234,15 +244,81 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, goals, use
           <FormControl fullWidth size="small">
             <InputLabel>{t('nav.goals')}</InputLabel>
             <Select
-              value={goalId}
-              onChange={(e) => setGoalId(e.target.value)}
+              value={newGoalMode ? NEW_GOAL_SENTINEL : goalId}
+              onChange={(e) => {
+                if (e.target.value === NEW_GOAL_SENTINEL) {
+                  setNewGoalMode(true)
+                  setNewGoalTitle('')
+                } else {
+                  setNewGoalMode(false)
+                  setGoalId(e.target.value)
+                }
+              }}
               label={t('nav.goals')}
             >
               <MenuItem value="">{t('task.noGoal')}</MenuItem>
               {(goals ?? []).map((g) => (
                 <MenuItem key={g.id} value={g.id}>{g.title}</MenuItem>
               ))}
+              <MenuItem value={NEW_GOAL_SENTINEL} sx={{ color: 'primary.main', fontWeight: 700 }}>
+                + {t('goal.createNew', 'מטרה חדשה')}
+              </MenuItem>
             </Select>
+          </FormControl>
+
+          {/* Inline new goal form */}
+          {newGoalMode && (
+            <Box sx={{ border: '1.5px solid', borderColor: 'primary.light', borderRadius: 2, p: 1.5, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              <Typography variant="caption" fontWeight={700} color="primary.main">{t('goal.createNew', 'מטרה חדשה')}</Typography>
+              <TextField
+                label={t('goal.title', 'כותרת מטרה')}
+                value={newGoalTitle}
+                onChange={(e) => setNewGoalTitle(e.target.value)}
+                size="small"
+                fullWidth
+                autoFocus
+              />
+              <FormControl fullWidth size="small">
+                <InputLabel>{t('goal.category', 'קטגוריה')}</InputLabel>
+                <Select
+                  value={newGoalCategory}
+                  onChange={(e) => setNewGoalCategory(e.target.value as GoalCategory)}
+                  label={t('goal.category', 'קטגוריה')}
+                >
+                  {Object.values(GoalCategory).map((cat) => (
+                    <MenuItem key={cat} value={cat}>{t(`goalCategory.${cat}`, cat)}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                <Button size="small" onClick={() => { setNewGoalMode(false); setGoalId('') }}>{t('common.cancel')}</Button>
+                <Button
+                  size="small"
+                  variant="contained"
+                  disabled={!newGoalTitle.trim() || newGoalSaving}
+                  startIcon={newGoalSaving ? <CircularProgress size={14} /> : undefined}
+                  onClick={async () => {
+                    if (!userId || !newGoalTitle.trim()) return
+                    setNewGoalSaving(true)
+                    try {
+                      const created = await goalsApi.create({
+                        userId,
+                        title: newGoalTitle.trim(),
+                        category: newGoalCategory,
+                        goalType: GoalType.Finite,
+                      })
+                      onGoalCreated?.(created)
+                      setGoalId(created.id)
+                      setNewGoalMode(false)
+                    } finally {
+                      setNewGoalSaving(false)
+                    }
+                  }}
+                >{t('common.add')}</Button>
+              </Box>
+            </Box>
+          )
+          }
           </FormControl>
 
           {/* Priority */}

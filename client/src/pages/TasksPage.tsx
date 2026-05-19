@@ -61,15 +61,24 @@ export default function TasksPage() {
   }, [localTasks])
 
   const toggleSubComplete = useCallback((taskId: string, subId: string) => {
-    setLocalTasks((prev) => prev.map((t) => {
-      if (t.id !== taskId) return t
-      return {
-        ...t,
-        subTasks: (t.subTasks ?? []).map((s) =>
+    setLocalTasks((prev) => {
+      const updated = prev.map((t) => {
+        if (t.id !== taskId) return t
+        const newSubs = (t.subTasks ?? []).map((s) =>
           s.id === subId ? { ...s, isCompleted: !s.isCompleted } : s,
-        ),
+        )
+        const allDone = newSubs.length > 0 && newSubs.every((s) => s.isCompleted)
+        return { ...t, subTasks: newSubs, isCompleted: allDone ? true : t.isCompleted }
+      })
+      // fire API calls outside render
+      const task = updated.find((t) => t.id === taskId)
+      const sub  = task?.subTasks?.find((s) => s.id === subId)
+      if (sub) tasksApi.updateSubTask(subId, { isCompleted: sub.isCompleted }).catch(() => {})
+      if (task?.isCompleted && !prev.find((t) => t.id === taskId)?.isCompleted) {
+        tasksApi.update(taskId, { isCompleted: true }).catch(() => {})
       }
-    }))
+      return updated
+    })
   }, [])
 
   const handleAddTask = useCallback((task: TaskItem) => {
@@ -363,6 +372,7 @@ export default function TasksPage() {
         open={addOpen}
         onClose={() => setAddOpen(false)}
         onAdd={handleAddTask}
+        onGoalCreated={(g) => setGoals((prev) => [...prev, g])}
         goals={goals}
         userId={user?.id ?? ''}
       />
@@ -372,6 +382,7 @@ export default function TasksPage() {
         onClose={() => setEditTask(null)}
         onAdd={handleAddTask}
         onEdit={handleEditTask}
+        onGoalCreated={(g) => setGoals((prev) => [...prev, g])}
         editTask={editTask ?? undefined}
         goals={goals}
         userId={user?.id ?? ''}
