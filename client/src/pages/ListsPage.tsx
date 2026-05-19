@@ -58,17 +58,13 @@ export default function ListsPage() {
 
       {/* ── List grid ── */}
       {!loading && !error && (lists.length === 0 ? (
-        <Box
-          sx={{
-            borderRadius: 3,
-            border: '1px dashed',
-            borderColor: 'divider',
-            py: 6,
-            textAlign: 'center',
-          }}
-        >
-          <Typography variant="body2" color="text.disabled">
-            {t('list.empty')}
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 8, gap: 1.5 }}>
+          <Typography sx={{ fontSize: 56, lineHeight: 1 }}>📋</Typography>
+          <Typography variant="body1" fontWeight={700} color="text.primary">
+            {t('list.emptyTitle')}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', maxWidth: 260 }}>
+            {t('list.emptySubtitle')}
           </Typography>
         </Box>
       ) : (

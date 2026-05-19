@@ -254,10 +254,23 @@ export default function TasksPage() {
         ))}
       </Box>
 
-      {/* ── No results ── */}
-      {grouped.length === 0 && ungrouped.length === 0 && (
+      {/* ── No tasks at all ── */}
+      {localTasks.length === 0 && (
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 8, gap: 1.5 }}>
+          <Typography sx={{ fontSize: 56, lineHeight: 1 }}>✅</Typography>
+          <Typography variant="body1" fontWeight={700} color="text.primary">
+            {t('task.emptyTitle')}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', maxWidth: 260 }}>
+            {t('task.emptySubtitle')}
+          </Typography>
+        </Box>
+      )}
+
+      {/* ── No results for current filter ── */}
+      {localTasks.length > 0 && grouped.length === 0 && ungrouped.length === 0 && (
         <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
-          {t('common.noData')}
+          {t('task.emptyFilter')}
         </Typography>
       )}
 

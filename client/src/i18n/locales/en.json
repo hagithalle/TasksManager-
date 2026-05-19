@@ -34,6 +34,9 @@
       "completed": "Completed"
     },
     "noGoal": "No Goal",
+    "emptyTitle": "No tasks yet",
+    "emptySubtitle": "Add your first task — every journey begins with one step!",
+    "emptyFilter": "No tasks for this filter",
     "minutesShort": "min",
     "durationLabel": "Duration (min)",
     "plannedTime": "Time",
@@ -59,13 +62,17 @@
     "weeklyStats": "{{completed}}/{{total}} this week",
     "todayRemaining": "{{count}} remaining today",
     "pinned": "Pinned",
-    "all": "All Goals"
+    "all": "All Goals",
+    "emptyTitle": "No goals yet",
+    "emptySubtitle": "Goals help you stay focused. Add your first goal!"
   },
   "list": {
     "new": "New List",
     "title": "List Title",
     "all": "All Lists",
     "empty": "No lists yet",
+    "emptyTitle": "No lists yet",
+    "emptySubtitle": "Create a shopping list, to-do list, or anything you want to track",
     "noItems": "No items yet",
     "addItem": "+ Add item",
     "itemPlaceholder": "New item...",

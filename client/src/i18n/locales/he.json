@@ -34,6 +34,9 @@
       "completed": "הושלמו"
     },
     "noGoal": "ללא מטרה",
+    "emptyTitle": "עדיין אין לך משימות",
+    "emptySubtitle": "הוסף משימה ראשונה — כל מסע מתחיל בצעד אחד!",
+    "emptyFilter": "אין משימות עבור הפילטר הנוכחי",
     "minutesShort": "דק'",
     "durationLabel": "משך (דק')",
     "plannedTime": "שעה",
@@ -59,13 +62,17 @@
     "weeklyStats": "{{completed}}/{{total}} השבוע",
     "todayRemaining": "{{count}} נותר להיום",
     "pinned": "מוצמדות",
-    "all": "כל המטרות"
+    "all": "כל המטרות",
+    "emptyTitle": "עדיין אין לך מטרות",
+    "emptySubtitle": "מטרות יעזרו לך לארגן ולהתמקד. הוסף את המטרה הראשונה שלך!"
   },
   "list": {
     "new": "רשימה חדשה",
     "title": "כותרת רשימה",
     "all": "כל הרשימות",
     "empty": "אין רשימות עדיין",
+    "emptyTitle": "עדיין אין לך רשימות",
+    "emptySubtitle": "צור רשימת קניות, מטלות בית או כל דבר שתרצי לעקוב אחריו",
     "noItems": "אין פריטים עדיין",
     "addItem": "+ הוסף פריט",
     "itemPlaceholder": "פריט חדש...",

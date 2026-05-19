@@ -77,6 +77,14 @@ export default function ListDetailPage() {
     } : prev)
   }
 
+  async function renameItem(itemId: string, title: string) {
+    const updated = await listsApi.updateItem(itemId, { title })
+    setList((prev) => prev ? {
+      ...prev,
+      items: prev.items.map((i) => i.id === itemId ? updated : i),
+    } : prev)
+  }
+
   async function commitAdd() {
     const title = newTitle.trim()
     setNewTitle('')
@@ -175,6 +183,7 @@ export default function ListDetailPage() {
                     item={item}
                     onToggle={toggleItem}
                     onDelete={deleteItem}
+                    onRename={renameItem}
                   />
                 </Box>
               ))}

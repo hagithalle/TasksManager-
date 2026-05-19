@@ -41,7 +41,15 @@ const PRIORITY_ORDER: Record<Priority, number> = {
 
 const INITIAL_SHOW = 5
 
-function TodayTaskList({ tasks, onNavigate }: { tasks: TaskItem[]; onNavigate: () => void }) {
+function TodayTaskList({
+  tasks,
+  onToggle,
+  onNavigate,
+}: {
+  tasks: TaskItem[]
+  onToggle: (id: string) => void
+  onNavigate: () => void
+}) {
   const { t }         = useTranslation()
   const [showAll, setShowAll] = useState(false)
 
@@ -82,10 +90,16 @@ function TodayTaskList({ tasks, onNavigate }: { tasks: TaskItem[]; onNavigate: (
                 sx={{ px: 2, py: 0.75, alignItems: 'center', cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
                 onClick={onNavigate}
               >
-                {tk.isCompleted
-                  ? <CheckCircleRoundedIcon sx={{ fontSize: 18, color: 'primary.main', mr: 1.5, flexShrink: 0 }} />
-                  : <RadioButtonUncheckedRoundedIcon sx={{ fontSize: 18, color: 'text.disabled', mr: 1.5, flexShrink: 0 }} />
-                }
+                <Box
+                  component="span"
+                  onClick={(e) => { e.stopPropagation(); onToggle(tk.id) }}
+                  sx={{ display: 'flex', alignItems: 'center', mr: 1.5, flexShrink: 0, cursor: 'pointer', borderRadius: '50%', '&:hover': { bgcolor: 'action.selected' }, p: 0.25 }}
+                >
+                  {tk.isCompleted
+                    ? <CheckCircleRoundedIcon sx={{ fontSize: 22, color: 'primary.main' }} />
+                    : <RadioButtonUncheckedRoundedIcon sx={{ fontSize: 22, color: 'text.disabled' }} />
+                  }
+                </Box>
                 <ListItemText
                   primary={
                     <Typography
@@ -147,6 +161,16 @@ export default function DashboardPage() {
     tasksApi.getByUser(user.id).then(setTasks).catch(() => {})
     goalsApi.getByUser(user.id).then(setGoals).catch(() => {})
   }, [user])
+
+  const toggleTask = (taskId: string) => {
+    const task = tasks.find((t) => t.id === taskId)
+    if (!task) return
+    const updated = { ...task, isCompleted: !task.isCompleted }
+    setTasks((prev) => prev.map((t) => t.id === taskId ? updated : t))
+    tasksApi.update(taskId, { isCompleted: updated.isCompleted }).catch(() => {
+      setTasks((prev) => prev.map((t) => t.id === taskId ? task : t))
+    })
+  }
 
   const { streak, last7 } = useStreak(tasks)
 
@@ -392,7 +416,7 @@ export default function DashboardPage() {
         onAdd={() => setAddTaskOpen(true)}
         onSeeAll={() => navigate('/tasks')}
       />
-      <TodayTaskList tasks={todayTasks} onNavigate={() => navigate('/tasks')} />
+      <TodayTaskList tasks={todayTasks} onToggle={toggleTask} onNavigate={() => navigate('/tasks')} />
 
       {/* ── Streak + Daily Insight ── */}
       <Box sx={{ display: 'flex', gap: 1.5, mb: 3 }}>

@@ -50,7 +50,24 @@ export default function GoalsPage() {
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-      {!loading && !error && (
+      {!loading && !error && goals.length === 0 && (
+        <Box
+          sx={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
+            py: 8, gap: 1.5,
+          }}
+        >
+          <Typography sx={{ fontSize: 56, lineHeight: 1 }}>🎯</Typography>
+          <Typography variant="body1" fontWeight={700} color="text.primary">
+            {t('goal.emptyTitle')}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', maxWidth: 260 }}>
+            {t('goal.emptySubtitle')}
+          </Typography>
+        </Box>
+      )}
+
+      {!loading && !error && goals.length > 0 && (
         <>
       {/* ── Pinned section ── */}
       {pinned.length > 0 && (

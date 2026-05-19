@@ -1,7 +1,8 @@
-import { Box, Checkbox, IconButton, Typography } from '@mui/material'
+import { Box, Checkbox, IconButton, InputBase, Typography } from '@mui/material'
 import CheckCircleRoundedIcon          from '@mui/icons-material/CheckCircleRounded'
 import RadioButtonUncheckedRoundedIcon from '@mui/icons-material/RadioButtonUncheckedRounded'
 import DeleteRoundedIcon               from '@mui/icons-material/DeleteRounded'
+import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { PersonalListItem } from '../../types'
 
@@ -9,10 +10,28 @@ interface Props {
   item:       PersonalListItem
   onToggle:   (id: string) => void
   onDelete:   (id: string) => void
+  onRename?:  (id: string, newTitle: string) => void
 }
 
-export default function ListItemRow({ item, onToggle, onDelete }: Props) {
+export default function ListItemRow({ item, onToggle, onDelete, onRename }: Props) {
   const { t } = useTranslation()
+  const [editing, setEditing] = useState(false)
+  const [draft,   setDraft]   = useState(item.title)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  function startEdit() {
+    setDraft(item.title)
+    setEditing(true)
+    setTimeout(() => inputRef.current?.focus(), 0)
+  }
+
+  function commitEdit() {
+    setEditing(false)
+    const title = draft.trim()
+    if (title && title !== item.title) onRename?.(item.id, title)
+    else setDraft(item.title)
+  }
+
   return (
     <Box
       sx={{
@@ -43,22 +62,42 @@ export default function ListItemRow({ item, onToggle, onDelete }: Props) {
         sx={{ p: 0.5 }}
       />
 
-      {/* Label */}
-      <Typography
-        variant="body2"
-        sx={{
-          flex: 1,
-          textDecoration: item.isCompleted ? 'line-through' : 'none',
-          color:          item.isCompleted ? 'text.disabled' : 'text.primary',
-          transition: 'color 0.15s',
-          lineHeight: 1.5,
-          py: 0.75,
-        }}
-      >
-        {item.title}
-      </Typography>
+      {/* Label / inline edit */}
+      {editing ? (
+        <InputBase
+          inputRef={inputRef}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commitEdit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter')  commitEdit()
+            if (e.key === 'Escape') { setEditing(false); setDraft(item.title) }
+          }}
+          fullWidth
+          sx={{ fontSize: '0.875rem', color: 'text.primary', flex: 1, py: 0.75 }}
+        />
+      ) : (
+        <Typography
+          variant="body2"
+          onClick={startEdit}
+          sx={{
+            flex: 1,
+            textDecoration: item.isCompleted ? 'line-through' : 'none',
+            color:          item.isCompleted ? 'text.disabled' : 'text.primary',
+            transition: 'color 0.15s',
+            lineHeight: 1.5,
+            py: 0.75,
+            cursor: 'text',
+            borderRadius: 1,
+            '&:hover': { bgcolor: 'action.hover' },
+            px: 0.5,
+          }}
+        >
+          {item.title}
+        </Typography>
+      )}
 
-      {/* Delete button — visible on hover (desktop) or always on touch */}
+      {/* Delete button */}
       <IconButton
         className="delete-btn"
         size="small"
