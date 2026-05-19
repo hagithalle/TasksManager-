@@ -1,4 +1,4 @@
-import { Box, CircularProgress, Alert, Fab, Typography, Button } from '@mui/material'
+import { Box, CircularProgress, Alert, Fab, Typography } from '@mui/material'
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded'
 import { useTranslation } from 'react-i18next'
@@ -51,23 +51,32 @@ export default function ListsPage() {
         {t('list.all')}
       </Typography>
 
-      {/* ── AI Button (shown when 2+ lists exist) ── */}
+      {/* ── AI banner (shown when 2+ lists exist) ── */}
       {lists.length >= 2 && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-          <Button
-            variant="outlined"
-            startIcon={<AutoAwesomeRoundedIcon />}
-            onClick={() => setAiOpen(true)}
-            sx={{
-              borderRadius: 3, fontWeight: 700, fontSize: '0.78rem',
-              borderColor: 'primary.main', color: 'primary.main',
-              background: 'linear-gradient(135deg, rgba(124,92,255,0.06) 0%, rgba(124,92,255,0.03) 100%)',
-              '&:hover': { bgcolor: 'rgba(124,92,255,0.1)' },
-              px: 2.5,
-            }}
-          >
-            {t('ai.lists.analyzeBtn')}
-          </Button>
+        <Box
+          onClick={() => setAiOpen(true)}
+          sx={{
+            display: 'flex', alignItems: 'center', gap: 1.5,
+            mb: 2.5, px: 2, py: 1.5, borderRadius: 3,
+            cursor: 'pointer',
+            background: 'linear-gradient(135deg, #7c5cff 0%, #a78bfa 100%)',
+            color: '#fff',
+            boxShadow: '0 4px 14px rgba(124,92,255,0.35)',
+            transition: 'all 0.2s',
+            '&:hover': { transform: 'translateY(-1px)', boxShadow: '0 6px 20px rgba(124,92,255,0.45)' },
+            '&:active': { transform: 'translateY(0)' },
+          }}
+        >
+          <AutoAwesomeRoundedIcon sx={{ fontSize: 28, flexShrink: 0 }} />
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="body2" fontWeight={800} sx={{ lineHeight: 1.3 }}>
+              {t('ai.lists.analyzeBtn')}
+            </Typography>
+            <Typography variant="caption" sx={{ opacity: 0.88, lineHeight: 1.3, display: 'block' }}>
+              {t('ai.lists.description')}
+            </Typography>
+          </Box>
+          <Typography sx={{ fontSize: 20, flexShrink: 0 }}>✨</Typography>
         </Box>
       )}
 
