@@ -4,12 +4,12 @@ import {
   LinearProgress, List, ListItem, ListItemText, Tooltip, Typography,
 } from '@mui/material'
 import CheckCircleRoundedIcon          from '@mui/icons-material/CheckCircleRounded'
-import ErrorRoundedIcon                from '@mui/icons-material/ErrorRounded'
-import TodayRoundedIcon                from '@mui/icons-material/TodayRounded'
-import TimerRoundedIcon                from '@mui/icons-material/TimerRounded'
 import RadioButtonUncheckedRoundedIcon from '@mui/icons-material/RadioButtonUncheckedRounded'
 import AddRoundedIcon                  from '@mui/icons-material/AddRounded'
 import ArrowForwardIosRoundedIcon      from '@mui/icons-material/ArrowForwardIosRounded'
+import ExpandMoreRoundedIcon           from '@mui/icons-material/ExpandMoreRounded'
+import ExpandLessRoundedIcon           from '@mui/icons-material/ExpandLessRounded'
+
 import { useTranslation } from 'react-i18next'
 import { useNavigate }    from 'react-router-dom'
 import { tasksApi, goalsApi } from '../api'
@@ -37,6 +37,99 @@ const PRIORITY_ORDER: Record<Priority, number> = {
   [Priority.Low]:      3,
 }
 
+// ─── TodayTaskList ────────────────────────────────────────────────────────────
+
+const INITIAL_SHOW = 5
+
+function TodayTaskList({ tasks, onNavigate }: { tasks: TaskItem[]; onNavigate: () => void }) {
+  const { t }         = useTranslation()
+  const [showAll, setShowAll] = useState(false)
+
+  if (tasks.length === 0) return <EmptyState text={t('dashboard.noTodayTasks')} mb={3} />
+
+  // Group: tasks with plannedTime vs without
+  const withTime    = tasks.filter(tk => tk.plannedTime).sort((a, b) => (a.plannedTime ?? '').localeCompare(b.plannedTime ?? ''))
+  const withoutTime = tasks.filter(tk => !tk.plannedTime)
+  const ordered     = [...withTime, ...withoutTime]
+
+  const visible  = showAll ? ordered : ordered.slice(0, INITIAL_SHOW)
+  const hiddenCount = ordered.length - INITIAL_SHOW
+
+  // Split by planned time groups: "before noon", "after noon" (or just "no time")
+  let lastTimeGroup: string | null = null
+
+  return (
+    <Card sx={{ borderRadius: 3, mb: 3, border: '1px solid', borderColor: 'divider', boxShadow: '0 1px 6px rgba(124,92,255,0.05)' }}>
+      <List disablePadding>
+        {visible.map((tk, i) => {
+          // Time group label
+          let groupHeader: string | null = null
+          const tg = tk.plannedTime ? tk.plannedTime.slice(0, 5) : t('dashboard.noTime')
+          if (tg !== lastTimeGroup) { groupHeader = tg; lastTimeGroup = tg }
+
+          return (
+            <Box key={tk.id}>
+              {groupHeader && (
+                <Box sx={{ px: 2, pt: i === 0 ? 1 : 0.75, pb: 0.25, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <Typography variant="caption" color="primary.main" fontWeight={700} sx={{ fontSize: '0.65rem' }}>
+                    {tk.plannedTime ? `⏰ ${groupHeader}` : `📌 ${groupHeader}`}
+                  </Typography>
+                  <Divider sx={{ flex: 1 }} />
+                </Box>
+              )}
+              {!groupHeader && i > 0 && <Divider sx={{ ml: 5 }} />}
+              <ListItem
+                sx={{ px: 2, py: 0.75, alignItems: 'center', cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
+                onClick={onNavigate}
+              >
+                {tk.isCompleted
+                  ? <CheckCircleRoundedIcon sx={{ fontSize: 18, color: 'primary.main', mr: 1.5, flexShrink: 0 }} />
+                  : <RadioButtonUncheckedRoundedIcon sx={{ fontSize: 18, color: 'text.disabled', mr: 1.5, flexShrink: 0 }} />
+                }
+                <ListItemText
+                  primary={
+                    <Typography
+                      variant="body2"
+                      fontWeight={tk.isCompleted ? 400 : 500}
+                      sx={{
+                        textDecoration: tk.isCompleted ? 'line-through' : 'none',
+                        color:          tk.isCompleted ? 'text.disabled' : 'text.primary',
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      {tk.title}
+                    </Typography>
+                  }
+                />
+                {tk.durationMinutes && (
+                  <Chip
+                    label={`${tk.durationMinutes}${t('task.minutesShort')}`}
+                    size="small"
+                    sx={{ height: 18, fontSize: '0.6rem', ml: 0.5, flexShrink: 0 }}
+                  />
+                )}
+                <PriorityChip priority={tk.priority} />
+              </ListItem>
+            </Box>
+          )
+        })}
+      </List>
+
+      {hiddenCount > 0 && (
+        <Box
+          onClick={() => setShowAll(o => !o)}
+          sx={{ px: 2, py: 0.875, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, cursor: 'pointer', borderTop: '1px solid', borderColor: 'divider', '&:hover': { bgcolor: 'action.hover' } }}
+        >
+          {showAll
+            ? <><ExpandLessRoundedIcon sx={{ fontSize: 16, color: 'primary.main' }} /><Typography variant="caption" color="primary.main" fontWeight={600}>{t('dashboard.showLess')}</Typography></>
+            : <><ExpandMoreRoundedIcon sx={{ fontSize: 16, color: 'primary.main' }} /><Typography variant="caption" color="primary.main" fontWeight={600}>{t('dashboard.showMore', { count: hiddenCount })}</Typography></>
+          }
+        </Box>
+      )}
+    </Card>
+  )
+}
+
 export default function DashboardPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -61,9 +154,6 @@ export default function DashboardPage() {
   const todayTasks     = tasks.filter((tk) => tk.dueDate?.startsWith(TODAY))
   const completedToday = todayTasks.filter((tk) =>  tk.isCompleted).length
   const remainingToday = todayTasks.filter((tk) => !tk.isCompleted).length
-  const urgentToday    = todayTasks.filter(
-    (tk) => !tk.isCompleted && (tk.priority === Priority.Critical || tk.priority === Priority.High),
-  ).length
 
   // Frog = highest-priority incomplete task today
   const frog: TaskItem | null =
@@ -79,42 +169,68 @@ export default function DashboardPage() {
     ),
   )
 
+  const frogCount  = todayTasks.filter((tk) => !tk.isCompleted).length > 0 ? 1 : 0
+
   const stats = [
-    { label: t('dashboard.totalToday'),     value: todayTasks.length, color: '#5438CC', bg: '#EDE9FF', Icon: TodayRoundedIcon,      filter: 'today'     },
-    { label: t('dashboard.completedToday'), value: completedToday,    color: '#2E7D32', bg: '#E8F5E9', Icon: CheckCircleRoundedIcon, filter: 'completed' },
-    { label: t('dashboard.remainingToday'), value: remainingToday,    color: '#E65100', bg: '#FFF3E0', Icon: TimerRoundedIcon,       filter: 'today'     },
-    { label: t('dashboard.urgent'),         value: urgentToday,       color: '#C62828', bg: '#FFEBEE', Icon: ErrorRoundedIcon,       filter: 'urgent'    },
+    {
+      emoji: '✅', value: completedToday,    color: '#2E7D32', bg: '#E8F5E9',
+      label: t('dashboard.completedToday'),  sub: t('dashboard.completedSub'),
+      filter: 'completed',
+    },
+    {
+      emoji: '⏰', value: remainingToday,    color: '#5438CC', bg: '#EDE9FF',
+      label: t('dashboard.remainingToday'),  sub: t('dashboard.remainingSub'),
+      filter: 'today',
+    },
+    {
+      emoji: '🐸', value: frogCount,         color: '#388E3C', bg: '#F1F8E9',
+      label: t('dashboard.frog'),            sub: t('dashboard.frogSub'),
+      filter: 'urgent',
+    },
+    {
+      emoji: '⚡', value: twoMinTasks.length, color: '#0277BD', bg: '#E1F5FE',
+      label: t('dashboard.twoMin'),          sub: t('dashboard.twoMinSub'),
+      filter: 'today',
+    },
+    {
+      emoji: '🔥', value: streak,             color: '#E65100', bg: '#FFF3E0',
+      label: t('streak.title'),              sub: t('streak.days'),
+      filter: null,
+    },
   ]
 
   return (
     <Box sx={{ px: 2, pt: 2, pb: 4 }}>
 
       {/* ── Stats strip ── */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1, mb: 3 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 0.75, mb: 3 }}>
         {stats.map((s) => (
           <Box
             key={s.label}
-            onClick={() => navigate(`/tasks?filter=${s.filter}`)}
+            onClick={() => s.filter && navigate(`/tasks?filter=${s.filter}`)}
             sx={{
               borderRadius: 2.5,
-              py: 1.5,
-              px: 0.5,
+              py: 1.25,
+              px: 0.25,
               textAlign: 'center',
               bgcolor: s.bg,
               border: '1.5px solid',
               borderColor: `${s.color}22`,
-              cursor: 'pointer',
+              cursor: s.filter ? 'pointer' : 'default',
               transition: 'transform 0.12s, box-shadow 0.12s',
-              '&:hover': { transform: 'translateY(-2px)', boxShadow: `0 4px 12px ${s.color}33` },
-              '&:active': { transform: 'translateY(0)' },
+              '&:hover': s.filter ? { transform: 'translateY(-2px)', boxShadow: `0 4px 12px ${s.color}33` } : {},
+              '&:active': s.filter ? { transform: 'translateY(0)' } : {},
             }}
           >
-            <s.Icon sx={{ fontSize: 22, color: s.color, display: 'block', mx: 'auto', mb: 0.25 }} />
-            <Typography variant="h6" fontWeight={700} lineHeight={1} sx={{ color: s.color }}>
+            <Typography sx={{ fontSize: 18, lineHeight: 1, display: 'block', mb: 0.25 }}>{s.emoji}</Typography>
+            <Typography variant="h6" fontWeight={800} lineHeight={1} sx={{ color: s.color, fontSize: '1.1rem' }}>
               {s.value}
             </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.6rem', display: 'block', mt: 0.25 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.55rem', display: 'block', mt: 0.25, lineHeight: 1.2 }}>
               {s.label}
+            </Typography>
+            <Typography variant="caption" sx={{ fontSize: '0.5rem', display: 'block', color: s.color, fontWeight: 600, lineHeight: 1.2 }}>
+              {s.sub}
             </Typography>
           </Box>
         ))}
@@ -276,48 +392,7 @@ export default function DashboardPage() {
         onAdd={() => setAddTaskOpen(true)}
         onSeeAll={() => navigate('/tasks')}
       />
-      {todayTasks.length === 0 ? (
-        <EmptyState text={t('dashboard.noTodayTasks')} />
-      ) : (
-        <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: 'divider', boxShadow: '0 1px 6px rgba(124,92,255,0.05)' }}>
-          <List disablePadding>
-            {todayTasks.map((tk, i) => (
-              <Box key={tk.id}>
-                {i > 0 && <Divider sx={{ ml: 5 }} />}
-                <ListItem sx={{ px: 2, py: 0.875, alignItems: 'flex-start', cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
-                  onClick={() => navigate('/tasks')}
-                >
-                  {tk.isCompleted
-                    ? <CheckCircleRoundedIcon sx={{ fontSize: 18, color: 'primary.main', mr: 1.5, mt: 0.2, flexShrink: 0 }} />
-                    : <RadioButtonUncheckedRoundedIcon sx={{ fontSize: 18, color: 'text.disabled', mr: 1.5, mt: 0.2, flexShrink: 0 }} />
-                  }
-                  <ListItemText
-                    primary={
-                      <Typography
-                        variant="body2"
-                        fontWeight={tk.isCompleted ? 400 : 500}
-                        sx={{
-                          textDecoration: tk.isCompleted ? 'line-through' : 'none',
-                          color:          tk.isCompleted ? 'text.disabled' : 'text.primary',
-                          lineHeight: 1.4,
-                        }}
-                      >
-                        {tk.title}
-                      </Typography>
-                    }
-                    secondary={
-                      tk.plannedTime
-                        ? <Typography component="span" variant="caption" color="text.secondary">{tk.plannedTime}</Typography>
-                        : undefined
-                    }
-                  />
-                  <PriorityChip priority={tk.priority} />
-                </ListItem>
-              </Box>
-            ))}
-          </List>
-        </Card>
-      )}
+      <TodayTaskList tasks={todayTasks} onNavigate={() => navigate('/tasks')} />
 
       {/* ── Streak + Daily Insight ── */}
       <Box sx={{ display: 'flex', gap: 1.5, mb: 3 }}>
