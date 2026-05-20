@@ -6,6 +6,17 @@ import type { TaskItem } from '../types'
 /** Today's date as YYYY-MM-DD, computed once at app startup. */
 export const TODAY = new Date().toISOString().slice(0, 10)
 
+const HOURS_24_MS = 24 * 60 * 60 * 1000
+
+/**
+ * Returns true when a completed task was finished more than 24 hours ago
+ * and should be hidden from all UI views (data is kept in the DB).
+ */
+export function isArchivedCompleted(task: TaskItem): boolean {
+  if (!task.isCompleted || !task.completedAt) return false
+  return Date.now() - new Date(task.completedAt).getTime() > HOURS_24_MS
+}
+
 // ─── Filter ───────────────────────────────────────────────────────────────────
 
 export type Filter = 'all' | 'today' | 'urgent' | 'completed'

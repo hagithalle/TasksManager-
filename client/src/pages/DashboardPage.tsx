@@ -22,7 +22,7 @@ import AddTaskDialog     from '../components/tasks/AddTaskDialog'
 import AddGoalDialog     from '../components/goals/AddGoalDialog'
 import AiParseDialog     from '../components/AiParseDialog'
 import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded'
-import { TODAY, PRIORITY_STYLE } from '../utils'
+import { TODAY, PRIORITY_STYLE, isArchivedCompleted } from '../utils'
 import FocusCoachCard    from '../components/coach/FocusCoachCard'
 import StreakCard        from '../components/streak/StreakCard'
 import DailyInsightCard from '../components/streak/DailyInsightCard'
@@ -198,8 +198,10 @@ export default function DashboardPage() {
   const { streak, last7 } = useStreak(tasks)
 
   // ── Derived data ────────────────────────────────────────────────────────────
-  const carriedTasks   = tasks.filter((tk) => tk.taskStatus === TaskStatus.CarriedOver && !tk.isCompleted)
-  const todayTasks     = tasks.filter((tk) => tk.dueDate?.startsWith(TODAY))
+  // Exclude tasks completed more than 24 h ago from all display logic
+  const visibleTasks   = tasks.filter((tk) => !isArchivedCompleted(tk))
+  const carriedTasks   = visibleTasks.filter((tk) => tk.taskStatus === TaskStatus.CarriedOver && !tk.isCompleted)
+  const todayTasks     = visibleTasks.filter((tk) => tk.dueDate?.startsWith(TODAY))
   const completedToday = todayTasks.filter((tk) =>  tk.isCompleted).length
   const remainingToday = todayTasks.filter((tk) => !tk.isCompleted).length
 
@@ -210,7 +212,7 @@ export default function DashboardPage() {
       .sort((a, b) => PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority])[0] ?? null
 
   // Two-minute = Quick execution type OR duration <= 2 min, not completed
-  const twoMinTasks = tasks.filter(
+  const twoMinTasks = visibleTasks.filter(
     (tk) => !tk.isCompleted && (
       tk.executionType === ExecutionType.Quick ||
       (tk.durationMinutes != null && tk.durationMinutes <= 2)
@@ -472,7 +474,7 @@ export default function DashboardPage() {
         <DailyInsightCard />
       </Box>
 
-      <TaskWheelModal open={wheelOpen} onClose={() => setWheelOpen(false)} tasks={tasks} />
+      <TaskWheelModal open={wheelOpen} onClose={() => setWheelOpen(false)} tasks={visibleTasks} />
 
       <Tooltip title={t('ai.buttonTooltip')}>
         <IconButton

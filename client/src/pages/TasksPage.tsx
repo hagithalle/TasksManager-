@@ -23,7 +23,7 @@ import { useAuth }                     from '../contexts/AuthContext'
 import { tasksApi, goalsApi }          from '../api'
 import { Priority, RecurrenceType } from '../types'
 import type { TaskItem, Goal }         from '../types'
-import { Filter, TODAY, applyFilter, PRIORITY_COLOR } from '../utils'
+import { Filter, TODAY, applyFilter, isArchivedCompleted, PRIORITY_COLOR } from '../utils'
 import AddTaskDialog from '../components/tasks/AddTaskDialog'
 import ShareDialog from '../components/ShareDialog'
 
@@ -174,7 +174,7 @@ export default function TasksPage() {
     },
   ]
 
-  const filtered = applyFilter(localTasks, filter)
+  const filtered = applyFilter(localTasks.filter((t) => !isArchivedCompleted(t)), filter)
 
   // group by goalId
   const grouped = goals
