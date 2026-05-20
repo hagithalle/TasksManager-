@@ -3,8 +3,8 @@ import { AppBar, Toolbar, Typography, IconButton, Box, Avatar, Tooltip } from '@
 import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded'
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded'
 import NotificationsNoneRoundedIcon from '@mui/icons-material/NotificationsNoneRounded'
-import MenuRoundedIcon from '@mui/icons-material/MenuRounded'
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded'
+import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded'
 import { useTranslation } from 'react-i18next'
 import LanguageSwitcher from './LanguageSwitcher'
 import { AppRoute } from '../routes/paths'
@@ -121,12 +121,15 @@ export default function TopBar() {
           )}
         </Box>
 
-        {/* Right/Left: notification bell + menu (dashboard) or back button (detail) */}
-        <Box sx={{ width: 72, flexShrink: 0, display: 'flex', justifyContent: 'flex-end', gap: 0.25 }}>
+        {/* Right/Left: notification bell + settings + logout (dashboard) or back button (detail) */}
+        <Box sx={{ width: 96, flexShrink: 0, display: 'flex', justifyContent: 'flex-end', gap: 0.25 }}>
           {isDashboard ? (
             <>
               <IconButton size="small" sx={{ color: 'text.secondary' }}>
                 <NotificationsNoneRoundedIcon fontSize="small" />
+              </IconButton>
+              <IconButton size="small" onClick={() => navigate(AppRoute.Settings)} sx={{ color: 'text.secondary' }}>
+                <SettingsRoundedIcon fontSize="small" />
               </IconButton>
               <IconButton size="small" onClick={handleLogout} sx={{ color: 'text.secondary' }}>
                 <LogoutRoundedIcon fontSize="small" />
