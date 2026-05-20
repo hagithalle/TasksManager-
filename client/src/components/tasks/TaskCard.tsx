@@ -10,6 +10,7 @@ import CalendarTodayRoundedIcon        from '@mui/icons-material/CalendarTodayRo
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TaskItem } from '../../types'
+import { TaskNature } from '../../types'
 import SubProgressBar from './SubProgressBar'
 import SubTaskList    from './SubTaskList'
 import { PRIORITY_STYLE, EXECUTION_STYLE } from '../../utils'
@@ -34,6 +35,20 @@ function TaskChips({ task }: { task: TaskItem }) {
     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
       <Chip label={t(`priority.${task.priority}`)}            size="small" sx={chipSx(ps)} />
       <Chip label={t(`executionType.${task.executionType}`)}  size="small" sx={chipSx(es)} />
+      {task.taskNature === TaskNature.Meeting && (
+        <Chip
+          label={`📅 ${t('taskNature.meeting')}`}
+          size="small"
+          sx={{ height: 20, fontSize: '0.65rem', fontWeight: 700, bgcolor: '#e0f2fe', color: '#0369a1', '& .MuiChip-label': { px: 1 } }}
+        />
+      )}
+      {task.taskNature === TaskNature.Appointment && (
+        <Chip
+          label={`🏥 ${t('taskNature.appointment')}`}
+          size="small"
+          sx={{ height: 20, fontSize: '0.65rem', fontWeight: 700, bgcolor: '#fce7f3', color: '#9d174d', '& .MuiChip-label': { px: 1 } }}
+        />
+      )}
     </Box>
   )
 }

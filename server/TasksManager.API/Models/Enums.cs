@@ -36,3 +36,10 @@ public enum ExecutionType
     Medium = 2,
     Long   = 3
 }
+
+public enum TaskNature
+{
+    Action      = 0,  // something you DO yourself
+    Meeting     = 1,  // scheduled meeting with others
+    Appointment = 2,  // fixed external appointment (doctor, dentist, etc.)
+}

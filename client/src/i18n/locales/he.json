@@ -103,6 +103,12 @@
     "medium": "בינוני",
     "long": "ארוך"
   },
+  "taskNature": {
+    "label":       "סוג משימה",
+    "action":      "ביצוע",
+    "meeting":     "פגישה",
+    "appointment": "תור"
+  },
   "category": {
     "home": "בית",
     "work": "עבודה",

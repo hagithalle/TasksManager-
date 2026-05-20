@@ -103,6 +103,12 @@
     "medium": "Medium",
     "long": "Long"
   },
+  "taskNature": {
+    "label":       "Task Type",
+    "action":      "Action",
+    "meeting":     "Meeting",
+    "appointment": "Appointment"
+  },
   "category": {
     "home": "Home",
     "work": "Work",

@@ -59,6 +59,8 @@ public class TaskService : ITaskService
     {
         var recurrence = Enum.TryParse<RecurrenceType>(dto.RecurrenceType, true, out var rt)
             ? rt : RecurrenceType.None;
+        var nature = Enum.TryParse<TaskNature>(dto.Nature, true, out var tn)
+            ? tn : TaskNature.Action;
 
         var task = new TaskItem
         {
@@ -77,6 +79,7 @@ public class TaskService : ITaskService
             ReminderAt = dto.ReminderAt,
             RecurrenceType = recurrence,
             RecurrenceInterval = dto.RecurrenceInterval,
+            Nature = nature,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -113,6 +116,9 @@ public class TaskService : ITaskService
             Enum.TryParse<RecurrenceType>(dto.RecurrenceType, true, out var rt))
             task.RecurrenceType = rt;
         if (dto.RecurrenceInterval.HasValue) task.RecurrenceInterval = dto.RecurrenceInterval.Value;
+        if (dto.Nature is not null &&
+            Enum.TryParse<TaskNature>(dto.Nature, true, out var tn))
+            task.Nature = tn;
         task.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
@@ -243,7 +249,8 @@ public class TaskService : ITaskService
         t.CreatedAt, t.UpdatedAt,
         t.ReminderAt,
         t.RecurrenceType.ToString().ToLower(),
-        t.RecurrenceInterval
+        t.RecurrenceInterval,
+        t.Nature.ToString().ToLower()
     );
 
     private static SubTaskDto ToSubDto(SubTask s) =>

@@ -28,6 +28,7 @@ public class TaskItem
     public DateTime UpdatedAt { get; set; }
     public DateTime? CompletedAt { get; set; }
     public DateTime? DeletedAt { get; set; }
+    public TaskNature Nature { get; set; } = TaskNature.Action;
 
     // Navigation
     public User User { get; set; } = null!;

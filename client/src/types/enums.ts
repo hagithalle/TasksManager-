@@ -69,3 +69,16 @@ export enum RecurrenceType {
   Weekly  = 'weekly',
   Monthly = 'monthly',
 }
+
+/**
+ * The nature / category of a task.
+ * Maps to translation key `taskNature.<value>`.
+ */
+export enum TaskNature {
+  /** Something you do yourself */
+  Action      = 'action',
+  /** Scheduled meeting with others */
+  Meeting     = 'meeting',
+  /** Fixed external appointment (doctor, dentist, admin, etc.) */
+  Appointment = 'appointment',
+}

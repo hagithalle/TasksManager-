@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react'
-import { Priority, ExecutionType, Difficulty } from '../types'
+import { Priority, ExecutionType, Difficulty, TaskNature } from '../types'
 import type { TaskItem } from '../types'
 import { TODAY } from '../utils'
 
@@ -78,15 +78,16 @@ export function useFocusCoach(tasks: TaskItem[]) {
     [tasks],
   )
 
-  const allIncomplete = useMemo(
-    () => tasks.filter(tk => !tk.isCompleted),
-    [tasks],
-  )
-
   // Tasks eligible for today's coach: no due date, due today, or overdue.
   // Tasks explicitly scheduled for a future date are excluded — they don't belong in today's plan.
+  // Meetings and appointments are excluded — they are fixed-time events, not actionable coach tasks.
   const dateEligible = useMemo(
-    () => tasks.filter(tk => !tk.isCompleted && (!tk.dueDate || tk.dueDate <= TODAY)),
+    () => tasks.filter(tk =>
+      !tk.isCompleted &&
+      (!tk.dueDate || tk.dueDate <= TODAY) &&
+      tk.taskNature !== TaskNature.Meeting &&
+      tk.taskNature !== TaskNature.Appointment
+    ),
     [tasks],
   )
 

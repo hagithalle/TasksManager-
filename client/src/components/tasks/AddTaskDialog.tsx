@@ -7,7 +7,7 @@ import AddRoundedIcon    from '@mui/icons-material/AddRounded'
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded'
 import { useTranslation } from 'react-i18next'
 import { tasksApi, goalsApi } from '../../api'
-import { ExecutionType, GoalCategory, GoalType, Priority, RecurrenceType } from '../../types'
+import { ExecutionType, GoalCategory, GoalType, Priority, RecurrenceType, TaskNature } from '../../types'
 import type { Goal, TaskItem, SubTask } from '../../types'
 import { PRIORITY_STYLE, EXECUTION_STYLE } from '../../utils'
 
@@ -45,6 +45,7 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
   const [reminderAt,      setReminderAt]      = useState('')
   const [recurrenceType,  setRecurrenceType]  = useState<RecurrenceType>(RecurrenceType.None)
   const [recurrenceInterval, setRecurrenceInterval] = useState(1)
+  const [taskNature,      setTaskNature]      = useState<TaskNature>(TaskNature.Action)
   const [titleError,      setTitleError]      = useState(false)
   const [loading,         setLoading]         = useState(false)
 
@@ -75,6 +76,7 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
       setReminderAt(editTask.reminderAt ? editTask.reminderAt.slice(0, 16) : '')
       setRecurrenceType(editTask.recurrenceType ?? RecurrenceType.None)
       setRecurrenceInterval(editTask.recurrenceInterval ?? 1)
+      setTaskNature((editTask.taskNature as TaskNature) ?? TaskNature.Action)
       setExistingSubs(editTask.subTasks ?? [])
       setDeletedSubIds(new Set())
       setSubTasks([])
@@ -94,6 +96,7 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
       setReminderAt('')
       setRecurrenceType(RecurrenceType.None)
       setRecurrenceInterval(1)
+      setTaskNature(TaskNature.Action)
       setTitleError(false)
       setSubTaskInput('')
       setSubTaskExec('')
@@ -114,6 +117,7 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
       setReminderAt('')
       setRecurrenceType(RecurrenceType.None)
       setRecurrenceInterval(1)
+      setTaskNature(TaskNature.Action)
       setTitleError(false)
       setSubTaskInput('')
       setSubTaskExec('')
@@ -171,6 +175,7 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
           reminderAt:         reminderAt || undefined,
           recurrenceType:     recurrenceType,
           recurrenceInterval: recurrenceInterval,
+          nature:             taskNature,
         })
         // Delete removed sub-tasks
         for (const id of deletedSubIds) {
@@ -210,6 +215,7 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
           reminderAt:         reminderAt || undefined,
           recurrenceType:     recurrenceType,
           recurrenceInterval: recurrenceInterval,
+          nature:             taskNature,
         })
         for (const st of subTasks) {
           const sub = await tasksApi.addSubTask(task.id, {
@@ -336,6 +342,36 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
               </Box>
             </Box>
           )}
+
+          {/* Task Nature */}
+          <Box>
+            <Typography variant="caption" color="text.secondary" sx={{ mb: 0.75, display: 'block' }}>
+              {t('taskNature.label')}
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
+              {([
+                { value: TaskNature.Action,      icon: '🔨' },
+                { value: TaskNature.Meeting,     icon: '📅' },
+                { value: TaskNature.Appointment, icon: '🏥' },
+              ] as const).map(({ value, icon }) => {
+                const active = taskNature === value
+                return (
+                  <Chip
+                    key={value}
+                    label={`${icon} ${t(`taskNature.${value}`)}`}
+                    onClick={() => setTaskNature(value)}
+                    sx={{
+                      fontWeight: 700,
+                      bgcolor:    active ? '#0369a1' : 'transparent',
+                      color:      active ? 'white'   : '#0369a1',
+                      border:     '1.5px solid #0369a1',
+                      '&:hover':  { bgcolor: active ? '#0369a1' : '#e0f2fe' },
+                    }}
+                  />
+                )
+              })}
+            </Box>
+          </Box>
 
           {/* Priority */}
           <Box>

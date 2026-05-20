@@ -50,7 +50,8 @@ public record TaskItemDto(
     DateTime UpdatedAt,
     DateTime? ReminderAt,
     string RecurrenceType,
-    int RecurrenceInterval
+    int RecurrenceInterval,
+    string Nature
 );
 
 public record CreateTaskItemDto(
@@ -67,7 +68,8 @@ public record CreateTaskItemDto(
     Guid? ListId,
     DateTime? ReminderAt = null,
     string RecurrenceType = "none",
-    int RecurrenceInterval = 1
+    int RecurrenceInterval = 1,
+    string Nature = "action"
 );
 
 public record UpdateTaskItemDto(
@@ -84,5 +86,6 @@ public record UpdateTaskItemDto(
     Guid? ListId,
     DateTime? ReminderAt = null,
     string? RecurrenceType = null,
-    int? RecurrenceInterval = null
+    int? RecurrenceInterval = null,
+    string? Nature = null
 );

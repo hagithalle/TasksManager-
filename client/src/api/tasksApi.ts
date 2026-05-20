@@ -16,6 +16,7 @@ export interface CreateTaskPayload {
   reminderAt?: string
   recurrenceType?: string
   recurrenceInterval?: number
+  nature?: string
 }
 
 export interface UpdateTaskPayload {
@@ -33,6 +34,7 @@ export interface UpdateTaskPayload {
   reminderAt?: string
   recurrenceType?: string
   recurrenceInterval?: number
+  nature?: string
 }
 
 export interface CreateSubTaskPayload {
@@ -83,6 +85,7 @@ function mapTask(raw: any): TaskItem {
     reminderAt:        raw.reminderAt ?? undefined,
     recurrenceType:    raw.recurrenceType ?? undefined,
     recurrenceInterval: raw.recurrenceInterval ?? undefined,
+    taskNature:        raw.nature ?? 'action',
     createdAt:         raw.createdAt,
     updatedAt:         raw.updatedAt,
   }

@@ -1,4 +1,4 @@
-import { Priority, ExecutionType, Difficulty, RecurrenceType } from './enums'
+import { Priority, ExecutionType, Difficulty, RecurrenceType, TaskNature } from './enums'
 
 export interface SubTask {
   id: string
@@ -61,6 +61,9 @@ export interface TaskItem {
 
   /** Recurrence interval (e.g. every 2 days/weeks/months) */
   recurrenceInterval?: number
+
+  /** Whether this is a regular action, a meeting, or an appointment */
+  taskNature?: TaskNature
 
   createdAt: string
   updatedAt: string
