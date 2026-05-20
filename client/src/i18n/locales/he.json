@@ -322,6 +322,7 @@
     "pickAnother": "בחר אחרת",
     "close": "סגור",
     "includeSubtasks": "כלול גם תת-משימות",
+    "lightOnly": "משימות קלות בלבד",
     "manageTasks": "ניהול משימות בגלגל",
     "autoHint": "אוטומטי: כל משימות מהיר וקצר",
     "selectAll": "בחר הכל",

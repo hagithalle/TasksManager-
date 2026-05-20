@@ -9,7 +9,7 @@ import CasinoRoundedIcon from '@mui/icons-material/CasinoRounded'
 import TuneRoundedIcon   from '@mui/icons-material/TuneRounded'
 import { useTranslation } from 'react-i18next'
 import { useNavigate }       from 'react-router-dom'
-import { Difficulty, ExecutionType } from '../../types'
+import { Difficulty, ExecutionType, TaskNature } from '../../types'
 import type { TaskItem } from '../../types'
 
 // ─── Local types ──────────────────────────────────────────────────────────────
@@ -61,6 +61,7 @@ export default function TaskWheelModal({ open, onClose, tasks }: Props) {
   const navigate = useNavigate()
 
   const [includeSubtasks, setIncludeSubtasks] = useState(false)
+  const [lightOnly,       setLightOnly]       = useState(true)
   const [rotation,        setRotation]        = useState(0)
   const [spinning,        setSpinning]        = useState(false)
   const [selected,        setSelected]        = useState<WheelItem | null>(null)
@@ -71,22 +72,28 @@ export default function TaskWheelModal({ open, onClose, tasks }: Props) {
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // All incomplete tasks for manual selection list
+  // All incomplete tasks — hard-exclude meetings and appointments
   const allIncomplete = useMemo(
-    () => tasks.filter((tk) => !tk.isCompleted),
+    () => tasks.filter((tk) =>
+      !tk.isCompleted &&
+      tk.taskNature !== TaskNature.Meeting &&
+      tk.taskNature !== TaskNature.Appointment,
+    ),
     [tasks],
   )
 
-  // Auto-eligible: Quick OR Short execution, or Easy difficulty
+  // Auto-eligible: respects lightOnly filter
   const autoEligibleIds = useMemo(() => new Set(
     allIncomplete
       .filter((tk) =>
-        tk.executionType === ExecutionType.Quick ||
-        tk.executionType === ExecutionType.Short ||
-        tk.difficulty    === Difficulty.Easy,
+        !lightOnly || (
+          tk.executionType === ExecutionType.Quick ||
+          tk.executionType === ExecutionType.Short ||
+          tk.difficulty    === Difficulty.Easy
+        ),
       )
       .map((tk) => tk.id),
-  ), [allIncomplete])
+  ), [allIncomplete, lightOnly])
 
   // On open: reset spin state; init manualIds from auto-eligible if first open
   useEffect(() => {
@@ -100,6 +107,12 @@ export default function TaskWheelModal({ open, onClose, tasks }: Props) {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
+
+  // When lightOnly changes: reset to auto mode
+  useEffect(() => {
+    setManualIds(null)
+    setShowResult(false)
+  }, [lightOnly])
 
   // Active set of task ids for the wheel
   const activeIds = manualIds ?? autoEligibleIds
@@ -211,22 +224,39 @@ export default function TaskWheelModal({ open, onClose, tasks }: Props) {
 
       <DialogContent sx={{ pt: 0, overflow: 'hidden' }}>
 
-        {/* Subtasks toggle + manage button */}
+        {/* Subtasks toggle + light-only toggle + manage button */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-          <FormControlLabel
-            control={
-              <Switch
-                size="small"
-                checked={includeSubtasks}
-                onChange={(e) => { setIncludeSubtasks(e.target.checked); setShowResult(false) }}
-              />
-            }
-            label={
-              <Typography variant="caption" color="text.secondary">
-                {t('wheel.includeSubtasks')}
-              </Typography>
-            }
-          />
+          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  size="small"
+                  checked={includeSubtasks}
+                  onChange={(e) => { setIncludeSubtasks(e.target.checked); setShowResult(false) }}
+                />
+              }
+              label={
+                <Typography variant="caption" color="text.secondary">
+                  {t('wheel.includeSubtasks')}
+                </Typography>
+              }
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  size="small"
+                  checked={lightOnly}
+                  onChange={(e) => setLightOnly(e.target.checked)}
+                  color="success"
+                />
+              }
+              label={
+                <Typography variant="caption" color="text.secondary">
+                  {t('wheel.lightOnly')}
+                </Typography>
+              }
+            />
+          </Box>
           <Tooltip title={t('wheel.manageTasks')}>
             <IconButton size="small" onClick={() => setManageOpen((v) => !v)} color={manageOpen ? 'primary' : 'default'}>
               <TuneRoundedIcon fontSize="small" />

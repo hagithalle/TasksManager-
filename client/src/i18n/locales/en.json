@@ -322,6 +322,7 @@
     "pickAnother": "Pick another",
     "close": "Close",
     "includeSubtasks": "Include subtasks",
+    "lightOnly": "Light tasks only",
     "manageTasks": "Manage wheel tasks",
     "autoHint": "Auto: all Quick & Short tasks",
     "selectAll": "Select all",
