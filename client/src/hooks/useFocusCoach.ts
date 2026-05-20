@@ -83,6 +83,13 @@ export function useFocusCoach(tasks: TaskItem[]) {
     [tasks],
   )
 
+  // Tasks eligible for today's coach: no due date, due today, or overdue.
+  // Tasks explicitly scheduled for a future date are excluded — they don't belong in today's plan.
+  const dateEligible = useMemo(
+    () => tasks.filter(tk => !tk.isCompleted && (!tk.dueDate || tk.dueDate <= TODAY)),
+    [tasks],
+  )
+
   // Frog = highest-priority incomplete today task
   const frogId = useMemo(
     () => todayIncomplete.sort(
@@ -96,13 +103,13 @@ export function useFocusCoach(tasks: TaskItem[]) {
     const ids = new Set<string>()
 
     if (settings.includeBeforeTargetTime) {
-      allIncomplete.forEach(tk => {
+      dateEligible.forEach(tk => {
         if (tk.plannedTime && timeBefore(tk.plannedTime, settings.targetTime)) ids.add(tk.id)
       })
     }
 
     if (settings.includeUrgent) {
-      allIncomplete.forEach(tk => {
+      dateEligible.forEach(tk => {
         if (tk.priority === Priority.Critical || tk.priority === Priority.High) ids.add(tk.id)
       })
     }
@@ -112,7 +119,7 @@ export function useFocusCoach(tasks: TaskItem[]) {
     }
 
     if (settings.includeTwoMin) {
-      allIncomplete.forEach(tk => {
+      dateEligible.forEach(tk => {
         if (
           tk.executionType === ExecutionType.Quick ||
           tk.executionType === ExecutionType.Short ||
@@ -122,12 +129,12 @@ export function useFocusCoach(tasks: TaskItem[]) {
     }
 
     if (settings.includeEasy) {
-      allIncomplete.forEach(tk => {
+      dateEligible.forEach(tk => {
         if (tk.difficulty === Difficulty.Easy) ids.add(tk.id)
       })
     }
 
-    const list = allIncomplete.filter(tk => ids.has(tk.id))
+    const list = dateEligible.filter(tk => ids.has(tk.id))
 
     // Sort: plannedTime first, then priority, then duration
     return list.sort((a, b) => {
@@ -138,7 +145,7 @@ export function useFocusCoach(tasks: TaskItem[]) {
       if (pd !== 0) return pd
       return (a.durationMinutes ?? 99) - (b.durationMinutes ?? 99)
     })
-  }, [allIncomplete, frogId, settings])
+  }, [dateEligible, frogId, settings])
 
   const completedEligible = useMemo(() => {
     // Count tasks that match eligible criteria but ARE completed
