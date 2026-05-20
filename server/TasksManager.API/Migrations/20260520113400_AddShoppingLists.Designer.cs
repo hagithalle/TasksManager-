@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TasksManager.API.Data;
@@ -11,9 +12,11 @@ using TasksManager.API.Data;
 namespace TasksManager.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260520113400_AddShoppingLists")]
+    partial class AddShoppingLists
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -174,19 +177,12 @@ namespace TasksManager.API.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("AlternativeBrandsJson")
-                        .HasColumnType("text");
-
                     b.Property<DateTime?>("BoughtAt")
                         .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Department")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<string>("ImageUrl")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
@@ -201,16 +197,8 @@ namespace TasksManager.API.Migrations
                     b.Property<DateTime?>("LastBoughtAt")
                         .HasColumnType("timestamp without time zone");
 
-                    b.Property<string>("NoteForBuyer")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
                     b.Property<Guid>("PersonalListId")
                         .HasColumnType("uuid");
-
-                    b.Property<string>("PreferredBrand")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
 
                     b.Property<decimal?>("Quantity")
                         .HasPrecision(10, 3)

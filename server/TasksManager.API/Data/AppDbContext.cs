@@ -20,6 +20,8 @@ public class AppDbContext : DbContext
     public DbSet<SubTask> SubTasks => Set<SubTask>();
     public DbSet<PersonalList> PersonalLists => Set<PersonalList>();
     public DbSet<PersonalListItem> PersonalListItems => Set<PersonalListItem>();
+    public DbSet<ShoppingItem> ShoppingItems => Set<ShoppingItem>();
+    public DbSet<ShoppingListSettings> ShoppingListSettings => Set<ShoppingListSettings>();
     public DbSet<ShareInvite>   ShareInvites   => Set<ShareInvite>();
     public DbSet<UserSettings>  UserSettings   => Set<UserSettings>();
 
@@ -102,6 +104,7 @@ public class AppDbContext : DbContext
             e.HasKey(l => l.Id);
             e.Property(l => l.Title).IsRequired().HasMaxLength(200);
             e.Property(l => l.Emoji).HasMaxLength(10);
+            e.Property(l => l.ListType).HasConversion<string>();
 
             e.HasOne(l => l.User)
              .WithMany(u => u.PersonalLists)
@@ -118,6 +121,36 @@ public class AppDbContext : DbContext
             e.HasOne(i => i.PersonalList)
              .WithMany(l => l.Items)
              .HasForeignKey(i => i.PersonalListId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ── ShoppingItem ──────────────────────────────────────────────────────
+        modelBuilder.Entity<ShoppingItem>(e =>
+        {
+            e.HasKey(i => i.Id);
+            e.Property(i => i.Title).IsRequired().HasMaxLength(300);
+            e.Property(i => i.Unit).HasMaxLength(50);
+            e.Property(i => i.Quantity).HasPrecision(10, 3);
+            e.Property(i => i.Department).HasConversion<string>();
+            e.Property(i => i.ItemType).HasConversion<string>();
+            e.Property(i => i.ImageUrl).HasMaxLength(2000);
+            e.Property(i => i.PreferredBrand).HasMaxLength(200);
+            e.Property(i => i.NoteForBuyer).HasMaxLength(500);
+
+            e.HasOne(i => i.PersonalList)
+             .WithMany(l => l.ShoppingItems)
+             .HasForeignKey(i => i.PersonalListId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ── ShoppingListSettings ──────────────────────────────────────────────
+        modelBuilder.Entity<ShoppingListSettings>(e =>
+        {
+            e.HasKey(s => s.Id);
+
+            e.HasOne(s => s.PersonalList)
+             .WithOne(l => l.ShoppingSettings)
+             .HasForeignKey<ShoppingListSettings>(s => s.PersonalListId)
              .OnDelete(DeleteBehavior.Cascade);
         });
 

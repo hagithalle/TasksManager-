@@ -1,10 +1,19 @@
-import { Box, Card, CardActionArea, IconButton, LinearProgress, Typography } from '@mui/material'
+import { Box, Card, CardActionArea, Chip, IconButton, LinearProgress, Typography } from '@mui/material'
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded'
 import ShareRoundedIcon from '@mui/icons-material/ShareRounded'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { PersonalList } from '../../types'
+import { ListType } from '../../types/enums'
 import ShareDialog from '../ShareDialog'
+
+const LIST_TYPE_EMOJI: Record<ListType, string> = {
+  [ListType.Checklist]: '✅',
+  [ListType.Shopping]:  '🛒',
+  [ListType.Notes]:     '📝',
+  [ListType.Ideas]:     '💡',
+  [ListType.Equipment]: '🎒',
+}
 
 interface Props {
   list: PersonalList
@@ -16,8 +25,13 @@ export default function PersonalListCard({ list, onClick, onDelete }: Props) {
   const { t } = useTranslation()
   const [shareOpen, setShareOpen] = useState(false)
 
-  const total   = list.items.length
-  const done    = list.items.filter((i) => i.isCompleted).length
+  const isShopping = list.listType === ListType.Shopping
+  const total   = isShopping
+    ? list.shoppingItems.filter((i) => i.isActive).length
+    : list.items.length
+  const done    = isShopping
+    ? list.shoppingItems.filter((i) => i.isActive && i.isBought).length
+    : list.items.filter((i) => i.isCompleted).length
   const pct     = total > 0 ? Math.round((done / total) * 100) : 0
   const allDone = total > 0 && done === total
 
@@ -49,16 +63,24 @@ export default function PersonalListCard({ list, onClick, onDelete }: Props) {
               fontSize: 22,
             }}
           >
-            {list.emoji ?? '📋'}
+            {list.emoji ?? LIST_TYPE_EMOJI[list.listType] ?? '📋'}
           </Box>
 
           {/* Content */}
           <Box sx={{ flex: 1, minWidth: 0 }}>
             {/* Title + actions + items count */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.75 }}>
-              <Typography variant="subtitle2" fontWeight={700} noWrap sx={{ flex: 1 }}>
-                {list.title}
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flex: 1, minWidth: 0 }}>
+                <Typography variant="subtitle2" fontWeight={700} noWrap sx={{ flex: 1 }}>
+                  {list.title}
+                </Typography>
+                <Chip
+                  label={`${LIST_TYPE_EMOJI[list.listType]} ${t(`listType.${list.listType}`)}`}
+                  size="small"
+                  variant="outlined"
+                  sx={{ fontSize: 10, height: 18, px: 0.5, flexShrink: 0 }}
+                />
+              </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, flexShrink: 0, ml: 1 }}>
                 {onDelete && (
                   <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDelete(list.id) }} sx={{ p: 0.25 }}>

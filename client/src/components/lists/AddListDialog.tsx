@@ -1,10 +1,19 @@
 import { useEffect, useState } from 'react'
 import {
-  Box, Dialog, DialogActions, DialogContent, DialogTitle,
-  Button, TextField,
+  Box, Chip, Dialog, DialogActions, DialogContent, DialogTitle,
+  Button, TextField, Typography,
 } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import type { PersonalList } from '../../types'
+import { ListType } from '../../types/enums'
+
+const LIST_TYPE_OPTIONS: { type: ListType; emoji: string }[] = [
+  { type: ListType.Checklist, emoji: '✅' },
+  { type: ListType.Shopping,  emoji: '🛒' },
+  { type: ListType.Notes,     emoji: '📝' },
+  { type: ListType.Ideas,     emoji: '💡' },
+  { type: ListType.Equipment, emoji: '🎒' },
+]
 
 interface AddListDialogProps {
   open:    boolean
@@ -15,6 +24,7 @@ interface AddListDialogProps {
     userId: string
     title: string
     emoji?: string
+    listType?: string
   }) => Promise<PersonalList>
 }
 
@@ -23,6 +33,7 @@ export default function AddListDialog({ open, onClose, onAdd, userId, createList
 
   const [title,      setTitle]      = useState('')
   const [emoji,      setEmoji]      = useState('')
+  const [listType,   setListType]   = useState<ListType>(ListType.Checklist)
   const [titleError, setTitleError] = useState(false)
   const [loading,    setLoading]    = useState(false)
 
@@ -30,6 +41,7 @@ export default function AddListDialog({ open, onClose, onAdd, userId, createList
     if (!open) {
       setTitle('')
       setEmoji('')
+      setListType(ListType.Checklist)
       setTitleError(false)
     }
   }, [open])
@@ -40,8 +52,9 @@ export default function AddListDialog({ open, onClose, onAdd, userId, createList
     try {
       const list = await createList({
         userId,
-        title: title.trim(),
-        emoji: emoji.trim() || undefined,
+        title:    title.trim(),
+        emoji:    emoji.trim() || undefined,
+        listType,
       })
       onAdd(list)
     } finally {
@@ -55,6 +68,26 @@ export default function AddListDialog({ open, onClose, onAdd, userId, createList
 
       <DialogContent sx={{ pt: '12px !important' }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+
+          {/* List type chips */}
+          <Box>
+            <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ mb: 0.75, display: 'block' }}>
+              {t('list.type')}
+            </Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+              {LIST_TYPE_OPTIONS.map(({ type, emoji: icon }) => (
+                <Chip
+                  key={type}
+                  label={`${icon} ${t(`listType.${type}`)}`}
+                  onClick={() => setListType(type)}
+                  variant={listType === type ? 'filled' : 'outlined'}
+                  color={listType === type ? 'primary' : 'default'}
+                  size="small"
+                  sx={{ fontWeight: listType === type ? 700 : 400 }}
+                />
+              ))}
+            </Box>
+          </Box>
 
           {/* Emoji */}
           <TextField

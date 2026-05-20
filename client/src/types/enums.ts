@@ -96,3 +96,46 @@ export enum TaskStatus {
   /** Past-due task carried forward to today */
   CarriedOver = 'carriedOver',
 }
+
+/**
+ * The type / purpose of a personal list.
+ * Maps to translation key `listType.<value>`.
+ */
+export enum ListType {
+  Checklist = 'checklist',
+  Shopping  = 'shopping',
+  Notes     = 'notes',
+  Ideas     = 'ideas',
+  Equipment = 'equipment',
+}
+
+/**
+ * Supermarket / store department for grouping shopping items.
+ * Maps to translation key `shoppingDepartment.<value>`.
+ */
+export enum ShoppingDepartment {
+  FruitsAndVegetables = 'fruitsAndVegetables',
+  Dairy               = 'dairy',
+  MeatAndFish         = 'meatAndFish',
+  Bakery              = 'bakery',
+  Pantry              = 'pantry',
+  Frozen              = 'frozen',
+  Cleaning            = 'cleaning',
+  Disposable          = 'disposable',
+  Baby                = 'baby',
+  Other               = 'other',
+}
+
+/**
+ * How often a shopping item is purchased — drives smart suggestion logic.
+ * Maps to translation key `shoppingItemType.<value>`.
+ */
+export enum ShoppingItemType {
+  /** Always suggest again after being bought */
+  Regular    = 'regular',
+  /** Suggest again after X days (configurable per list) */
+  Occasional = 'occasional',
+  /** Never auto-suggest */
+  OneTime    = 'oneTime',
+}
+

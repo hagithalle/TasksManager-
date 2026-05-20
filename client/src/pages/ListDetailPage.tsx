@@ -10,9 +10,11 @@ import { useTranslation } from 'react-i18next'
 import { listsApi, goalsApi } from '../api'
 import { useAuth } from '../contexts/AuthContext'
 import type { Goal, PersonalList, PersonalListItem } from '../types'
+import { ListType } from '../types/enums'
 import ListItemRow from '../components/lists/ListItemRow'
 import AddTaskDialog from '../components/tasks/AddTaskDialog'
 import ListIntelligenceDialog from '../components/lists/ListIntelligenceDialog'
+import ShoppingListView from '../components/lists/ShoppingListView'
 
 // ─── page ─────────────────────────────────────────────────────────────────────
 
@@ -70,9 +72,14 @@ export default function ListDetailPage() {
     )
   }
 
+  const isShopping = list.listType === ListType.Shopping
   const items   = list.items
-  const total   = items.length
-  const done    = items.filter((i) => i.isCompleted).length
+  const total   = isShopping
+    ? list.shoppingItems.filter((i) => i.isActive).length
+    : items.length
+  const done    = isShopping
+    ? list.shoppingItems.filter((i) => i.isActive && i.isBought).length
+    : items.filter((i) => i.isCompleted).length
   const pct     = total > 0 ? Math.round((done / total) * 100) : 0
   const allDone = total > 0 && done === total
 
@@ -206,7 +213,10 @@ export default function ListDetailPage() {
         />
       </Box>
 
-      {/* ── Items list ── */}
+      {/* ── Items list — branch by list type ── */}
+      {isShopping ? (
+        <ShoppingListView list={list} onUpdate={setList} />
+      ) : (
       <Box sx={{ px: 2, pt: 2 }}>
         {items.length === 0 && !adding ? (
           <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 3 }}>
@@ -295,6 +305,7 @@ export default function ListDetailPage() {
           </Box>
         )}
       </Box>
+      )} {/* end non-shopping branch */}
     </Box>
 
     {/* ── Convert item to task dialog ── */}

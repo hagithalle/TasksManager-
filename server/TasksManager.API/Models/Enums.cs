@@ -52,3 +52,33 @@ public enum ItemStatus
     Missed      = 3,  // time-sensitive task that passed without completion
     CarriedOver = 4,  // past-due non-time-sensitive task brought forward
 }
+
+public enum ListType
+{
+    Checklist   = 0,  // default – generic checklist
+    Shopping    = 1,  // smart shopping list with departments + suggestions
+    Notes       = 2,  // free-form notes
+    Ideas       = 3,  // idea collection
+    Equipment   = 4,  // packing / equipment list
+}
+
+public enum ShoppingDepartment
+{
+    FruitsAndVegetables = 0,
+    Dairy               = 1,
+    MeatAndFish         = 2,
+    Bakery              = 3,
+    Pantry              = 4,
+    Frozen              = 5,
+    Cleaning            = 6,
+    Disposable          = 7,
+    Baby                = 8,
+    Other               = 9,
+}
+
+public enum ShoppingItemType
+{
+    Regular    = 0,  // always suggest again after being bought
+    Occasional = 1,  // suggest again after X days
+    OneTime    = 2,  // never auto-suggest
+}

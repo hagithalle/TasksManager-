@@ -1,10 +1,13 @@
 import type { PersonalList } from '../types'
+import { ListType } from '../types/enums'
 
 export const mockLists: PersonalList[] = [
   {
     id: 'l1',
     title: 'רשימת קניות',
     emoji: '🛒',
+    listType: ListType.Checklist,
+    shoppingItems: [],
     items: [
       { id: 'li1',  title: 'חלב',         isCompleted: false, sortOrder: 1 },
       { id: 'li2',  title: 'לחם',         isCompleted: false, sortOrder: 2 },
@@ -22,6 +25,8 @@ export const mockLists: PersonalList[] = [
     id: 'l2',
     title: "צ'ק ליסט לטיסה",
     emoji: '✈️',
+    listType: ListType.Checklist,
+    shoppingItems: [],
     items: [
       { id: 'li9',  title: 'דרכון',          isCompleted: true,  sortOrder: 1 },
       { id: 'li10', title: 'כרטיס טיסה',     isCompleted: true,  sortOrder: 2 },
@@ -41,6 +46,8 @@ export const mockLists: PersonalList[] = [
     id: 'l3',
     title: 'ספרים לקרוא',
     emoji: '📚',
+    listType: ListType.Checklist,
+    shoppingItems: [],
     items: [
       { id: 'li19', title: 'Atomic Habits',           isCompleted: true,  sortOrder: 1 },
       { id: 'li20', title: 'The Pragmatic Programmer', isCompleted: false, sortOrder: 2 },
@@ -52,3 +59,4 @@ export const mockLists: PersonalList[] = [
     updatedAt: '2025-05-01T08:00:00Z',
   },
 ]
+

@@ -46,7 +46,7 @@ public class PersonalListsController : ControllerBase
         return deleted ? NoContent() : NotFound();
     }
 
-    // ── Items ─────────────────────────────────────────────────────────────────
+    // ── Generic list items ────────────────────────────────────────────────────
 
     [HttpPost("{listId:guid}/items")]
     public async Task<IActionResult> AddItem(Guid listId, CreatePersonalListItemDto dto)
@@ -68,4 +68,53 @@ public class PersonalListsController : ControllerBase
         var deleted = await _service.DeleteItemAsync(itemId);
         return deleted ? NoContent() : NotFound();
     }
+
+    // ── Shopping items ────────────────────────────────────────────────────────
+
+    [HttpPost("{listId:guid}/shopping-items")]
+    public async Task<IActionResult> AddShoppingItem(Guid listId, CreateShoppingItemDto dto)
+    {
+        var item = await _service.AddShoppingItemAsync(listId, dto);
+        return Created(string.Empty, item);
+    }
+
+    [HttpPatch("shopping-items/{itemId:guid}")]
+    public async Task<IActionResult> UpdateShoppingItem(Guid itemId, UpdateShoppingItemDto dto)
+    {
+        var item = await _service.UpdateShoppingItemAsync(itemId, dto);
+        return item is null ? NotFound() : Ok(item);
+    }
+
+    [HttpDelete("shopping-items/{itemId:guid}")]
+    public async Task<IActionResult> DeleteShoppingItem(Guid itemId)
+    {
+        var deleted = await _service.DeleteShoppingItemAsync(itemId);
+        return deleted ? NoContent() : NotFound();
+    }
+
+    // ── Shopping settings ─────────────────────────────────────────────────────
+
+    [HttpGet("{listId:guid}/shopping-settings")]
+    public async Task<IActionResult> GetShoppingSettings(Guid listId)
+    {
+        var settings = await _service.GetShoppingSettingsAsync(listId);
+        return settings is null ? NotFound() : Ok(settings);
+    }
+
+    [HttpPut("{listId:guid}/shopping-settings")]
+    public async Task<IActionResult> UpsertShoppingSettings(Guid listId, UpdateShoppingListSettingsDto dto)
+    {
+        var settings = await _service.UpsertShoppingSettingsAsync(listId, dto);
+        return Ok(settings);
+    }
+
+    // ── Clear trip ────────────────────────────────────────────────────────────
+
+    [HttpPost("{listId:guid}/clear-trip")]
+    public async Task<IActionResult> ClearTrip(Guid listId)
+    {
+        var list = await _service.ClearTripAsync(listId);
+        return list is null ? NotFound() : Ok(list);
+    }
 }
+
