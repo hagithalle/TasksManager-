@@ -43,3 +43,12 @@ public enum TaskNature
     Meeting     = 1,  // scheduled meeting with others
     Appointment = 2,  // fixed external appointment (doctor, dentist, etc.)
 }
+
+public enum ItemStatus
+{
+    Open        = 0,  // default – not yet completed
+    Completed   = 1,  // user marked as done
+    Archived    = 2,  // manually archived
+    Missed      = 3,  // time-sensitive task that passed without completion
+    CarriedOver = 4,  // past-due non-time-sensitive task brought forward
+}

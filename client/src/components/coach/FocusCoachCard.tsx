@@ -43,6 +43,7 @@ export default function FocusCoachCard({ tasks, onRefresh }: Props) {
     eligibleTasks,
     totalCount, completedCount, progress,
     nextTask, secondTask,
+    carriedOverCount,
   } = useFocusCoach(tasks)
 
   const remaining = totalCount - completedCount
@@ -67,6 +68,21 @@ export default function FocusCoachCard({ tasks, onRefresh }: Props) {
           dailyTarget={settings.dailyTaskTarget}
           tasks={tasks}
         />
+      )}
+
+      {/* ── Carried-over reminder ── */}
+      {settings.includeCarriedOver && carriedOverCount > 0 && (
+        <Box sx={{
+          px: 2, py: 1,
+          bgcolor: '#fff7ed',
+          borderBottom: '1px solid #fed7aa',
+          display: 'flex', alignItems: 'center', gap: 1,
+        }}>
+          <Typography sx={{ fontSize: 16, lineHeight: 1, flexShrink: 0 }}>🔄</Typography>
+          <Typography variant="caption" sx={{ color: '#c2410c', fontWeight: 600 }}>
+            {t('carryOver.coachReminder', { count: carriedOverCount })}
+          </Typography>
+        </Box>
       )}
 
       {/* ── Header ── */}

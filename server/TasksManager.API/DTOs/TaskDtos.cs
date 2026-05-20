@@ -51,7 +51,8 @@ public record TaskItemDto(
     DateTime? ReminderAt,
     string RecurrenceType,
     int RecurrenceInterval,
-    string Nature
+    string Nature,
+    ItemStatus Status
 );
 
 public record CreateTaskItemDto(
@@ -87,5 +88,6 @@ public record UpdateTaskItemDto(
     DateTime? ReminderAt = null,
     string? RecurrenceType = null,
     int? RecurrenceInterval = null,
-    string? Nature = null
+    string? Nature = null,
+    ItemStatus? Status = null
 );

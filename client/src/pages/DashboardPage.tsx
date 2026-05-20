@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import {
-  Box, Button, Card, CardActionArea, Chip, Divider, IconButton,
+  Box, Button, Card, CardActionArea, Chip, Collapse, Divider, IconButton,
   LinearProgress, List, ListItem, ListItemText, Tooltip, Typography,
 } from '@mui/material'
 import CheckCircleRoundedIcon          from '@mui/icons-material/CheckCircleRounded'
@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate }    from 'react-router-dom'
 import { tasksApi, goalsApi } from '../api'
 import { useAuth }        from '../contexts/AuthContext'
-import { ExecutionType, Priority } from '../types'
+import { ExecutionType, Priority, TaskStatus } from '../types'
 import type { TaskItem, Goal } from '../types'
 import GoalCategoryIcon  from '../components/goals/GoalCategoryIcon'
 import TaskWheelModal    from '../components/tasks/TaskWheelModal'
@@ -173,9 +173,32 @@ export default function DashboardPage() {
     })
   }
 
+  const moveCarriedTask = (taskId: string, when: 'today' | 'tomorrow') => {
+    const task = tasks.find((t) => t.id === taskId)
+    if (!task) return
+    const dueDate = when === 'today'
+      ? TODAY
+      : new Date(Date.now() + 86_400_000).toISOString().slice(0, 10)
+    const updated = { ...task, dueDate, taskStatus: TaskStatus.Open }
+    setTasks((prev) => prev.map((t) => t.id === taskId ? updated : t))
+    tasksApi.update(taskId, { dueDate, status: TaskStatus.Open }).catch(() => {
+      setTasks((prev) => prev.map((t) => t.id === taskId ? task : t))
+    })
+  }
+
+  const archiveCarriedTask = (taskId: string) => {
+    const task = tasks.find((t) => t.id === taskId)
+    if (!task) return
+    setTasks((prev) => prev.filter((t) => t.id !== taskId))
+    tasksApi.update(taskId, { status: TaskStatus.Archived }).catch(() => {
+      setTasks((prev) => [task, ...prev])
+    })
+  }
+
   const { streak, last7 } = useStreak(tasks)
 
   // ── Derived data ────────────────────────────────────────────────────────────
+  const carriedTasks   = tasks.filter((tk) => tk.taskStatus === TaskStatus.CarriedOver && !tk.isCompleted)
   const todayTasks     = tasks.filter((tk) => tk.dueDate?.startsWith(TODAY))
   const completedToday = todayTasks.filter((tk) =>  tk.isCompleted).length
   const remainingToday = todayTasks.filter((tk) => !tk.isCompleted).length
@@ -260,6 +283,16 @@ export default function DashboardPage() {
           </Box>
         ))}
       </Box>
+
+      {/* ── Carried-over tasks ── */}
+      {carriedTasks.length > 0 && (
+        <CarryOverSection
+          tasks={carriedTasks}
+          onMoveToday={(id) => moveCarriedTask(id, 'today')}
+          onMoveTomorrow={(id) => moveCarriedTask(id, 'tomorrow')}
+          onArchive={archiveCarriedTask}
+        />
+      )}
 
       {/* ── Focus Coach ── */}
       <FocusCoachCard
@@ -496,6 +529,108 @@ export default function DashboardPage() {
 }
 
 // ─── sub-components ───────────────────────────────────────────────────────────────
+
+// ─── CarryOverSection ─────────────────────────────────────────────────────────
+
+function CarryOverSection({
+  tasks,
+  onMoveToday,
+  onMoveTomorrow,
+  onArchive,
+}: {
+  tasks: TaskItem[]
+  onMoveToday:    (id: string) => void
+  onMoveTomorrow: (id: string) => void
+  onArchive:      (id: string) => void
+}) {
+  const { t } = useTranslation()
+  const [open, setOpen] = useState(true)
+
+  return (
+    <Box sx={{ mb: 2.5 }}>
+      {/* Header — clickable to collapse */}
+      <Box
+        onClick={() => setOpen(o => !o)}
+        sx={{
+          display: 'flex', alignItems: 'center', gap: 0.75, mb: open ? 1 : 0,
+          cursor: 'pointer',
+          '&:hover': { opacity: 0.8 },
+        }}
+      >
+        <Typography sx={{ fontSize: 16, lineHeight: 1 }}>🔄</Typography>
+        <Typography
+          variant="caption"
+          fontWeight={700}
+          color="warning.dark"
+          sx={{ letterSpacing: 0.4, textTransform: 'uppercase', flex: 1 }}
+        >
+          {t('carryOver.sectionTitle')}
+          <Typography
+            component="span"
+            variant="caption"
+            sx={{ ml: 0.75, bgcolor: '#fed7aa', color: '#c2410c', borderRadius: 1, px: 0.75, py: 0.1, fontWeight: 700 }}
+          >
+            {tasks.length}
+          </Typography>
+        </Typography>
+        {open ? <ExpandLessRoundedIcon sx={{ fontSize: 16, color: 'warning.dark' }} /> : <ExpandMoreRoundedIcon sx={{ fontSize: 16, color: 'warning.dark' }} />}
+      </Box>
+
+      <Collapse in={open}>
+        <Card sx={{
+          borderRadius: 3,
+          border: '1.5px solid #fed7aa',
+          bgcolor: '#fffbf5',
+          boxShadow: '0 1px 6px rgba(194,65,12,0.08)',
+        }}>
+          <List disablePadding>
+            {tasks.map((tk, i) => (
+              <Box key={tk.id}>
+                {i > 0 && <Divider sx={{ ml: 2 }} />}
+                <ListItem sx={{ px: 2, py: 0.875, alignItems: 'flex-start', flexDirection: 'column', gap: 0.5 }}>
+                  <Typography variant="body2" fontWeight={500} sx={{ lineHeight: 1.4 }}>
+                    {tk.title}
+                  </Typography>
+                  {tk.dueDate && (
+                    <Typography variant="caption" color="text.disabled">
+                      {new Date(tk.dueDate).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' })}
+                    </Typography>
+                  )}
+                  <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => onMoveToday(tk.id)}
+                      sx={{ borderRadius: 2, py: 0.25, px: 1.25, fontSize: '0.7rem', fontWeight: 700, borderColor: '#7c5cff', color: '#7c5cff', minWidth: 0 }}
+                    >
+                      📌 {t('carryOver.moveToday')}
+                    </Button>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => onMoveTomorrow(tk.id)}
+                      sx={{ borderRadius: 2, py: 0.25, px: 1.25, fontSize: '0.7rem', fontWeight: 700, borderColor: '#0369a1', color: '#0369a1', minWidth: 0 }}
+                    >
+                      ⏩ {t('carryOver.moveTomorrow')}
+                    </Button>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => onArchive(tk.id)}
+                      sx={{ borderRadius: 2, py: 0.25, px: 1.25, fontSize: '0.7rem', fontWeight: 700, borderColor: '#94a3b8', color: '#64748b', minWidth: 0 }}
+                    >
+                      📦 {t('carryOver.archive')}
+                    </Button>
+                  </Box>
+                </ListItem>
+              </Box>
+            ))}
+          </List>
+        </Card>
+      </Collapse>
+    </Box>
+  )
+}
 
 function SectionHeader({
   title, subtitle, emoji, onAdd, onSeeAll,

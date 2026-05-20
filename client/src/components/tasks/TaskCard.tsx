@@ -10,7 +10,7 @@ import CalendarTodayRoundedIcon        from '@mui/icons-material/CalendarTodayRo
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TaskItem } from '../../types'
-import { TaskNature } from '../../types'
+import { TaskNature, TaskStatus } from '../../types'
 import SubProgressBar from './SubProgressBar'
 import SubTaskList    from './SubTaskList'
 import { PRIORITY_STYLE, EXECUTION_STYLE } from '../../utils'
@@ -47,6 +47,20 @@ function TaskChips({ task }: { task: TaskItem }) {
           label={`🏥 ${t('taskNature.appointment')}`}
           size="small"
           sx={{ height: 20, fontSize: '0.65rem', fontWeight: 700, bgcolor: '#fce7f3', color: '#9d174d', '& .MuiChip-label': { px: 1 } }}
+        />
+      )}
+      {task.taskStatus === TaskStatus.CarriedOver && (
+        <Chip
+          label={`🔄 ${t('carryOver.badge')}`}
+          size="small"
+          sx={{ height: 20, fontSize: '0.65rem', fontWeight: 700, bgcolor: '#fff7ed', color: '#c2410c', border: '1px solid #fed7aa', '& .MuiChip-label': { px: 1 } }}
+        />
+      )}
+      {task.taskStatus === TaskStatus.Missed && (
+        <Chip
+          label={`⚠️ ${t('carryOver.missedBadge')}`}
+          size="small"
+          sx={{ height: 20, fontSize: '0.65rem', fontWeight: 700, bgcolor: '#fff1f2', color: '#be123c', border: '1px solid #fecdd3', '& .MuiChip-label': { px: 1 } }}
         />
       )}
     </Box>

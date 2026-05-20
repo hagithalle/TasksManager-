@@ -109,6 +109,22 @@
     "meeting":     "פגישה",
     "appointment": "תור"
   },
+  "taskStatus": {
+    "open":        "פתוח",
+    "completed":   "הושלם",
+    "archived":    "בארכיון",
+    "missed":      "פוספס",
+    "carriedOver": "נדחה"
+  },
+  "carryOver": {
+    "sectionTitle":  "משימות שנדחו מאתמול",
+    "badge":         "נדחתה",
+    "missedBadge":   "פוספסה",
+    "moveToday":     "להיום",
+    "moveTomorrow":  "למחר",
+    "archive":       "ארכיון",
+    "coachReminder": "{{count}} משימות נדחו מאתמול. אתה רוצה להתמודד איתן היום?"
+  },
   "category": {
     "home": "בית",
     "work": "עבודה",
@@ -173,6 +189,7 @@
     "filterFrog": "צפרדע — המשימה הישיבית ביותר",
     "filterTwoMin": "משימות מהירות (עד 2 דקות)",
     "filterEasy": "משימות קלות",
+    "filterCarriedOver": "משימות שנדחו",
     "dailyTarget": "יעד משימות יומי:",
     "noTasks": "אני כאן כדי לעזור לך להשיג את המטרות שלך",
     "allTasks": "כל המשימות ({{count}})",

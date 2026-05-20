@@ -1,4 +1,4 @@
-import { Priority, ExecutionType, Difficulty, RecurrenceType, TaskNature } from './enums'
+import { Priority, ExecutionType, Difficulty, RecurrenceType, TaskNature, TaskStatus } from './enums'
 
 export interface SubTask {
   id: string
@@ -64,6 +64,9 @@ export interface TaskItem {
 
   /** Whether this is a regular action, a meeting, or an appointment */
   taskNature?: TaskNature
+
+  /** Lifecycle status (open / completed / archived / missed / carriedOver) */
+  taskStatus?: TaskStatus
 
   createdAt: string
   updatedAt: string

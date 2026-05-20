@@ -17,6 +17,7 @@ const FILTER_KEYS: Array<{ key: keyof CoachSettings; i18n: string }> = [
   { key: 'includeFrog',             i18n: 'coach.filterFrog'       },
   { key: 'includeTwoMin',           i18n: 'coach.filterTwoMin'     },
   { key: 'includeEasy',             i18n: 'coach.filterEasy'       },
+  { key: 'includeCarriedOver',      i18n: 'coach.filterCarriedOver'},
 ]
 
 export default function CoachSettingsPanel({ open, settings, onChange }: Props) {

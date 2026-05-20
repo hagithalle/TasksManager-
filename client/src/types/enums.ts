@@ -82,3 +82,17 @@ export enum TaskNature {
   /** Fixed external appointment (doctor, dentist, admin, etc.) */
   Appointment = 'appointment',
 }
+
+/**
+ * Lifecycle status of a task.
+ * Maps to translation key `taskStatus.<value>`.
+ */
+export enum TaskStatus {
+  Open        = 'open',
+  Completed   = 'completed',
+  Archived    = 'archived',
+  /** Past-due time-sensitive task that was not completed */
+  Missed      = 'missed',
+  /** Past-due task carried forward to today */
+  CarriedOver = 'carriedOver',
+}

@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react'
-import { Priority, ExecutionType, Difficulty, TaskNature } from '../types'
+import { Priority, ExecutionType, Difficulty, TaskNature, TaskStatus } from '../types'
 import type { TaskItem } from '../types'
 import { TODAY } from '../utils'
 
@@ -18,6 +18,8 @@ export interface CoachSettings {
   includeTwoMin: boolean
   /** Include tasks with difficulty === Easy */
   includeEasy: boolean
+  /** Include carried-over tasks from previous days */
+  includeCarriedOver: boolean
   /** Target number of tasks to complete per day */
   dailyTaskTarget: number
 }
@@ -29,6 +31,7 @@ export const DEFAULT_SETTINGS: CoachSettings = {
   includeFrog:             true,
   includeTwoMin:           true,
   includeEasy:             false,
+  includeCarriedOver:      false,
   dailyTaskTarget:         5,
 }
 
@@ -81,13 +84,23 @@ export function useFocusCoach(tasks: TaskItem[]) {
   // Tasks eligible for today's coach: no due date, due today, or overdue.
   // Tasks explicitly scheduled for a future date are excluded — they don't belong in today's plan.
   // Meetings and appointments are excluded — they are fixed-time events, not actionable coach tasks.
+  // CarriedOver tasks are only included when the user enables the setting.
   const dateEligible = useMemo(
     () => tasks.filter(tk =>
       !tk.isCompleted &&
       (!tk.dueDate || tk.dueDate <= TODAY) &&
       tk.taskNature !== TaskNature.Meeting &&
-      tk.taskNature !== TaskNature.Appointment
+      tk.taskNature !== TaskNature.Appointment &&
+      tk.taskStatus !== TaskStatus.Missed &&
+      tk.taskStatus !== TaskStatus.Archived &&
+      (settings.includeCarriedOver || tk.taskStatus !== TaskStatus.CarriedOver)
     ),
+    [tasks, settings.includeCarriedOver],
+  )
+
+  // Count of carried-over tasks (for reminder message)
+  const carriedOverCount = useMemo(
+    () => tasks.filter(tk => !tk.isCompleted && tk.taskStatus === TaskStatus.CarriedOver).length,
     [tasks],
   )
 
@@ -182,5 +195,6 @@ export function useFocusCoach(tasks: TaskItem[]) {
     progress,
     nextTask,
     secondTask,
+    carriedOverCount,
   }
 }

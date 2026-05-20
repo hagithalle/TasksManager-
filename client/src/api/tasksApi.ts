@@ -17,6 +17,7 @@ export interface CreateTaskPayload {
   recurrenceType?: string
   recurrenceInterval?: number
   nature?: string
+  status?: string
 }
 
 export interface UpdateTaskPayload {
@@ -35,6 +36,7 @@ export interface UpdateTaskPayload {
   recurrenceType?: string
   recurrenceInterval?: number
   nature?: string
+  status?: string
 }
 
 export interface CreateSubTaskPayload {
@@ -86,6 +88,7 @@ function mapTask(raw: any): TaskItem {
     recurrenceType:    raw.recurrenceType ?? undefined,
     recurrenceInterval: raw.recurrenceInterval ?? undefined,
     taskNature:        raw.nature ?? 'action',
+    taskStatus:        raw.status ?? 'open',
     createdAt:         raw.createdAt,
     updatedAt:         raw.updatedAt,
   }

@@ -109,6 +109,22 @@
     "meeting":     "Meeting",
     "appointment": "Appointment"
   },
+  "taskStatus": {
+    "open":        "Open",
+    "completed":   "Completed",
+    "archived":    "Archived",
+    "missed":      "Missed",
+    "carriedOver": "Carried Over"
+  },
+  "carryOver": {
+    "sectionTitle":  "Tasks carried from yesterday",
+    "badge":         "Carried Over",
+    "missedBadge":   "Missed",
+    "moveToday":     "Today",
+    "moveTomorrow":  "Tomorrow",
+    "archive":       "Archive",
+    "coachReminder": "{{count}} tasks carried over from yesterday. Ready to tackle them today?"
+  },
   "category": {
     "home": "Home",
     "work": "Work",
@@ -173,6 +189,7 @@
     "filterFrog": "Frog — today's top priority",
     "filterTwoMin": "Quick tasks (under 2 min)",
     "filterEasy": "Easy tasks",
+    "filterCarriedOver": "Carried-over tasks",
     "dailyTarget": "Daily task target:",
     "noTasks": "I'm here to help you reach your goals",
     "allTasks": "All tasks ({{count}})",

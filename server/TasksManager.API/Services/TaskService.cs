@@ -14,6 +14,29 @@ public class TaskService : ITaskService
 
     public async Task<IEnumerable<TaskItemDto>> GetAllByUserAsync(Guid userId)
     {
+        // ── Auto carry-over: mark overdue open tasks as CarriedOver or Missed ──
+        var today = DateTime.UtcNow.Date;
+        var overdue = await _db.Tasks
+            .Where(t => t.UserId == userId
+                     && t.DeletedAt == null
+                     && t.Status == ItemStatus.Open
+                     && !t.IsCompleted
+                     && t.DueDate.HasValue
+                     && t.DueDate.Value.Date < today)
+            .ToListAsync();
+
+        if (overdue.Any())
+        {
+            foreach (var task in overdue)
+            {
+                // Time-sensitive (has a specific planned time) → Missed
+                // Otherwise (just a date, no clock time) → CarriedOver
+                task.Status    = task.PlannedTime != null ? ItemStatus.Missed : ItemStatus.CarriedOver;
+                task.UpdatedAt = DateTime.UtcNow;
+            }
+            await _db.SaveChangesAsync();
+        }
+
         var ownTasks = await _db.Tasks
             .AsNoTracking()
             .Where(t => t.UserId == userId && t.DeletedAt == null)
@@ -81,7 +104,8 @@ public class TaskService : ITaskService
             RecurrenceInterval = dto.RecurrenceInterval,
             Nature = nature,
             CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            UpdatedAt = DateTime.UtcNow,
+            Status = ItemStatus.Open,
         };
         _db.Tasks.Add(task);
         await _db.SaveChangesAsync();
@@ -102,6 +126,9 @@ public class TaskService : ITaskService
                 task.CompletedAt = DateTime.UtcNow;
             else if (!dto.IsCompleted.Value)
                 task.CompletedAt = null;
+            // Sync status with completion toggle (unless Status is also being set explicitly)
+            if (!dto.Status.HasValue)
+                task.Status = dto.IsCompleted.Value ? ItemStatus.Completed : ItemStatus.Open;
         }
         if (dto.Priority.HasValue)         task.Priority      = dto.Priority.Value;
         if (dto.ExecutionType.HasValue)    task.ExecutionType = dto.ExecutionType.Value;
@@ -119,6 +146,21 @@ public class TaskService : ITaskService
         if (dto.Nature is not null &&
             Enum.TryParse<TaskNature>(dto.Nature, true, out var tn))
             task.Nature = tn;
+        if (dto.Status.HasValue)
+        {
+            task.Status = dto.Status.Value;
+            // Sync IsCompleted with explicit Status transitions
+            if (dto.Status.Value == ItemStatus.Completed && !task.IsCompleted)
+            {
+                task.IsCompleted = true;
+                if (task.CompletedAt is null) task.CompletedAt = DateTime.UtcNow;
+            }
+            else if (dto.Status.Value == ItemStatus.Open && task.IsCompleted)
+            {
+                task.IsCompleted = false;
+                task.CompletedAt = null;
+            }
+        }
         task.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
@@ -250,7 +292,8 @@ public class TaskService : ITaskService
         t.ReminderAt,
         t.RecurrenceType.ToString().ToLower(),
         t.RecurrenceInterval,
-        t.Nature.ToString().ToLower()
+        t.Nature.ToString().ToLower(),
+        t.Status
     );
 
     private static SubTaskDto ToSubDto(SubTask s) =>
