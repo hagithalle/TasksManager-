@@ -11,7 +11,8 @@
     "done": "Done",
     "back": "Back",
     "loading": "Loading...",
-    "noData": "No data to display"
+    "noData": "No data to display",
+    "required": "Required"
   },
   "task": {
     "new": "New Task",
@@ -85,7 +86,8 @@
     "deleteItem": "Delete item",
     "progress": "{{done}}/{{total}} done",
     "items": "{{count}} items",
-    "convertToTask": "Convert to task"
+    "convertToTask": "Convert to task",
+    "customEmoji": "Custom icon (emoji)"
   },
   "priority": {
     "low": "Low",
@@ -400,6 +402,7 @@
   "shopping": {
     "addItem": "Add Item",
     "editItem": "Edit Item",
+    "productName": "Product name",
     "quantity": "Quantity",
     "unit": "Unit",
     "unitPlaceholder": "kg, pcs…",

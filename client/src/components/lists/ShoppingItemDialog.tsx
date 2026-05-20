@@ -1,12 +1,75 @@
 import {
   Box, Button, Chip, Collapse, Dialog, DialogActions, DialogContent, DialogTitle,
-  Divider, FormControl, IconButton, InputLabel, MenuItem, Select, TextField, Typography,
+  Divider, FormControl, IconButton, InputAdornment, InputLabel, MenuItem, Select, TextField, Typography,
 } from '@mui/material'
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded'
+import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ShoppingDepartment, ShoppingItemType } from '../../types/enums'
 import type { ShoppingItem } from '../../types'
+
+// ── keyword → department map ─────────────────────────────────────────────────
+const DEPT_KEYWORDS: Record<ShoppingDepartment, string[]> = {
+  [ShoppingDepartment.FruitsAndVegetables]: [
+    'תפוח','עגבניה','מלפפון','גזר','בצל','שום','לימון','אבוקדו','בננה','ענב',
+    'תות','פלפל','כרוב','ברוקולי','פטריות','תרד','חסה','כרובית','תירס','אבטיח',
+    'מלון','קיווי','מנגו','אפרסק','שזיף','דובדבן','אגס','רימון','פטל','אוכמניות',
+    'תפוזים','תפוז','אנגוריות','סלרי','פקאן','שמיר','כוסברה','נענע',
+    'apple','banana','carrot','tomato','cucumber','onion','garlic','avocado',
+    'grape','pepper','broccoli','lettuce','mango','orange','lemon','watermelon',
+  ],
+  [ShoppingDepartment.Dairy]: [
+    'חלב','גבינה','יוגורט','שמנת','חמאה','קוטג','קשקבל','עמק','מוצרלה',
+    'פרמזן','בולגרית','לבן','ריקוטה','ביצים','ביצה','קפיר','שמנת חמוצה',
+    'milk','cheese','yogurt','butter','cream','eggs','egg','dairy',
+  ],
+  [ShoppingDepartment.MeatAndFish]: [
+    'עוף','בשר','סלמון','טונה','המבורגר','נקניק','פרגית','חזה','שניצל',
+    'קציצות','דג','בורי','דניס','אמנון','פילה','כרעיים','כבד','נקניקיות',
+    'chicken','beef','salmon','tuna','fish','meat','steak','turkey',
+  ],
+  [ShoppingDepartment.Bakery]: [
+    'לחם','חלה','בגט','פיתה','לחמניה','קרואסון','מאפה','עוגה','עוגיות','טורט',
+    'bread','pita','croissant','cake','baguette','roll','toast',
+  ],
+  [ShoppingDepartment.Pantry]: [
+    'אורז','פסטה','קמח','סוכר','שמן','מלח','פלפל שחור','תבלין','רוטב','קטשופ',
+    'מיונז','חומוס','טחינה','שימורים','דגני','שוקולד','ריבה','דבש','קפה','תה',
+    'rice','pasta','flour','sugar','oil','salt','sauce','ketchup','chocolate',
+    'coffee','tea','honey','jam','cereal','oat','oats','lentil','beans',
+  ],
+  [ShoppingDepartment.Frozen]: [
+    'גלידה','קפוא','פיצה','ירקות קפואים','שניצל קפוא',
+    'ice cream','frozen','pizza freeze',
+  ],
+  [ShoppingDepartment.Cleaning]: [
+    'אקונומיקה','סבון','אבקת כביסה','מרכך','נוזל כלים','ניר טואלט',
+    'נייר טואלט','מגבת נייר','ניקוי','חומר ניקוי',
+    'soap','detergent','cleaning','toilet paper','dishwash',
+  ],
+  [ShoppingDepartment.Disposable]: [
+    'כוסות חד פעמי','צלחות חד פעמי','חד פעמי','שקיות זבל','ניר אלומיניום',
+    'נייר אלומיניום','מגבות נייר',
+    'plastic cup','disposable','plastic plate','trash bag','foil',
+  ],
+  [ShoppingDepartment.Baby]: [
+    'חיתול','חיתולים','מטפחות לח','פורמולה','תרכובת מזון','מזון לתינוק',
+    'diapers','diaper','baby food','formula','wipes',
+  ],
+  [ShoppingDepartment.Other]: [],
+}
+
+function detectDepartment(title: string): ShoppingDepartment | null {
+  const lower = title.toLowerCase()
+  for (const [dept, keywords] of Object.entries(DEPT_KEYWORDS)) {
+    if (dept === ShoppingDepartment.Other) continue
+    if (keywords.some((kw) => lower.includes(kw.toLowerCase()))) {
+      return dept as ShoppingDepartment
+    }
+  }
+  return null
+}
 
 interface Props {
   open:      boolean
@@ -37,6 +100,7 @@ export default function ShoppingItemDialog({ open, onClose, onSave, initial }: P
   const [department,     setDepartment]     = useState<string>(ShoppingDepartment.Other)
   const [itemType,       setItemType]       = useState<string>(ShoppingItemType.Regular)
   const [titleError,     setTitleError]     = useState(false)
+  const [userPickedDept, setUserPickedDept] = useState(false)
   // product details
   const [detailsOpen,    setDetailsOpen]    = useState(false)
   const [imageUrl,       setImageUrl]       = useState('')
@@ -58,6 +122,7 @@ export default function ShoppingItemDialog({ open, onClose, onSave, initial }: P
       setAltBrandInput('')
       setNoteForBuyer(initial?.noteForBuyer ?? '')
       setTitleError(false)
+      setUserPickedDept(!!initial?.department && initial.department !== ShoppingDepartment.Other)
       setDetailsOpen(!!(initial?.imageUrl || initial?.preferredBrand || (initial?.alternativeBrands?.length ?? 0) > 0 || initial?.noteForBuyer))
     }
   }, [open, initial])
@@ -96,14 +161,29 @@ export default function ShoppingItemDialog({ open, onClose, onSave, initial }: P
 
           {/* Title */}
           <TextField
-            label={t('common.title')}
+            label={t('shopping.productName')}
             value={title}
-            onChange={(e) => { setTitle(e.target.value); setTitleError(false) }}
+            onChange={(e) => {
+              const val = e.target.value
+              setTitle(val)
+              setTitleError(false)
+              if (!userPickedDept) {
+                const detected = detectDepartment(val)
+                if (detected) setDepartment(detected)
+              }
+            }}
             error={titleError}
             helperText={titleError ? t('common.required') : undefined}
             fullWidth
             autoFocus
             size="small"
+            InputProps={{
+              endAdornment: !userPickedDept && detectDepartment(title) ? (
+                <InputAdornment position="end">
+                  <AutoAwesomeRoundedIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                </InputAdornment>
+              ) : undefined,
+            }}
           />
 
           {/* Quantity + Unit */}
@@ -133,7 +213,7 @@ export default function ShoppingItemDialog({ open, onClose, onSave, initial }: P
             <Select
               value={department}
               label={t('shopping.department')}
-              onChange={(e) => setDepartment(e.target.value)}
+              onChange={(e) => { setDepartment(e.target.value); setUserPickedDept(true) }}
             >
               {DEPARTMENTS.map((d) => (
                 <MenuItem key={d} value={d}>

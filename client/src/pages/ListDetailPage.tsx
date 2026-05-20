@@ -1,6 +1,6 @@
 import {
   Box, CircularProgress, Divider, IconButton, InputBase,
-  LinearProgress, List, Menu, MenuItem, Tooltip, Typography,
+  LinearProgress, List, Menu, MenuItem, TextField, Tooltip, Typography,
 } from '@mui/material'
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded'
@@ -46,9 +46,13 @@ export default function ListDetailPage() {
   const [convertItem, setConvertItem] = useState<PersonalListItem | null>(null)
   const [goals,      setGoals]      = useState<Goal[]>([])
   const [allLists,   setAllLists]   = useState<PersonalList[]>([])
-  const [aiOpen,     setAiOpen]     = useState(false)
-  const [typeAnchor, setTypeAnchor] = useState<null | HTMLElement>(null)
+  const [aiOpen,         setAiOpen]         = useState(false)
+  const [typeAnchor,     setTypeAnchor]     = useState<null | HTMLElement>(null)
+  const [titleDraft,     setTitleDraft]     = useState('')
+  const [editingTitle,   setEditingTitle]   = useState(false)
+  const [customEmoji,    setCustomEmoji]    = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
+  const titleRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!user) return
@@ -60,7 +64,7 @@ export default function ListDetailPage() {
     setLoading(true)
     listsApi
       .getById(id)
-      .then(setList)
+      .then((l) => { setList(l); setTitleDraft(l.title) })
       .finally(() => setLoading(false))
   }, [id])
 
@@ -155,7 +159,24 @@ export default function ListDetailPage() {
   async function changeListType(newType: ListType) {
     if (!list || !id) return
     setTypeAnchor(null)
-    const updated = await listsApi.update(id, { listType: newType })
+    const updated = await listsApi.update(id, { listType: newType, emoji: LIST_TYPE_EMOJI[newType] })
+    setList(updated)
+  }
+
+  async function saveTitle() {
+    const trimmed = titleDraft.trim()
+    setEditingTitle(false)
+    if (!trimmed || trimmed === list?.title || !id) return
+    const updated = await listsApi.update(id, { title: trimmed })
+    setList(updated)
+  }
+
+  async function saveCustomEmoji() {
+    const e = customEmoji.trim()
+    setCustomEmoji('')
+    setTypeAnchor(null)
+    if (!e || !id) return
+    const updated = await listsApi.update(id, { emoji: e })
     setList(updated)
   }
 
@@ -192,9 +213,34 @@ export default function ListDetailPage() {
             </Box>
           </Tooltip>
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="h3" fontWeight={700} noWrap>
-              {list.title}
-            </Typography>
+            {editingTitle ? (
+              <InputBase
+                inputRef={titleRef}
+                value={titleDraft}
+                onChange={(e) => setTitleDraft(e.target.value)}
+                onBlur={saveTitle}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter')  saveTitle()
+                  if (e.key === 'Escape') { setTitleDraft(list.title); setEditingTitle(false) }
+                }}
+                fullWidth
+                autoFocus
+                sx={{
+                  fontSize: '1.35rem', fontWeight: 700, lineHeight: 1.2,
+                  '& input': { p: 0 },
+                }}
+              />
+            ) : (
+              <Typography
+                variant="h3"
+                fontWeight={700}
+                noWrap
+                onClick={() => { setTitleDraft(list.title); setEditingTitle(true) }}
+                sx={{ cursor: 'text', '&:hover': { color: 'primary.main' } }}
+              >
+                {list.title}
+              </Typography>
+            )}
             <Typography variant="caption" color="text.secondary">
               {t('list.items', { count: total })}
             </Typography>
@@ -260,6 +306,22 @@ export default function ListDetailPage() {
             {t(`listType.${type}`)}
           </MenuItem>
         ))}
+        <Divider sx={{ my: 0.5 }} />
+        <Box sx={{ px: 1.5, pb: 1 }}>
+          <TextField
+            size="small"
+            variant="outlined"
+            placeholder={t('list.customEmoji')}
+            value={customEmoji}
+            onChange={(e) => setCustomEmoji(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') saveCustomEmoji()
+              e.stopPropagation()
+            }}
+            inputProps={{ maxLength: 4 }}
+            sx={{ width: 140, '& input': { fontSize: '1.2rem', textAlign: 'center' } }}
+          />
+        </Box>
       </Menu>
 
       {/* ── Items list — branch by list type ── */}

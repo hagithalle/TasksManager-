@@ -9,9 +9,10 @@
     "save": "שמור",
     "cancel": "בטל",
     "done": "סיים",
-    "back": "חזור",
+    "back": "חזרה",
     "loading": "טוען...",
-    "noData": "אין נתונים להצגה"
+    "noData": "אין נתונים להצג",
+    "required": "שדה חובה"
   },
   "task": {
     "new": "משימה חדשה",
@@ -85,7 +86,8 @@
     "deleteItem": "מחק פריט",
     "progress": "{{done}}/{{total}} הושלמו",
     "items": "{{count}} פריטים",
-    "convertToTask": "הפוך למשימה"
+    "convertToTask": "המר למשימה",
+    "customEmoji": "אייקון מותאם אישית"
   },
   "priority": {
     "low": "נמוכה",
@@ -400,6 +402,7 @@
   "shopping": {
     "addItem": "הוסף פריט",
     "editItem": "ערוך פריט",
+    "productName": "שם מוצר",
     "quantity": "כמות",
     "unit": "יחידה",
     "unitPlaceholder": "ק״ג, יח׳…",
