@@ -433,7 +433,9 @@ export default function ListDetailPage() {
     <ListIntelligenceDialog
       open={aiOpen}
       onClose={() => setAiOpen(false)}
-      lists={allLists}
+      lists={isShopping
+        ? allLists.filter((l) => l.listType === ListType.Shopping)
+        : allLists}
       currentListTitle={list?.title}
       onAddItemsToList={async (items) => {
         if (!id) return

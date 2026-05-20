@@ -1,5 +1,6 @@
 import apiClient from './apiClient'
 import type { TaskItem, Goal, PersonalList } from '../types'
+import { ListType } from '../types/enums'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -109,12 +110,16 @@ export function toAiTaskSummary(task: TaskItem): AiTaskSummary {
   }
 }
 
-/** Compute recurring item stats from all lists */
+/** Compute recurring item stats from lists.
+ * For shopping lists, uses shoppingItems titles; for other lists, uses regular items. */
 export function computeRecurringItems(lists: PersonalList[]): AiListItemStat[] {
   const freq = new Map<string, { count: number; lastSeen: string }>()
   for (const list of lists) {
-    for (const item of list.items) {
-      const key = item.title.toLowerCase().trim()
+    const titles = list.listType === ListType.Shopping
+      ? list.shoppingItems.map((i) => i.title)
+      : list.items.map((i) => i.title)
+    for (const title of titles) {
+      const key = title.toLowerCase().trim()
       const existing = freq.get(key)
       if (!existing) {
         freq.set(key, { count: 1, lastSeen: list.updatedAt })
