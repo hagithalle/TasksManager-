@@ -121,7 +121,7 @@ export default function TopBar() {
           )}
         </Box>
 
-        {/* Right/Left: notification bell + settings + logout (dashboard) or back button (detail) */}
+        {/* Right/Left: icons vary by page type */}
         <Box sx={{ width: 96, flexShrink: 0, display: 'flex', justifyContent: 'flex-end', gap: 0.25 }}>
           {isDashboard ? (
             <>
@@ -144,7 +144,11 @@ export default function TopBar() {
             >
               <BackIcon fontSize="small" />
             </IconButton>
-          ) : null}
+          ) : (
+            <IconButton size="small" onClick={() => navigate(AppRoute.Settings)} sx={{ color: 'text.secondary' }}>
+              <SettingsRoundedIcon fontSize="small" />
+            </IconButton>
+          )}
         </Box>
       </Toolbar>
     </AppBar>

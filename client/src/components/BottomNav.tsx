@@ -7,8 +7,8 @@ import {
 import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded'
 import TaskAltRoundedIcon    from '@mui/icons-material/TaskAltRounded'
 import FlagRoundedIcon       from '@mui/icons-material/FlagRounded'
+import ListRoundedIcon       from '@mui/icons-material/ListRounded'
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded'
-import SettingsRoundedIcon   from '@mui/icons-material/SettingsRounded'
 import { useTranslation } from 'react-i18next'
 import { AppRoute } from '../routes/paths'
 
@@ -16,8 +16,8 @@ const NAV_ITEMS = [
   { label: 'nav.dashboard', icon: <DashboardRoundedIcon />,      path: AppRoute.Dashboard },
   { label: 'nav.tasks',     icon: <TaskAltRoundedIcon />,        path: AppRoute.Tasks     },
   { label: 'nav.goals',     icon: <FlagRoundedIcon />,           path: AppRoute.Goals     },
+  { label: 'nav.lists',     icon: <ListRoundedIcon />,           path: AppRoute.Lists     },
   { label: 'nav.calendar',  icon: <CalendarMonthRoundedIcon />,  path: AppRoute.Calendar  },
-  { label: 'nav.settings',  icon: <SettingsRoundedIcon />,       path: AppRoute.Settings  },
 ]
 
 export default function BottomNav() {
