@@ -110,6 +110,7 @@ public record CreatePersonalListDto(
 
 public record UpdatePersonalListDto(
     string? Title,
-    string? Emoji
+    string? Emoji,
+    string? ListType = null
 );
 

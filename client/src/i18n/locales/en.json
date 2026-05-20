@@ -39,6 +39,7 @@
     "emptyTitle": "No tasks yet",
     "emptySubtitle": "Add your first task — every journey begins with one step!",
     "emptyFilter": "No tasks for this filter",
+    "completedSection": "Completed ({{count}})",
     "minutesShort": "min",
     "durationLabel": "Duration (min)",
     "plannedTime": "Time",

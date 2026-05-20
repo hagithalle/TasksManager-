@@ -102,6 +102,20 @@ public class PersonalListService : IPersonalListService
 
         if (dto.Title is not null) list.Title = dto.Title;
         if (dto.Emoji is not null) list.Emoji = dto.Emoji;
+        if (dto.ListType is not null)
+        {
+            var newType = Enum.TryParse<ListType>(dto.ListType, ignoreCase: true, out var lt) ? lt : list.ListType;
+            list.ListType = newType;
+            // Auto-create shopping settings when converting to shopping
+            if (newType == ListType.Shopping && list.ShoppingSettings is null)
+            {
+                _db.ShoppingListSettings.Add(new ShoppingListSettings
+                {
+                    Id             = Guid.NewGuid(),
+                    PersonalListId = list.Id,
+                });
+            }
+        }
         list.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();

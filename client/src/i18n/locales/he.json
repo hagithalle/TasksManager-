@@ -39,6 +39,7 @@
     "emptyTitle": "עדיין אין לך משימות",
     "emptySubtitle": "הוסף משימה ראשונה — כל מסע מתחיל בצעד אחד!",
     "emptyFilter": "אין משימות עבור הפילטר הנוכחי",
+    "completedSection": "הושלמו ({{count}})",
     "minutesShort": "דק'",
     "durationLabel": "משך (דק')",
     "plannedTime": "שעה",

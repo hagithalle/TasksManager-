@@ -1,6 +1,6 @@
 import {
   Box, CircularProgress, Divider, IconButton, InputBase,
-  LinearProgress, List, Tooltip, Typography,
+  LinearProgress, List, Menu, MenuItem, Tooltip, Typography,
 } from '@mui/material'
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded'
@@ -15,6 +15,22 @@ import ListItemRow from '../components/lists/ListItemRow'
 import AddTaskDialog from '../components/tasks/AddTaskDialog'
 import ListIntelligenceDialog from '../components/lists/ListIntelligenceDialog'
 import ShoppingListView from '../components/lists/ShoppingListView'
+
+// ─── constants ────────────────────────────────────────────────────────────────
+const LIST_TYPE_EMOJI: Record<ListType, string> = {
+  [ListType.Checklist]: '✅',
+  [ListType.Shopping]:  '🛒',
+  [ListType.Notes]:     '📝',
+  [ListType.Ideas]:     '💡',
+  [ListType.Equipment]: '🎒',
+}
+const LIST_TYPE_OPTIONS: { type: ListType; emoji: string }[] = [
+  { type: ListType.Checklist, emoji: '✅' },
+  { type: ListType.Shopping,  emoji: '🛒' },
+  { type: ListType.Notes,     emoji: '📝' },
+  { type: ListType.Ideas,     emoji: '💡' },
+  { type: ListType.Equipment, emoji: '🎒' },
+]
 
 // ─── page ─────────────────────────────────────────────────────────────────────
 
@@ -31,6 +47,7 @@ export default function ListDetailPage() {
   const [goals,      setGoals]      = useState<Goal[]>([])
   const [allLists,   setAllLists]   = useState<PersonalList[]>([])
   const [aiOpen,     setAiOpen]     = useState(false)
+  const [typeAnchor, setTypeAnchor] = useState<null | HTMLElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -135,6 +152,13 @@ export default function ListDetailPage() {
     setList((prev) => prev ? { ...prev, items: [...prev.items, newItem] } : prev)
   }
 
+  async function changeListType(newType: ListType) {
+    if (!list || !id) return
+    setTypeAnchor(null)
+    const updated = await listsApi.update(id, { listType: newType })
+    setList(updated)
+  }
+
   // ── render ──────────────────────────────────────────────────────────────────
 
   return (
@@ -148,20 +172,25 @@ export default function ListDetailPage() {
           background: 'linear-gradient(135deg, #EDE9FF 0%, #F3E5F5 100%)',
         }}
       >
-        {/* Emoji + title */}
+        {/* Emoji circle — click to change list type */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
-          <Box
-            sx={{
-              width: 56, height: 56, borderRadius: '50%',
-              bgcolor: allDone ? '#E8F5E9' : 'white',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 28, flexShrink: 0,
-              boxShadow: '0 2px 8px rgba(124,92,255,0.12)',
-              transition: 'background-color 0.3s',
-            }}
-          >
-            {list.emoji ?? '📋'}
-          </Box>
+          <Tooltip title={t(`listType.${list.listType}`)}>
+            <Box
+              onClick={(e) => setTypeAnchor(e.currentTarget)}
+              sx={{
+                width: 56, height: 56, borderRadius: '50%',
+                bgcolor: allDone ? '#E8F5E9' : 'white',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 28, flexShrink: 0,
+                boxShadow: '0 2px 8px rgba(124,92,255,0.12)',
+                transition: 'background-color 0.3s',
+                cursor: 'pointer',
+                '&:hover': { boxShadow: '0 2px 12px rgba(124,92,255,0.22)' },
+              }}
+            >
+              {list.emoji ?? LIST_TYPE_EMOJI[list.listType]}
+            </Box>
+          </Tooltip>
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography variant="h3" fontWeight={700} noWrap>
               {list.title}
@@ -212,6 +241,26 @@ export default function ListDetailPage() {
           }}
         />
       </Box>
+
+      {/* ── List type picker menu ── */}
+      <Menu
+        anchorEl={typeAnchor}
+        open={Boolean(typeAnchor)}
+        onClose={() => setTypeAnchor(null)}
+        PaperProps={{ sx: { borderRadius: 3, minWidth: 160 } }}
+      >
+        {LIST_TYPE_OPTIONS.map(({ type, emoji }) => (
+          <MenuItem
+            key={type}
+            selected={list.listType === type}
+            onClick={() => changeListType(type)}
+            sx={{ gap: 1 }}
+          >
+            <span>{emoji}</span>
+            {t(`listType.${type}`)}
+          </MenuItem>
+        ))}
+      </Menu>
 
       {/* ── Items list — branch by list type ── */}
       {isShopping ? (

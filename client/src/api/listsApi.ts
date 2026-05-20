@@ -12,6 +12,7 @@ export interface CreateListPayload {
 export interface UpdateListPayload {
   title?: string
   emoji?: string
+  listType?: string
 }
 
 export interface CreateListItemPayload {

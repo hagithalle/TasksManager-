@@ -343,6 +343,7 @@ export default function TasksPage() {
             onToggleSub={toggleSubComplete}
             onEdit={setEditTask}
             onDelete={handleDeleteTask}
+            completedInitiallyOpen={filter === 'completed'}
             i18n={i18n}
             t={t}
           />
@@ -368,6 +369,7 @@ export default function TasksPage() {
             onToggleSub={toggleSubComplete}
             onEdit={setEditTask}
             onDelete={handleDeleteTask}
+            completedInitiallyOpen={filter === 'completed'}
             i18n={i18n}
             t={t}
           />
@@ -418,22 +420,30 @@ export default function TasksPage() {
 
 // ─── TaskGroup ────────────────────────────────────────────────────────────────
 interface TaskGroupProps {
-  tasks:          TaskItem[]
-  expanded:       Record<string, boolean>
-  onToggleExpand: (id: string) => void
-  onToggleTask:   (id: string) => void
-  onToggleSub:    (taskId: string, subId: string) => void
-  onEdit:         (task: TaskItem) => void
-  onDelete:       (id: string) => void
+  tasks:                   TaskItem[]
+  expanded:                Record<string, boolean>
+  onToggleExpand:          (id: string) => void
+  onToggleTask:            (id: string) => void
+  onToggleSub:             (taskId: string, subId: string) => void
+  onEdit:                  (task: TaskItem) => void
+  onDelete:                (id: string) => void
+  completedInitiallyOpen?: boolean
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  t:              (key: string, opts?: any) => string
-  i18n:           { language: string }
+  t:                       (key: string, opts?: any) => string
+  i18n:                    { language: string }
 }
 
-function TaskGroup({ tasks, expanded, onToggleExpand, onToggleTask, onToggleSub, onEdit, onDelete, t, i18n }: TaskGroupProps) {
+function TaskGroup({ tasks, expanded, onToggleExpand, onToggleTask, onToggleSub, onEdit, onDelete, completedInitiallyOpen = false, t, i18n }: TaskGroupProps) {
   const [shareTask, setShareTask] = useState<TaskItem | null>(null)
+  const [showDone, setShowDone]   = useState(completedInitiallyOpen)
+
+  const activeTasks = tasks.filter((tk) => !tk.isCompleted)
+  const doneTasks   = tasks.filter((tk) => tk.isCompleted)
+
   return (
     <>
+    {/* ── Active tasks ── */}
+    {activeTasks.length > 0 && (
     <Box
       sx={{
         borderRadius: 3,
@@ -444,7 +454,7 @@ function TaskGroup({ tasks, expanded, onToggleExpand, onToggleTask, onToggleSub,
       }}
     >
       <List disablePadding>
-        {tasks.map((task, index) => {
+        {activeTasks.map((task, index) => {
           const hasSubs = (task.subTasks?.length ?? 0) > 0
           const isOpen  = expanded[task.id] ?? false
 
@@ -581,6 +591,124 @@ function TaskGroup({ tasks, expanded, onToggleExpand, onToggleTask, onToggleSub,
         })}
       </List>
     </Box>
+    )}
+
+    {/* ── Completed section ── */}
+    {doneTasks.length > 0 && (
+      <Box sx={{ mt: activeTasks.length > 0 ? 1.5 : 0 }}>
+        {/* Collapsible header */}
+        <Box
+          onClick={() => setShowDone((v) => !v)}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            cursor: 'pointer',
+            px: 0.5,
+            py: 0.75,
+            borderRadius: 2,
+            '&:hover': { bgcolor: 'action.hover' },
+          }}
+        >
+          <CheckCircleRoundedIcon sx={{ fontSize: 16, color: 'success.main', opacity: 0.7 }} />
+          <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ flex: 1 }}>
+            {t('task.completedSection', { count: doneTasks.length })}
+          </Typography>
+          {showDone
+            ? <ExpandLessRoundedIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
+            : <ExpandMoreRoundedIcon sx={{ fontSize: 16, color: 'text.disabled' }} />}
+        </Box>
+
+        <Collapse in={showDone}>
+          <Box
+            sx={{
+              borderRadius: 3,
+              border: '1px solid',
+              borderColor: 'divider',
+              overflow: 'hidden',
+              opacity: 0.75,
+              boxShadow: 'none',
+              mt: 0.5,
+            }}
+          >
+            <List disablePadding>
+              {doneTasks.map((task, index) => {
+                const hasSubs = (task.subTasks?.length ?? 0) > 0
+                const isOpen  = expanded[task.id] ?? false
+                return (
+                  <Box key={task.id}>
+                    {index > 0 && <Divider />}
+                    <ListItem disablePadding sx={{ px: 1.5, py: 1, alignItems: 'flex-start' }}>
+                      <ListItemIcon sx={{ minWidth: 36, mt: 0.25 }}>
+                        <Checkbox
+                          edge="start"
+                          checked={task.isCompleted}
+                          onChange={() => onToggleTask(task.id)}
+                          disableRipple
+                          icon={<RadioButtonUncheckedRoundedIcon sx={{ color: 'text.disabled' }} />}
+                          checkedIcon={<CheckCircleRoundedIcon sx={{ color: 'primary.main' }} />}
+                          size="small"
+                        />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Box sx={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, bgcolor: PRIORITY_COLOR[task.priority] ?? '#999' }} />
+                            <Typography variant="body2" fontWeight={500} sx={{ textDecoration: 'line-through', color: 'text.disabled', flex: 1 }}>
+                              {task.title}
+                            </Typography>
+                            <Box sx={{ display: 'flex', gap: 0, flexShrink: 0 }}>
+                              <IconButton size="small" onClick={() => onEdit(task)} sx={{ p: 0.25 }}>
+                                <EditRoundedIcon sx={{ fontSize: 15, color: 'text.disabled' }} />
+                              </IconButton>
+                              <IconButton size="small" onClick={() => onDelete(task.id)} sx={{ p: 0.25 }}>
+                                <DeleteRoundedIcon sx={{ fontSize: 15, color: 'text.disabled' }} />
+                              </IconButton>
+                              {hasSubs && (
+                                <IconButton size="small" onClick={() => onToggleExpand(task.id)} sx={{ p: 0.25 }}>
+                                  {isOpen ? <ExpandLessRoundedIcon sx={{ fontSize: 15 }} /> : <ExpandMoreRoundedIcon sx={{ fontSize: 15 }} />}
+                                </IconButton>
+                              )}
+                            </Box>
+                          </Box>
+                        }
+                        secondary={
+                          task.dueDate ? (
+                            <Typography component="span" variant="caption" color="text.disabled">
+                              {t('task.dueDate')}: {new Date(task.dueDate).toLocaleDateString(i18n.language, { day: '2-digit', month: '2-digit' })}
+                            </Typography>
+                          ) : undefined
+                        }
+                      />
+                    </ListItem>
+                    {hasSubs && (
+                      <Collapse in={isOpen}>
+                        <List disablePadding sx={{ pl: 5, bgcolor: 'action.hover', pb: 0.5 }}>
+                          {task.subTasks!.map((sub) => (
+                            <ListItem key={sub.id} disablePadding sx={{ py: 0.25 }}>
+                              <ListItemIcon sx={{ minWidth: 30 }}>
+                                <Checkbox edge="start" checked={sub.isCompleted} onChange={() => onToggleSub(task.id, sub.id)} disableRipple
+                                  icon={<RadioButtonUncheckedRoundedIcon sx={{ fontSize: 16, color: 'text.disabled' }} />}
+                                  checkedIcon={<CheckCircleRoundedIcon sx={{ fontSize: 16, color: 'primary.main' }} />} size="small" />
+                              </ListItemIcon>
+                              <ListItemText primary={
+                                <Typography variant="caption" sx={{ textDecoration: 'line-through', color: 'text.disabled' }}>
+                                  {sub.title}
+                                </Typography>
+                              } />
+                            </ListItem>
+                          ))}
+                        </List>
+                      </Collapse>
+                    )}
+                  </Box>
+                )
+              })}
+            </List>
+          </Box>
+        </Collapse>
+      </Box>
+    )}
 
     {shareTask && (
       <ShareDialog

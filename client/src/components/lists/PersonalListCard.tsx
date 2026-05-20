@@ -1,4 +1,4 @@
-import { Box, Card, CardActionArea, Chip, IconButton, LinearProgress, Typography } from '@mui/material'
+import { Box, Card, CardActionArea, IconButton, LinearProgress, Typography } from '@mui/material'
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded'
 import ShareRoundedIcon from '@mui/icons-material/ShareRounded'
 import { useState } from 'react'
@@ -74,12 +74,6 @@ export default function PersonalListCard({ list, onClick, onDelete }: Props) {
                 <Typography variant="subtitle2" fontWeight={700} noWrap sx={{ flex: 1 }}>
                   {list.title}
                 </Typography>
-                <Chip
-                  label={`${LIST_TYPE_EMOJI[list.listType]} ${t(`listType.${list.listType}`)}`}
-                  size="small"
-                  variant="outlined"
-                  sx={{ fontSize: 10, height: 18, px: 0.5, flexShrink: 0 }}
-                />
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, flexShrink: 0, ml: 1 }}>
                 {onDelete && (
