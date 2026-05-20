@@ -435,6 +435,9 @@
     "assistantSubtitle": "{{count}} פריטים שאולי שכחת",
     "assistantEmpty": "אין הצעות כרגע",
     "addAllSuggestions": "הוסף הכל",
+    "addSelected": "הוסף נבחרים ({{count}})",
+    "selectAll": "בחר הכל",
+    "deselectAll": "בטל בחירה",
     "skipSuggestion": "דלג",
     "reason": {
       "regular": "נקנה כמעט כל שבוע",

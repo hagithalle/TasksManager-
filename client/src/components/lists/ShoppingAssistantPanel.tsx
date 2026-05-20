@@ -1,5 +1,5 @@
 import {
-  Box, Chip, CircularProgress, Collapse, Divider,
+  Box, Checkbox, Chip, CircularProgress, Collapse, Divider,
   IconButton, Paper, Typography,
 } from '@mui/material'
 import AddRoundedIcon        from '@mui/icons-material/AddRounded'
@@ -114,6 +114,7 @@ export default function ShoppingAssistantPanel({ list, onItemAdded }: Props) {
   const [skipped,    setSkipped]    = useState<Set<string>>(new Set())
   const [adding,     setAdding]     = useState<Set<string>>(new Set())
   const [addingAll,  setAddingAll]  = useState(false)
+  const [deselected, setDeselected] = useState<Set<string>>(new Set())
   const [editTarget, setEditTarget] = useState<ShoppingItem | null>(null)
   const [editOpen,   setEditOpen]   = useState(false)
 
@@ -125,6 +126,8 @@ export default function ShoppingAssistantPanel({ list, onItemAdded }: Props) {
   )
 
   const suggestions = allSuggestions.filter((e) => !skipped.has(e.item.id))
+  const selectedSuggestions = suggestions.filter((e) => !deselected.has(e.item.id))
+  const selectedCount = selectedSuggestions.length
 
   const grouped = useMemo(() => {
     const map = new Map<string, SuggestionEntry[]>()
@@ -163,6 +166,15 @@ export default function ShoppingAssistantPanel({ list, onItemAdded }: Props) {
     setSkipped((prev) => new Set(prev).add(id))
   }
 
+  function handleToggleSelect(id: string) {
+    setDeselected((prev) => {
+      const n = new Set(prev)
+      if (n.has(id)) n.delete(id)
+      else n.add(id)
+      return n
+    })
+  }
+
   function handleEdit(item: ShoppingItem) {
     setEditTarget(item)
     setEditOpen(true)
@@ -186,7 +198,7 @@ export default function ShoppingAssistantPanel({ list, onItemAdded }: Props) {
   async function handleAddAll() {
     setAddingAll(true)
     try {
-      const toAdd = suggestions.map((e) => e.item)
+      const toAdd = selectedSuggestions.map((e) => e.item)
       for (const item of toAdd) {
         const updated = await listsApi.updateShoppingItem(item.id, {
           isActive: true,
@@ -233,21 +245,21 @@ export default function ShoppingAssistantPanel({ list, onItemAdded }: Props) {
           </Typography>
         </Box>
 
-        {/* Add-all button */}
+        {/* Add-selected button */}
         {suggestions.length > 0 && (
           <Box
             component="button"
             onClick={(e) => { e.stopPropagation(); void handleAddAll() }}
-            disabled={addingAll}
+            disabled={addingAll || selectedCount === 0}
             sx={{
               display: 'flex', alignItems: 'center', gap: 0.5,
               px: 1.25, py: 0.5,
               border: '1.5px solid',
-              borderColor: 'primary.light',
+              borderColor: selectedCount > 0 ? 'primary.light' : 'divider',
               borderRadius: 2,
-              bgcolor: 'rgba(124,92,255,0.05)',
-              color: 'primary.main',
-              cursor: addingAll ? 'default' : 'pointer',
+              bgcolor: selectedCount > 0 ? 'rgba(124,92,255,0.05)' : 'transparent',
+              color: selectedCount > 0 ? 'primary.main' : 'text.disabled',
+              cursor: (addingAll || selectedCount === 0) ? 'default' : 'pointer',
               fontSize: 11, fontWeight: 700,
               '&:disabled': { opacity: 0.5 },
               '&:hover:not(:disabled)': { bgcolor: 'rgba(124,92,255,0.12)' },
@@ -257,7 +269,7 @@ export default function ShoppingAssistantPanel({ list, onItemAdded }: Props) {
             {addingAll
               ? <CircularProgress size={10} sx={{ mr: 0.25 }} />
               : <AddRoundedIcon sx={{ fontSize: 13 }} />}
-            {t('shopping.addAllSuggestions')}
+            {t('shopping.addSelected', { count: selectedCount })}
           </Box>
         )}
 
@@ -278,6 +290,26 @@ export default function ShoppingAssistantPanel({ list, onItemAdded }: Props) {
           </Typography>
         ) : (
           <Box sx={{ px: 1.5, pb: 2 }}>
+            {/* Select-all / deselect-all row */}
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 0.5 }}>
+              <Typography
+                variant="caption"
+                color="primary"
+                sx={{ cursor: 'pointer', fontWeight: 600, '&:hover': { opacity: 0.75 } }}
+                onClick={() =>
+                  setDeselected(
+                    selectedCount === suggestions.length
+                      ? new Set(suggestions.map((e) => e.item.id))
+                      : new Set(),
+                  )
+                }
+              >
+                {selectedCount === suggestions.length
+                  ? t('shopping.deselectAll')
+                  : t('shopping.selectAll')}
+              </Typography>
+            </Box>
+
             {Array.from(grouped.entries()).map(([dept, entries]) => (
               <Box key={dept} sx={{ mb: 1.5 }}>
 
@@ -302,11 +334,13 @@ export default function ShoppingAssistantPanel({ list, onItemAdded }: Props) {
                     key={entry.item.id}
                     entry={entry}
                     isAdding={adding.has(entry.item.id)}
+                    isSelected={!deselected.has(entry.item.id)}
                     deptBg={DEPT_BG[dept] ?? '#FAFAFA'}
                     deptIcon={DEPT_ICONS[dept] ?? '🛒'}
                     onAdd={handleAdd}
                     onSkip={handleSkip}
                     onEdit={handleEdit}
+                    onToggleSelect={handleToggleSelect}
                   />
                 ))}
               </Box>
@@ -329,16 +363,18 @@ export default function ShoppingAssistantPanel({ list, onItemAdded }: Props) {
 // ── Suggestion card ───────────────────────────────────────────────────────────
 
 interface CardProps {
-  entry:    SuggestionEntry
-  isAdding: boolean
-  deptBg:   string
-  deptIcon: string
-  onAdd:    (item: ShoppingItem) => void
-  onSkip:   (id: string) => void
-  onEdit:   (item: ShoppingItem) => void
+  entry:           SuggestionEntry
+  isAdding:        boolean
+  isSelected:      boolean
+  deptBg:          string
+  deptIcon:        string
+  onAdd:           (item: ShoppingItem) => void
+  onSkip:          (id: string) => void
+  onEdit:          (item: ShoppingItem) => void
+  onToggleSelect:  (id: string) => void
 }
 
-function SuggestionCard({ entry, isAdding, deptBg, deptIcon, onAdd, onSkip, onEdit }: CardProps) {
+function SuggestionCard({ entry, isAdding, isSelected, deptBg, deptIcon, onAdd, onSkip, onEdit, onToggleSelect }: CardProps) {
   const { t }    = useTranslation()
   const { item } = entry
 
@@ -366,6 +402,15 @@ function SuggestionCard({ entry, isAdding, deptBg, deptIcon, onAdd, onSkip, onEd
         transition: 'opacity 0.2s',
       }}
     >
+      {/* Checkbox */}
+      <Checkbox
+        checked={isSelected}
+        onChange={() => onToggleSelect(item.id)}
+        onClick={(e) => e.stopPropagation()}
+        size="small"
+        sx={{ p: 0.25, mr: 0.25, color: 'divider', '&.Mui-checked': { color: 'primary.main' } }}
+      />
+
       {/* Dept / image icon circle */}
       <Box
         sx={{

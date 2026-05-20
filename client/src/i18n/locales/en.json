@@ -435,6 +435,9 @@
     "assistantSubtitle": "{{count}} items you might need",
     "assistantEmpty": "No suggestions at the moment",
     "addAllSuggestions": "Add all",
+    "addSelected": "Add selected ({{count}})",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all",
     "skipSuggestion": "Skip",
     "reason": {
       "regular": "Bought almost every week",
