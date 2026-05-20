@@ -15,6 +15,7 @@ import ListItemRow from '../components/lists/ListItemRow'
 import AddTaskDialog from '../components/tasks/AddTaskDialog'
 import ListIntelligenceDialog from '../components/lists/ListIntelligenceDialog'
 import ShoppingListView from '../components/lists/ShoppingListView'
+import { detectDepartment } from '../components/lists/ShoppingItemDialog'
 
 // ─── constants ────────────────────────────────────────────────────────────────
 const LIST_TYPE_EMOJI: Record<ListType, string> = {
@@ -439,9 +440,21 @@ export default function ListDetailPage() {
       currentListTitle={list?.title}
       onAddItemsToList={async (items) => {
         if (!id) return
-        for (const title of items) {
-          const newItem = await listsApi.addItem(id, { title }).catch(() => null)
-          if (newItem) setList(prev => prev ? { ...prev, items: [...prev.items, newItem] } : prev)
+        if (isShopping) {
+          for (const title of items) {
+            const dept = detectDepartment(title) ?? 'other'
+            const newItem = await listsApi.addShoppingItem(id, {
+              title,
+              department: dept,
+              itemType: 'regular',
+            }).catch(() => null)
+            if (newItem) setList(prev => prev ? { ...prev, shoppingItems: [...prev.shoppingItems, newItem] } : prev)
+          }
+        } else {
+          for (const title of items) {
+            const newItem = await listsApi.addItem(id, { title }).catch(() => null)
+            if (newItem) setList(prev => prev ? { ...prev, items: [...prev.items, newItem] } : prev)
+          }
         }
       }}
     />

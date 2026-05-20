@@ -60,7 +60,7 @@ const DEPT_KEYWORDS: Record<ShoppingDepartment, string[]> = {
   [ShoppingDepartment.Other]: [],
 }
 
-function detectDepartment(title: string): ShoppingDepartment | null {
+export function detectDepartment(title: string): ShoppingDepartment | null {
   const lower = title.toLowerCase()
   for (const [dept, keywords] of Object.entries(DEPT_KEYWORDS)) {
     if (dept === ShoppingDepartment.Other) continue
