@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { habitsApi, HabitCompletion } from '../api';
+import { useEffect, useState } from 'react';
+import { habitsApi, HabitCompletion } from '../api/habitsApi';
 import { Box, Checkbox, Typography, CircularProgress, Alert } from '@mui/material';
 
 export default function DailyHabitsList() {
