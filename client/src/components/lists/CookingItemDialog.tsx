@@ -1,55 +1,4 @@
 import { useEffect, useState } from 'react'
-import CloudUploadIcon from '@mui/icons-material/CloudUpload'
-import { aiApi } from '../../api/aiExtractApi'
-
-type InputMode = 'manual' | 'url' | 'file'
-
-export default function CookingItemDialog({ open, initial, onClose, onSave }: Props) {
-  const { t } = useTranslation()
-  const [title, setTitle]             = useState('')
-  const [recipeUrl, setRecipeUrl]     = useState('')
-  const [notes, setNotes]             = useState('')
-  const [plannedDate, setPlannedDate] = useState('')
-  const [tags, setTags]               = useState<string[]>([])
-  const [customTag, setCustomTag]     = useState('')
-  const [ingredients, setIngredients] = useState<CookingIngredient[]>([])
-  const [saving, setSaving]           = useState(false)
-  const [inputMode, setInputMode]     = useState<InputMode>('manual')
-  const [extractUrl, setExtractUrl]   = useState('')
-  const [extracting, setExtracting]   = useState(false)
-  const [extractFile, setExtractFile] = useState<File | null>(null)
-
-  // חילוץ מתכון מ-URL
-  async function handleExtractUrl() {
-    if (!extractUrl.trim()) return
-    setExtracting(true)
-    try {
-      const data = await aiApi.extractRecipeFromUrl(extractUrl.trim())
-      setTitle(data.title)
-      setIngredients((data.ingredients || []).map((str: string) => ({ title: str, quantity: undefined, unit: '' })))
-      setNotes(data.notes || '')
-    } catch (e) {
-      setNotes('שגיאה בחילוץ מתכון מהכתובת')
-    } finally {
-      setExtracting(false)
-    }
-  }
-
-  // חילוץ מתכון מקובץ
-  async function handleExtractFile() {
-    if (!extractFile) return
-    setExtracting(true)
-    try {
-      const data = await aiApi.extractRecipeFromFile(extractFile)
-      setTitle(data.title)
-      setIngredients((data.ingredients || []).map((str: string) => ({ title: str, quantity: undefined, unit: '' })))
-      setNotes(data.notes || '')
-    } catch (e) {
-      setNotes('שגיאה בחילוץ מתכון מהקובץ')
-    } finally {
-      setExtracting(false)
-    }
-  }
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button,
   TextField, Stack, Chip, Typography, IconButton, Box,
@@ -80,6 +29,20 @@ export default function CookingItemDialog({ open, initial, onClose, onSave }: Pr
   const [customTag, setCustomTag]     = useState('')
   const [ingredients, setIngredients] = useState<CookingIngredient[]>([])
   const [saving, setSaving]           = useState(false)
+  const [inputMode, setInputMode]     = useState<'manual' | 'url'>('manual')
+
+  // חילוץ מרכיבים אוטומטי מתוך טקסט חופשי
+  function extractIngredientsFromText(text: string) {
+    // דוגמה פשוטה: כל שורה שמכילה מספר/כמות או מתחילה ב-•
+    return text.split('\n')
+      .map(line => line.trim())
+      .filter(line => line.match(/^(•|\d|\d+\/\d|חצי|רבע|שליש|כף|כוס|קילו|גרם|ליטר|קמצוץ|מעט|כמה|\d+\s?)/))
+      .map(line => ({ title: line, quantity: undefined, unit: '' }))
+  }
+
+  function handleExtractIngredients() {
+    setIngredients(extractIngredientsFromText(notes))
+  }
 
   // Populate from initial item when editing
   useEffect(() => {
@@ -156,48 +119,20 @@ export default function CookingItemDialog({ open, initial, onClose, onSave }: Pr
 
       <DialogContent>
         {/* בחירת מצב הזנה */}
+
         <Stack direction="row" spacing={1} mb={2}>
           <Chip label="הזנה ידנית" color={inputMode === 'manual' ? 'primary' : 'default'} onClick={() => setInputMode('manual')} />
-          <Chip label="חילוץ מ-URL" color={inputMode === 'url' ? 'primary' : 'default'} onClick={() => setInputMode('url')} />
-          <Chip label="חילוץ מקובץ" color={inputMode === 'file' ? 'primary' : 'default'} onClick={() => setInputMode('file')} />
+          <Chip label="קישור מתכון" color={inputMode === 'url' ? 'primary' : 'default'} onClick={() => setInputMode('url')} />
         </Stack>
 
-        {/* UI לכל מצב */}
         {inputMode === 'url' && (
           <Stack spacing={1} mb={2}>
             <TextField
               label="הדבק כתובת מתכון"
-              value={extractUrl}
-              onChange={e => setExtractUrl(e.target.value)}
+              value={recipeUrl}
+              onChange={e => setRecipeUrl(e.target.value)}
               fullWidth
-              disabled={extracting}
             />
-            <Button variant="outlined" onClick={handleExtractUrl} disabled={extracting || !extractUrl.trim()}>
-              {extracting ? 'מחלץ...' : 'חילוץ אוטומטי'}
-            </Button>
-          </Stack>
-        )}
-
-        {inputMode === 'file' && (
-          <Stack spacing={1} mb={2}>
-            <Button
-              variant="outlined"
-              component="label"
-              startIcon={<CloudUploadIcon />}
-              disabled={extracting}
-            >
-              העלה קובץ מתכון
-              <input
-                type="file"
-                accept=".pdf,.doc,.docx,.txt,image/*"
-                hidden
-                onChange={e => setExtractFile(e.target.files?.[0] || null)}
-              />
-            </Button>
-            {extractFile && <Typography variant="body2">{extractFile.name}</Typography>}
-            <Button variant="outlined" onClick={handleExtractFile} disabled={extracting || !extractFile}>
-              {extracting ? 'מחלץ...' : 'חילוץ אוטומטי'}
-            </Button>
           </Stack>
         )}
 
@@ -326,15 +261,20 @@ export default function CookingItemDialog({ open, initial, onClose, onSave }: Pr
             placeholder="https://..."
           />
 
-          {/* Notes */}
-          <TextField
-            label={t('cooking.notes')}
-            value={notes}
-            onChange={e => setNotes(e.target.value)}
-            fullWidth
-            multiline
-            rows={2}
-          />
+          {/* Notes + חילוץ מרכיבים */}
+          <Stack direction="row" spacing={1} alignItems="flex-start">
+            <TextField
+              label={t('cooking.notes')}
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+              fullWidth
+              multiline
+              rows={2}
+            />
+            <Button variant="outlined" onClick={handleExtractIngredients} sx={{ height: '40px', mt: 1 }}>
+              חילוץ מרכיבים אוטומטי
+            </Button>
+          </Stack>
         </Stack>
       </DialogContent>
 
