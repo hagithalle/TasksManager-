@@ -131,14 +131,22 @@ export default function PushToShoppingDialog({
                     key={item.title}
                     disablePadding
                     sx={{ py: 0.5 }}
-                    onClick={() => !item.isAlreadyOnList && toggleItem(item.title)}
+                    onClick={e => {
+                      // Prevent double toggle if checkbox was clicked
+                      if (item.isAlreadyOnList) return
+                      // If click originated from checkbox, ignore (checkbox handles it)
+                      if ((e.target as HTMLElement).closest('.shopping-checkbox')) return
+                      toggleItem(item.title)
+                    }}
                     style={{ cursor: item.isAlreadyOnList ? 'default' : 'pointer' }}
                   >
                     <ListItemIcon sx={{ minWidth: 36 }}>
                       <Checkbox
+                        className="shopping-checkbox"
                         checked={checked}
                         disabled={item.isAlreadyOnList}
                         size="small"
+                        onClick={e => e.stopPropagation()}
                         onChange={() => toggleItem(item.title)}
                       />
                     </ListItemIcon>
