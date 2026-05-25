@@ -195,4 +195,42 @@ async function analyzeLists(lists: PersonalList[], language = 'he'): Promise<AiL
   return data
 }
 
-export const aiApi = { analyzeDay, searchTasks, getInsights, analyzeGoals, analyzeLists }
+// ── Plan Analysis ─────────────────────────────────────────────────────────────
+
+export interface AiPlanSubTask {
+  title: string
+  estimatedMinutes: number | null
+}
+
+export interface AiPlanTask {
+  title: string
+  relatedGoal: string | null
+  dueDate: string | null
+  priority: string
+  executionType: string
+  estimatedMinutes: number | null
+  frequency: 'once' | 'daily' | 'weekly' | null
+  subTasks: AiPlanSubTask[]
+}
+
+export interface AiPlanGoal {
+  title: string
+  category: string
+  dueDate: string | null
+  priority: string
+  estimatedTotalHours: number | null
+  rationale: string | null
+}
+
+export interface AiPlanResponse {
+  summary: string
+  goals: AiPlanGoal[]
+  tasks: AiPlanTask[]
+}
+
+async function analyzePlan(text: string, language = 'he'): Promise<AiPlanResponse> {
+  const { data } = await apiClient.post<AiPlanResponse>('/ai/plan', { text, language })
+  return data
+}
+
+export const aiApi = { analyzeDay, searchTasks, getInsights, analyzeGoals, analyzeLists, analyzePlan }

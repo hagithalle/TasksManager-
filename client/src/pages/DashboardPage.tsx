@@ -21,7 +21,9 @@ import TaskWheelModal    from '../components/tasks/TaskWheelModal'
 import AddTaskDialog     from '../components/tasks/AddTaskDialog'
 import AddGoalDialog     from '../components/goals/AddGoalDialog'
 import AiParseDialog     from '../components/AiParseDialog'
+import AiTaskAnalysisDialog from '../components/AiTaskAnalysisDialog'
 import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded'
+import PsychologyRoundedIcon from '@mui/icons-material/PsychologyRounded'
 import { TODAY, PRIORITY_STYLE, isArchivedCompleted } from '../utils'
 import FocusCoachCard    from '../components/coach/FocusCoachCard'
 import StreakCard        from '../components/streak/StreakCard'
@@ -156,6 +158,7 @@ export default function DashboardPage() {
   const [addTaskOpen, setAddTaskOpen] = useState(false)
   const [addGoalOpen, setAddGoalOpen] = useState(false)
   const [aiOpen, setAiOpen] = useState(false)
+  const [planOpen, setPlanOpen] = useState(false)
 
   useEffect(() => {
     if (!user) return
@@ -490,6 +493,20 @@ export default function DashboardPage() {
         </IconButton>
       </Tooltip>
 
+      <Tooltip title={t('ai.plan.buttonTooltip')}>
+        <IconButton
+          onClick={() => setPlanOpen(true)}
+          sx={{
+            position: 'fixed', bottom: 144, right: 16,
+            bgcolor: 'primary.main', color: 'white',
+            '&:hover': { bgcolor: 'primary.dark' },
+            boxShadow: 3,
+          }}
+        >
+          <PsychologyRoundedIcon />
+        </IconButton>
+      </Tooltip>
+
       <AddTaskDialog
         open={addTaskOpen}
         onClose={() => setAddTaskOpen(false)}
@@ -513,6 +530,19 @@ export default function DashboardPage() {
         onCreated={(newTasks, newGoals) => {
           setTasks(prev => [...newTasks, ...prev])
           setGoals(prev => [...newGoals, ...prev])
+        }}
+      />
+
+      <AiTaskAnalysisDialog
+        open={planOpen}
+        onClose={() => setPlanOpen(false)}
+        userId={user?.id ?? ''}
+        onCreated={() => {
+          // Reload tasks and goals after AI plan creation
+          if (user?.id) {
+            tasksApi.getByUser(user.id).then(setTasks).catch(() => {})
+            goalsApi.getByUser(user.id).then(setGoals).catch(() => {})
+          }
         }}
       />
 

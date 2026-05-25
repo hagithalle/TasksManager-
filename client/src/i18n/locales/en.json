@@ -283,7 +283,32 @@
     "newList": "New list",
     "newListName": "List",
     "editHint": "Click ▼ to edit an item, add subtasks and more",
-    "quantity": "Quantity"
+    "quantity": "Quantity",
+    "plan": {
+      "title": "AI Task Analysis",
+      "subtitle": "Describe what you need to do — AI creates a structured plan with goals, tasks and timeline",
+      "placeholder": "e.g. I need to study for a C# interview by June 3rd and do course assignments 2 hours a day...",
+      "analyze": "Analyze",
+      "analyzing": "Analyzing...",
+      "goalsSection": "Goals",
+      "tasksSection": "Tasks",
+      "selectItems": "Select items to create",
+      "selectAll": "Select all",
+      "deselectAll": "Deselect all",
+      "saveBtn": "Save {{count}} items",
+      "saving": "Saving...",
+      "saved": "Created successfully!",
+      "savedSub": "{{count}} items added to your workspace",
+      "saveError": "Error saving items. Please try again.",
+      "error": "Analysis failed. Please try again.",
+      "errorRateLimit": "Service is busy, please try again in a minute.",
+      "noResults": "No tasks or goals identified. Try rephrasing.",
+      "back": "Back",
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "approxHours": "~{{count}}h",
+      "buttonTooltip": "AI Analysis & Planning"
+    }
   },
   "dashboard": {
     "totalToday": "Today",

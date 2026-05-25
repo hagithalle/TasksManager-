@@ -436,6 +436,74 @@ Rules:
         }
     }
 
+    // ── Task Plan Analysis ────────────────────────────────────────────────────
+
+    public async Task<AiPlanResponseDto> AnalyzePlanAsync(string text, string language = "he")
+    {
+        var apiKey = _config["OpenAI:ApiKey"]
+            ?? throw new InvalidOperationException("OpenAI API key is not configured.");
+
+        var langHe = language == "he";
+        var today = DateTime.UtcNow.ToString("yyyy-MM-dd");
+
+        var prompt = $@"You are an expert productivity planner. Analyze the following text and create a structured action plan.
+Today's date is {today}. Respond in {(langHe ? "Hebrew" : "English")}.
+
+Text: ""{text}""
+
+Return ONLY valid JSON (no markdown, no explanation):
+{{
+  ""summary"": ""one-sentence plan summary in {(langHe ? "Hebrew" : "English")}"",
+  ""goals"": [
+    {{
+      ""title"": ""goal title in original language of the text"",
+      ""category"": ""education|work|health|personal|finance|other"",
+      ""dueDate"": ""YYYY-MM-DD or null"",
+      ""priority"": ""low|medium|high"",
+      ""estimatedTotalHours"": number_or_null,
+      ""rationale"": ""why this is a goal — 1 sentence in {(langHe ? "Hebrew" : "English")}""
+    }}
+  ],
+  ""tasks"": [
+    {{
+      ""title"": ""task title in original language of the text"",
+      ""relatedGoal"": ""matching goal title or null"",
+      ""dueDate"": ""YYYY-MM-DD or null"",
+      ""priority"": ""low|medium|high"",
+      ""executionType"": ""quick|short|medium|long"",
+      ""estimatedMinutes"": number_or_null,
+      ""frequency"": ""once|daily|weekly"",
+      ""subTasks"": [
+        {{ ""title"": ""sub-task title in original language"", ""estimatedMinutes"": number_or_null }}
+      ]
+    }}
+  ]
+}}
+
+Rules:
+- Keep ALL titles in the ORIGINAL language of the input text
+- For recurring tasks (e.g. ""2 hours every day"", ""שעתיים ביום"") → one task with frequency ""daily"" and estimatedMinutes set accordingly
+- Convert relative dates (""June 3rd"", ""3.6"", ""next week"") to absolute YYYY-MM-DD relative to today ({today})
+- executionType: quick (<15 min), short (15-30 min), medium (30-60 min), long (>60 min)
+- Break complex tasks into 2-5 concrete sub-tasks; simple tasks get empty subTasks array []
+- Set priority based on urgency and deadline proximity
+- estimatedTotalHours for goals: realistic total effort (e.g. 20h for a C# interview prep course)
+- summary must be a single short sentence, not a paragraph";
+
+        var generated = await CallGptAsync(apiKey, prompt, 1500);
+        try
+        {
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            return JsonSerializer.Deserialize<AiPlanResponseDto>(generated, opts)
+                   ?? new AiPlanResponseDto("", [], []);
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "Failed to parse AI plan response: {Text}", generated);
+            return new AiPlanResponseDto("", [], []);
+        }
+    }
+
     // ── Shared GPT helper ────────────────────────────────────────────────────
 
     private async Task<string> CallGptAsync(string apiKey, string prompt, int maxTokens)

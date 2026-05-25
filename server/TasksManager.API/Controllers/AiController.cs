@@ -155,4 +155,27 @@ public class AiController : ControllerBase
             return StatusCode(500, new { code = "AI_ERROR" });
         }
     }
+
+    // POST api/ai/plan
+    [HttpPost("plan")]
+    public async Task<IActionResult> AnalyzePlan(AiPlanRequestDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Text))
+            return BadRequest(new { message = "Text is required." });
+
+        try
+        {
+            var result = await _ai.AnalyzePlanAsync(dto.Text, dto.Language ?? "he");
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(503, new { code = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected AI error in plan analysis");
+            return StatusCode(500, new { code = "AI_ERROR" });
+        }
+    }
 }

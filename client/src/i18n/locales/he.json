@@ -283,7 +283,32 @@
     "newList": "רשימה חדשה",
     "newListName": "רשימה",
     "editHint": "לחץ על ▼ לעריכת פריט, הוספת תת-משימות ועוד",
-    "quantity": "כמות"
+    "quantity": "כמות",
+    "plan": {
+      "title": "ניתוח AI",
+      "subtitle": "תאר מה יש לך לעשות — AI יוצר תוכנית מובנית עם מטרות, משימות ולוח זמנים",
+      "placeholder": "לדוגמה: יש לי ללמוד לראיון C# עד 3.6 ולעשות מטלות קורס שעתיים ביום...",
+      "analyze": "נתח",
+      "analyzing": "מנתח...",
+      "goalsSection": "מטרות",
+      "tasksSection": "משימות",
+      "selectItems": "בחר מה ליצור",
+      "selectAll": "בחר הכל",
+      "deselectAll": "בטל בחירה",
+      "saveBtn": "שמור {{count}} פריטים",
+      "saving": "שומר...",
+      "saved": "נוצר בהצלחה!",
+      "savedSub": "{{count}} פריטים נוספו למערכת",
+      "saveError": "שגיאה בשמירה. נסה שוב.",
+      "error": "שגיאה בניתוח. נסה שוב.",
+      "errorRateLimit": "השירות עמוס, נסה שוב בעוד דקה.",
+      "noResults": "לא זוהו משימות או מטרות. נסה לנסח מחדש.",
+      "back": "חזור",
+      "daily": "יומי",
+      "weekly": "שבועי",
+      "approxHours": "~{{count}} שע'",
+      "buttonTooltip": "ניתוח AI ותכנון"
+    }
   },
   "dashboard": {
     "totalToday": "היום",

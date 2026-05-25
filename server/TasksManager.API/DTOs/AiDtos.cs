@@ -154,3 +154,35 @@ public record AiParseResponseDto(
     List<AiParsedGoalDto> Goals,
     List<AiParsedListItemDto> ListItems
 );
+
+// ── Task Plan Analysis ────────────────────────────────────────────────────────
+
+public record AiPlanRequestDto([Required][MaxLength(2000)] string Text, string? Language = "he");
+
+public record AiPlanSubTaskDto(string Title, int? EstimatedMinutes);
+
+public record AiPlanTaskDto(
+    string Title,
+    string? RelatedGoal,
+    string? DueDate,
+    string Priority,
+    string ExecutionType,
+    int? EstimatedMinutes,
+    string? Frequency,
+    List<AiPlanSubTaskDto> SubTasks
+);
+
+public record AiPlanGoalDto(
+    string Title,
+    string Category,
+    string? DueDate,
+    string Priority,
+    int? EstimatedTotalHours,
+    string? Rationale
+);
+
+public record AiPlanResponseDto(
+    string Summary,
+    List<AiPlanGoalDto> Goals,
+    List<AiPlanTaskDto> Tasks
+);
