@@ -82,11 +82,9 @@ export function useFocusCoach(tasks: TaskItem[]) {
   )
 
   // Tasks eligible for today's coach: no due date, due today, or overdue.
-  // Tasks explicitly scheduled for a future date are excluded — they don't belong in today's plan.
-  // Meetings and appointments are excluded — they are fixed-time events, not actionable coach tasks.
-  // CarriedOver tasks are only included when the user enables the setting.
-  const dateEligible = useMemo(
-    () => tasks.filter(tk =>
+  // If none exist, fallback to 'promotion' tasks: open, not completed, not archived/missed, dueDate in future or missing.
+  const dateEligible = useMemo(() => {
+    const base = tasks.filter(tk =>
       !tk.isCompleted &&
       (!tk.dueDate || tk.dueDate <= TODAY) &&
       tk.taskNature !== TaskNature.Meeting &&
@@ -94,9 +92,18 @@ export function useFocusCoach(tasks: TaskItem[]) {
       tk.taskStatus !== TaskStatus.Missed &&
       tk.taskStatus !== TaskStatus.Archived &&
       (settings.includeCarriedOver || tk.taskStatus !== TaskStatus.CarriedOver)
-    ),
-    [tasks, settings.includeCarriedOver],
-  )
+    )
+    if (base.length > 0) return base
+    // Fallback: suggest 'promotion' tasks
+    return tasks.filter(tk =>
+      !tk.isCompleted &&
+      tk.taskNature !== TaskNature.Meeting &&
+      tk.taskNature !== TaskNature.Appointment &&
+      tk.taskStatus !== TaskStatus.Missed &&
+      tk.taskStatus !== TaskStatus.Archived &&
+      (!tk.dueDate || tk.dueDate > TODAY)
+    )
+  }, [tasks, settings.includeCarriedOver])
 
   // Count of carried-over tasks (for reminder message)
   const carriedOverCount = useMemo(
