@@ -15,10 +15,16 @@ export default function DailyHabitsList() {
           setHabits(data);
         } else {
           setHabits([]);
+        }
+      })
+      .catch((err) => {
+        // אם אין הרגלים (404/204) - אל תציג שגיאה
+        if (err?.response?.status === 404 || err?.response?.status === 204) {
+          setHabits([]);
+        } else {
           setError('שגיאה בטעינת הרגלים');
         }
       })
-      .catch(() => setError('שגיאה בטעינת הרגלים'))
       .finally(() => setLoading(false));
   }, []);
 
