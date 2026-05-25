@@ -7,9 +7,17 @@ export default function DailyHabitsList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+
   useEffect(() => {
     habitsApi.getToday()
-      .then(setHabits)
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setHabits(data);
+        } else {
+          setHabits([]);
+          setError('שגיאה בטעינת הרגלים');
+        }
+      })
       .catch(() => setError('שגיאה בטעינת הרגלים'))
       .finally(() => setLoading(false));
   }, []);
