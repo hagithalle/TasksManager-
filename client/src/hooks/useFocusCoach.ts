@@ -86,7 +86,10 @@ export function useFocusCoach(tasks: TaskItem[]) {
   const dateEligible = useMemo(() => {
     const base = tasks.filter(tk =>
       !tk.isCompleted &&
-      (!tk.dueDate || tk.dueDate <= TODAY) &&
+      (
+        (!tk.dueDate || tk.dueDate <= TODAY) ||
+        tk.recurrenceType === RecurrenceType.Daily
+      ) &&
       tk.taskNature !== TaskNature.Meeting &&
       tk.taskNature !== TaskNature.Appointment &&
       tk.taskStatus !== TaskStatus.Missed &&
