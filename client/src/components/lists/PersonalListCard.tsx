@@ -8,11 +8,12 @@ import { ListType } from '../../types/enums'
 import ShareDialog from '../ShareDialog'
 
 const LIST_TYPE_EMOJI: Record<ListType, string> = {
-  [ListType.Checklist]: '✅',
-  [ListType.Shopping]:  '🛒',
-  [ListType.Notes]:     '📝',
-  [ListType.Ideas]:     '💡',
-  [ListType.Equipment]: '🎒',
+  [ListType.Checklist]:   '✅',
+  [ListType.Shopping]:    '🛒',
+  [ListType.Notes]:       '📝',
+  [ListType.Ideas]:       '💡',
+  [ListType.Equipment]:   '🎒',
+  [ListType.CookingPlan]: '🍳',
 }
 
 interface Props {

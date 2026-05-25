@@ -26,5 +26,19 @@ public interface IPersonalListService
 
     // Clear trip: mark all bought items as inactive and update lastBoughtAt
     Task<PersonalListDto?> ClearTripAsync(Guid listId, Guid callerId);
+
+    // Cooking item operations
+    Task<CookingItemDto?> AddCookingItemAsync(Guid listId, CreateCookingItemDto dto, Guid callerId);
+    Task<CookingItemDto?> UpdateCookingItemAsync(Guid itemId, UpdateCookingItemDto dto, Guid callerId);
+    Task<bool> DeleteCookingItemAsync(Guid itemId, Guid callerId);
+
+    // Extract ingredients from a cooking list and compare to an existing shopping list
+    Task<ExtractIngredientsResultDto?> ExtractIngredientsAsync(Guid cookingListId, Guid shoppingListId, Guid callerId);
+
+    // Push selected ingredients to a shopping list (user must confirm first)
+    Task<bool> PushIngredientsToShoppingAsync(Guid cookingListId, PushToShoppingRequestDto dto, Guid callerId);
+
+    // Rule-based cooking suggestions based on the user's cooking history
+    Task<IEnumerable<CookingSuggestionDto>> GetCookingSuggestionsAsync(Guid userId);
 }
 

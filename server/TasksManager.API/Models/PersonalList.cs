@@ -18,5 +18,6 @@ public class PersonalList
     public ICollection<PersonalListItem> Items { get; set; } = new List<PersonalListItem>();
     public ICollection<ShoppingItem> ShoppingItems { get; set; } = new List<ShoppingItem>();
     public ShoppingListSettings? ShoppingSettings { get; set; }
+    public ICollection<CookingItem> CookingItems { get; set; } = new List<CookingItem>();
     public ICollection<TaskItem> Tasks { get; set; } = new List<TaskItem>();
 }

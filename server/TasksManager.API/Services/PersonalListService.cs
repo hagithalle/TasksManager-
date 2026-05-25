@@ -22,6 +22,7 @@ public class PersonalListService : IPersonalListService
             .Include(l => l.Items)
             .Include(l => l.ShoppingItems)
             .Include(l => l.ShoppingSettings)
+            .Include(l => l.CookingItems)
             .ToListAsync();
 
         // Shared lists accepted by this user
@@ -37,6 +38,7 @@ public class PersonalListService : IPersonalListService
                 .Include(l => l.Items)
                 .Include(l => l.ShoppingItems)
                 .Include(l => l.ShoppingSettings)
+                .Include(l => l.CookingItems)
                 .ToListAsync()
             : new List<PersonalList>();
 
@@ -50,6 +52,7 @@ public class PersonalListService : IPersonalListService
             .Include(l => l.Items)
             .Include(l => l.ShoppingItems)
             .Include(l => l.ShoppingSettings)
+            .Include(l => l.CookingItems)
             .FirstOrDefaultAsync(l => l.Id == id);
         return list is null ? null : ToDto(list);
     }
@@ -86,6 +89,7 @@ public class PersonalListService : IPersonalListService
             .Include(l => l.Items)
             .Include(l => l.ShoppingItems)
             .Include(l => l.ShoppingSettings)
+            .Include(l => l.CookingItems)
             .FirstAsync(l => l.Id == list.Id);
 
         return ToDto(list);
@@ -97,6 +101,7 @@ public class PersonalListService : IPersonalListService
             .Include(l => l.Items)
             .Include(l => l.ShoppingItems)
             .Include(l => l.ShoppingSettings)
+            .Include(l => l.CookingItems)
             .FirstOrDefaultAsync(l => l.Id == id);
         if (list is null || list.UserId != callerId) return null;
 
@@ -298,6 +303,7 @@ public class PersonalListService : IPersonalListService
             .Include(l => l.Items)
             .Include(l => l.ShoppingItems)
             .Include(l => l.ShoppingSettings)
+            .Include(l => l.CookingItems)
             .FirstOrDefaultAsync(l => l.Id == listId);
         if (list is null || !await HasListAccessAsync(listId, callerId)) return null;
 
@@ -325,8 +331,7 @@ public class PersonalListService : IPersonalListService
         l.ListType.ToString().ToLower(),
         l.Items.Select(ToItemDto).OrderBy(i => i.SortOrder),
         l.ShoppingItems.Select(ToShoppingItemDto).OrderBy(i => i.SortOrder),
-        l.ShoppingSettings is null ? null : ToSettingsDto(l.ShoppingSettings),
-        l.CreatedAt,
+        l.ShoppingSettings is null ? null : ToSettingsDto(l.ShoppingSettings),        l.CookingItems.Select(ToCookingItemDto).OrderBy(i => i.SortOrder),        l.CreatedAt,
         l.UpdatedAt
     );
 
@@ -365,5 +370,285 @@ public class PersonalListService : IPersonalListService
         s.GroupByDepartment,
         s.ShowBoughtSection
     );
+
+    // ── Cooking items ─────────────────────────────────────────────────────────
+
+    public async Task<CookingItemDto?> AddCookingItemAsync(Guid listId, CreateCookingItemDto dto, Guid callerId)
+    {
+        if (!await HasListAccessAsync(listId, callerId)) return null;
+        var item = new CookingItem
+        {
+            Id             = Guid.NewGuid(),
+            PersonalListId = listId,
+            Title          = dto.Title,
+            RecipeUrl      = dto.RecipeUrl,
+            IngredientsJson = dto.Ingredients is not null
+                ? JsonSerializer.Serialize(dto.Ingredients)
+                : null,
+            Notes       = dto.Notes,
+            PlannedDate = dto.PlannedDate,
+            TagsJson    = dto.Tags is not null ? JsonSerializer.Serialize(dto.Tags) : null,
+            SortOrder   = dto.SortOrder,
+            CreatedAt   = DateTime.UtcNow,
+            UpdatedAt   = DateTime.UtcNow,
+        };
+        _db.CookingItems.Add(item);
+        await _db.SaveChangesAsync();
+        return ToCookingItemDto(item);
+    }
+
+    public async Task<CookingItemDto?> UpdateCookingItemAsync(Guid itemId, UpdateCookingItemDto dto, Guid callerId)
+    {
+        var item = await _db.CookingItems.FirstOrDefaultAsync(i => i.Id == itemId);
+        if (item is null || !await HasListAccessAsync(item.PersonalListId, callerId)) return null;
+
+        if (dto.Title is not null)       item.Title       = dto.Title;
+        if (dto.RecipeUrl is not null)   item.RecipeUrl   = string.IsNullOrEmpty(dto.RecipeUrl) ? null : dto.RecipeUrl;
+        if (dto.Notes is not null)       item.Notes       = string.IsNullOrEmpty(dto.Notes) ? null : dto.Notes;
+        if (dto.PlannedDate.HasValue)    item.PlannedDate = dto.PlannedDate;
+        if (dto.SortOrder.HasValue)      item.SortOrder   = dto.SortOrder.Value;
+        if (dto.LinkedShoppingListId.HasValue) item.LinkedShoppingListId = dto.LinkedShoppingListId;
+
+        if (dto.Ingredients is not null)
+            item.IngredientsJson = JsonSerializer.Serialize(dto.Ingredients);
+        if (dto.Tags is not null)
+            item.TagsJson = JsonSerializer.Serialize(dto.Tags);
+
+        item.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+        return ToCookingItemDto(item);
+    }
+
+    public async Task<bool> DeleteCookingItemAsync(Guid itemId, Guid callerId)
+    {
+        var item = await _db.CookingItems.FirstOrDefaultAsync(i => i.Id == itemId);
+        if (item is null || !await HasListAccessAsync(item.PersonalListId, callerId)) return false;
+        _db.CookingItems.Remove(item);
+        await _db.SaveChangesAsync();
+        return true;
+    }
+
+    // ── Ingredient extraction (rule-based) ────────────────────────────────────
+
+    public async Task<ExtractIngredientsResultDto?> ExtractIngredientsAsync(
+        Guid cookingListId, Guid shoppingListId, Guid callerId)
+    {
+        if (!await HasListAccessAsync(cookingListId, callerId)) return null;
+
+        var cookingItems = await _db.CookingItems
+            .AsNoTracking()
+            .Where(c => c.PersonalListId == cookingListId)
+            .ToListAsync();
+
+        // Aggregate all ingredients, dedup by normalised title
+        var aggregated = new Dictionary<string, SuggestedShoppingItemDto>(StringComparer.OrdinalIgnoreCase);
+        foreach (var ci in cookingItems)
+        {
+            if (ci.IngredientsJson is null) continue;
+            var ingredients = JsonSerializer.Deserialize<IEnumerable<CookingIngredientDto>>(
+                ci.IngredientsJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+                ?? Enumerable.Empty<CookingIngredientDto>();
+
+            foreach (var ing in ingredients)
+            {
+                var key = ing.Title.Trim().ToLower();
+                if (!aggregated.ContainsKey(key))
+                    aggregated[key] = new SuggestedShoppingItemDto(
+                        ing.Title.Trim(), ing.Quantity, ing.Unit,
+                        GuessShoppingDepartment(ing.Title), false);
+            }
+        }
+
+        // Check what's already on the shopping list
+        var shoppingTitles = await _db.ShoppingItems
+            .AsNoTracking()
+            .Where(s => s.PersonalListId == shoppingListId && s.IsActive)
+            .Select(s => s.Title.ToLower())
+            .ToListAsync();
+
+        var result = aggregated.Values
+            .Select(item => item with { IsAlreadyOnList = shoppingTitles.Contains(item.Title.ToLower()) })
+            .OrderBy(i => i.IsAlreadyOnList)
+            .ThenBy(i => i.Title)
+            .ToList();
+
+        return new ExtractIngredientsResultDto(result);
+    }
+
+    // ── Push ingredients to shopping list ─────────────────────────────────────
+
+    public async Task<bool> PushIngredientsToShoppingAsync(
+        Guid cookingListId, PushToShoppingRequestDto dto, Guid callerId)
+    {
+        if (!await HasListAccessAsync(cookingListId, callerId)) return false;
+        if (!await HasListAccessAsync(dto.ShoppingListId, callerId)) return false;
+
+        // Get existing active items on the shopping list (avoid duplicates)
+        var existingTitles = await _db.ShoppingItems
+            .Where(s => s.PersonalListId == dto.ShoppingListId && s.IsActive)
+            .Select(s => s.Title.ToLower())
+            .ToListAsync();
+
+        var sortBase = await _db.ShoppingItems
+            .Where(s => s.PersonalListId == dto.ShoppingListId)
+            .CountAsync();
+
+        int sortOrder = sortBase;
+        foreach (var item in dto.Items)
+        {
+            if (existingTitles.Contains(item.Title.ToLower())) continue;
+
+            var dept = Enum.TryParse<ShoppingDepartment>(item.Department, ignoreCase: true, out var d)
+                ? d : ShoppingDepartment.Other;
+
+            _db.ShoppingItems.Add(new ShoppingItem
+            {
+                Id             = Guid.NewGuid(),
+                PersonalListId = dto.ShoppingListId,
+                Title          = item.Title,
+                Quantity       = item.Quantity,
+                Unit           = item.Unit,
+                Department     = dept,
+                ItemType       = ShoppingItemType.Regular,
+                IsActive       = true,
+                SortOrder      = sortOrder++,
+            });
+        }
+
+        // Update LinkedShoppingListId on the cooking list items
+        var cookingItems = await _db.CookingItems
+            .Where(c => c.PersonalListId == cookingListId)
+            .ToListAsync();
+        foreach (var ci in cookingItems)
+            ci.LinkedShoppingListId = dto.ShoppingListId;
+
+        await _db.SaveChangesAsync();
+        return true;
+    }
+
+    // ── Cooking history suggestions (rule-based) ──────────────────────────────
+
+    public async Task<IEnumerable<CookingSuggestionDto>> GetCookingSuggestionsAsync(Guid userId)
+    {
+        // Get all cooking items from all cooking lists owned by the user
+        var allItems = await _db.CookingItems
+            .AsNoTracking()
+            .Where(c => c.PersonalList.UserId == userId)
+            .OrderByDescending(c => c.CreatedAt)
+            .ToListAsync();
+
+        // Group by normalised title, count, take last ingredients/tags
+        var groups = allItems
+            .GroupBy(c => c.Title.Trim().ToLower())
+            .Select(g =>
+            {
+                var latest  = g.OrderByDescending(x => x.CreatedAt).First();
+                var ingJson = latest.IngredientsJson;
+                var tags    = latest.TagsJson is null
+                    ? Enumerable.Empty<string>()
+                    : JsonSerializer.Deserialize<IEnumerable<string>>(latest.TagsJson,
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+                      ?? Enumerable.Empty<string>();
+                var ingredients = ingJson is null
+                    ? Enumerable.Empty<CookingIngredientDto>()
+                    : JsonSerializer.Deserialize<IEnumerable<CookingIngredientDto>>(ingJson,
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+                      ?? Enumerable.Empty<CookingIngredientDto>();
+
+                return new CookingSuggestionDto(
+                    latest.Title,
+                    g.Count(),
+                    ingredients,
+                    tags,
+                    g.Max(x => x.CreatedAt)
+                );
+            })
+            .OrderByDescending(s => s.TimesCooked)
+            .ThenByDescending(s => s.LastCooked)
+            .Take(20);
+
+        return groups;
+    }
+
+    // ── Department detection (rule-based keyword match) ───────────────────────
+
+    private static readonly Dictionary<ShoppingDepartment, string[]> DeptKeywords = new()
+    {
+        [ShoppingDepartment.FruitsAndVegetables] = [
+            "tomato","tomatoes","cucumber","pepper","lettuce","carrot","onion","garlic",
+            "potato","apple","banana","lemon","orange","zucchini","broccoli","spinach",
+            "parsley","coriander","dill","mint","avocado","eggplant","mushroom",
+            // Hebrew
+            "עגבנ","מלפ","פלפ","חסה","גזר","בצל","שום","תפוח אדמה","תפוח","בנ","לימ","תפוז",
+            "קישוא","ברוקולי","תרד","פטרוזיליה","כוסברה","שמיר","נענע","אבוקדו","חציל","פטריה",
+        ],
+        [ShoppingDepartment.Dairy] = [
+            "milk","cheese","yogurt","butter","cream","sour cream","cottage","feta","mozzarella",
+            "cream cheese","whipped cream","custard","egg","eggs",
+            // Hebrew
+            "חלב","גבינ","יוגורט","חמאה","שמנת","קוטג","פטה","מוצרלה","ביצ",
+        ],
+        [ShoppingDepartment.MeatAndFish] = [
+            "chicken","beef","lamb","turkey","fish","salmon","tuna","shrimp","prawn","steak",
+            "mince","ground beef","pork",
+            // Hebrew
+            "עוף","בשר","כבש","הודו","דג","סלמון","טונה","שרימפס","פרגיות","חזה עוף",
+        ],
+        [ShoppingDepartment.Bakery] = [
+            "bread","pita","roll","bun","challah","baguette","croissant","cake","flour tortilla",
+            // Hebrew
+            "לחם","פיתה","חלה","כיכר","רול","באגט","קרואסון","עוגה",
+        ],
+        [ShoppingDepartment.Pantry] = [
+            "rice","pasta","oil","olive oil","salt","sugar","flour","semolina","lentil","chickpea",
+            "bean","canned","tomato paste","sauce","vinegar","honey","soy sauce","spice","cumin",
+            "paprika","turmeric","cinnamon","stock","broth","can","tin",
+            // Hebrew
+            "אורז","פסטה","שמן","מלח","סוכר","קמח","עדשים","חומוס","שעועית","רסק","רוטב",
+            "חומץ","דבש","קטשופ","כמון","פפריקה","כורכום","קינמון","ציר","שימור",
+        ],
+        [ShoppingDepartment.Frozen] = [
+            "frozen","ice cream","gelato",
+            "קפוא","גלידה",
+        ],
+        [ShoppingDepartment.Cleaning] = [
+            "soap","detergent","cleaning","bleach","dishwash","laundry","sponge","trash bag",
+            "אבקה","סבון","ניקוי","אקונומיקה","ספוג","שקית זבל",
+        ],
+    };
+
+    private static string GuessShoppingDepartment(string ingredientTitle)
+    {
+        var lower = ingredientTitle.ToLower();
+        foreach (var (dept, keywords) in DeptKeywords)
+        {
+            if (keywords.Any(k => lower.Contains(k)))
+                return dept.ToString().ToLower()[0] + dept.ToString()[1..]; // camelCase first char
+        }
+        return "other";
+    }
+
+    // ── Cooking item mapper ───────────────────────────────────────────────────
+
+    private static CookingItemDto ToCookingItemDto(CookingItem c)
+    {
+        var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+        var ingredients = c.IngredientsJson is null
+            ? Enumerable.Empty<CookingIngredientDto>()
+            : JsonSerializer.Deserialize<IEnumerable<CookingIngredientDto>>(c.IngredientsJson, opts)
+              ?? Enumerable.Empty<CookingIngredientDto>();
+
+        var tags = c.TagsJson is null
+            ? Enumerable.Empty<string>()
+            : JsonSerializer.Deserialize<IEnumerable<string>>(c.TagsJson, opts)
+              ?? Enumerable.Empty<string>();
+
+        return new CookingItemDto(
+            c.Id, c.PersonalListId, c.Title, c.RecipeUrl,
+            ingredients, c.Notes, c.PlannedDate, tags,
+            c.LinkedShoppingListId, c.SortOrder, c.CreatedAt, c.UpdatedAt
+        );
+    }
 }
 

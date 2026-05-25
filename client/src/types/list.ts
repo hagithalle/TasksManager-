@@ -41,6 +41,40 @@ export interface ShoppingListSettings {
   showBoughtSection: boolean
 }
 
+// ── Cooking types ─────────────────────────────────────────────────────────────
+
+export interface CookingIngredient {
+  title: string
+  quantity?: number
+  unit?: string
+}
+
+export interface CookingItem {
+  id: string
+  personalListId: string
+  title: string
+  recipeUrl?: string
+  ingredients: CookingIngredient[]
+  notes?: string
+  /** ISO date string (YYYY-MM-DD) */
+  plannedDate?: string
+  tags: string[]
+  linkedShoppingListId?: string
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
+// ── Suggested shopping item from ingredient extraction ─────────────────────────
+
+export interface SuggestedShoppingItem {
+  title: string
+  quantity?: number
+  unit?: string
+  department: string
+  isAlreadyOnList: boolean
+}
+
 export interface PersonalList {
   id: string
 
@@ -61,6 +95,9 @@ export interface PersonalList {
 
   /** Shopping-specific settings (only present for shopping lists) */
   shoppingSettings?: ShoppingListSettings
+
+  /** Cooking plan items (only populated for cooking plan lists) */
+  cookingItems: CookingItem[]
 
   createdAt: string
   updatedAt: string

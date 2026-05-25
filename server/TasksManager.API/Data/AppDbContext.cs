@@ -22,6 +22,7 @@ public class AppDbContext : DbContext
     public DbSet<PersonalListItem> PersonalListItems => Set<PersonalListItem>();
     public DbSet<ShoppingItem> ShoppingItems => Set<ShoppingItem>();
     public DbSet<ShoppingListSettings> ShoppingListSettings => Set<ShoppingListSettings>();
+    public DbSet<CookingItem> CookingItems => Set<CookingItem>();
     public DbSet<ShareInvite>   ShareInvites   => Set<ShareInvite>();
     public DbSet<UserSettings>  UserSettings   => Set<UserSettings>();
 
@@ -153,7 +154,19 @@ public class AppDbContext : DbContext
              .HasForeignKey<ShoppingListSettings>(s => s.PersonalListId)
              .OnDelete(DeleteBehavior.Cascade);
         });
+        // ── CookingItem ────────────────────────────────────────────────────────────────────
+        modelBuilder.Entity<CookingItem>(e =>
+        {
+            e.HasKey(c => c.Id);
+            e.Property(c => c.Title).IsRequired().HasMaxLength(300);
+            e.Property(c => c.RecipeUrl).HasMaxLength(2000);
+            e.Property(c => c.Notes).HasMaxLength(2000);
 
+            e.HasOne(c => c.PersonalList)
+             .WithMany(l => l.CookingItems)
+             .HasForeignKey(c => c.PersonalListId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
         // ── ShareInvite ───────────────────────────────────────────────────────
         modelBuilder.Entity<ShareInvite>(e =>
         {

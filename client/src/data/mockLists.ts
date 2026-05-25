@@ -8,6 +8,7 @@ export const mockLists: PersonalList[] = [
     emoji: '🛒',
     listType: ListType.Checklist,
     shoppingItems: [],
+    cookingItems: [],
     items: [
       { id: 'li1',  title: 'חלב',         isCompleted: false, sortOrder: 1 },
       { id: 'li2',  title: 'לחם',         isCompleted: false, sortOrder: 2 },
@@ -27,6 +28,7 @@ export const mockLists: PersonalList[] = [
     emoji: '✈️',
     listType: ListType.Checklist,
     shoppingItems: [],
+    cookingItems: [],
     items: [
       { id: 'li9',  title: 'דרכון',          isCompleted: true,  sortOrder: 1 },
       { id: 'li10', title: 'כרטיס טיסה',     isCompleted: true,  sortOrder: 2 },
@@ -48,6 +50,7 @@ export const mockLists: PersonalList[] = [
     emoji: '📚',
     listType: ListType.Checklist,
     shoppingItems: [],
+    cookingItems: [],
     items: [
       { id: 'li19', title: 'Atomic Habits',           isCompleted: true,  sortOrder: 1 },
       { id: 'li20', title: 'The Pragmatic Programmer', isCompleted: false, sortOrder: 2 },

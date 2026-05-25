@@ -60,6 +60,7 @@ public enum ListType
     Notes       = 2,  // free-form notes
     Ideas       = 3,  // idea collection
     Equipment   = 4,  // packing / equipment list
+    CookingPlan = 5,  // meal / cooking planning list
 }
 
 public enum ShoppingDepartment

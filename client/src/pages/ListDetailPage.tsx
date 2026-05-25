@@ -15,22 +15,25 @@ import ListItemRow from '../components/lists/ListItemRow'
 import AddTaskDialog from '../components/tasks/AddTaskDialog'
 import ListIntelligenceDialog from '../components/lists/ListIntelligenceDialog'
 import ShoppingListView from '../components/lists/ShoppingListView'
+import CookingPlanView from '../components/lists/CookingPlanView'
 import { detectDepartment } from '../components/lists/ShoppingItemDialog'
 
 // ─── constants ────────────────────────────────────────────────────────────────
 const LIST_TYPE_EMOJI: Record<ListType, string> = {
-  [ListType.Checklist]: '✅',
-  [ListType.Shopping]:  '🛒',
-  [ListType.Notes]:     '📝',
-  [ListType.Ideas]:     '💡',
-  [ListType.Equipment]: '🎒',
+  [ListType.Checklist]:   '✅',
+  [ListType.Shopping]:    '🛒',
+  [ListType.Notes]:       '📝',
+  [ListType.Ideas]:       '💡',
+  [ListType.Equipment]:   '🎒',
+  [ListType.CookingPlan]: '🍳',
 }
 const LIST_TYPE_OPTIONS: { type: ListType; emoji: string }[] = [
-  { type: ListType.Checklist, emoji: '✅' },
-  { type: ListType.Shopping,  emoji: '🛒' },
-  { type: ListType.Notes,     emoji: '📝' },
-  { type: ListType.Ideas,     emoji: '💡' },
-  { type: ListType.Equipment, emoji: '🎒' },
+  { type: ListType.Checklist,   emoji: '✅' },
+  { type: ListType.Shopping,    emoji: '🛒' },
+  { type: ListType.Notes,       emoji: '📝' },
+  { type: ListType.Ideas,       emoji: '💡' },
+  { type: ListType.Equipment,   emoji: '🎒' },
+  { type: ListType.CookingPlan, emoji: '🍳' },
 ]
 
 // ─── page ─────────────────────────────────────────────────────────────────────
@@ -94,7 +97,8 @@ export default function ListDetailPage() {
     )
   }
 
-  const isShopping = list.listType === ListType.Shopping
+  const isShopping   = list.listType === ListType.Shopping
+  const isCookingPlan = list.listType === ListType.CookingPlan
   const items   = list.items
   const total   = isShopping
     ? list.shoppingItems.filter((i) => i.isActive).length
@@ -328,6 +332,10 @@ export default function ListDetailPage() {
       {/* ── Items list — branch by list type ── */}
       {isShopping ? (
         <ShoppingListView list={list} onUpdate={setList} />
+      ) : isCookingPlan ? (
+        <Box sx={{ px: 2, pt: 2 }}>
+          <CookingPlanView list={list} allLists={allLists} onListUpdated={setList} />
+        </Box>
       ) : (
       <Box sx={{ px: 2, pt: 2 }}>
         {items.length === 0 && !adding ? (

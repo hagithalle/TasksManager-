@@ -406,7 +406,8 @@
     "shopping": "Shopping",
     "notes": "Notes",
     "ideas": "Ideas",
-    "equipment": "Equipment"
+    "equipment": "Equipment",
+    "cookingplan": "Cooking Plan"
   },
   "shoppingDepartment": {
     "fruitsAndVegetables": "Fruits & Vegetables",
@@ -470,6 +471,43 @@
       "occasionalDays": "Not bought for {{days}} days",
       "firstTime": "A frequent item in your list"
     }
+  },
+  "cooking": {
+    "planTitle": "Cooking Plan",
+    "addDish": "Add Dish",
+    "editDish": "Edit Dish",
+    "dishName": "Dish Name",
+    "plannedDate": "Planned Date",
+    "tags": "Tags",
+    "customTag": "Custom tag",
+    "tag_shabbat": "Shabbat",
+    "tag_weekday": "Weekday",
+    "tag_dairy": "Dairy",
+    "tag_meat": "Meat",
+    "tag_parve": "Parve",
+    "tag_quick": "Quick",
+    "tag_kids": "Kids",
+    "tag_freezes": "Freezes",
+    "ingredients": "Ingredients",
+    "noIngredients": "No ingredients added yet",
+    "ingredientName": "Ingredient",
+    "qty": "Qty",
+    "unit": "Unit",
+    "recipeUrl": "Recipe URL",
+    "notes": "Notes",
+    "ingredientCount": "{{count}} ingredients",
+    "viewRecipe": "View Recipe",
+    "emptyState": "No dishes planned yet. Add your first dish!",
+    "suggestions": "Based on your cooking history",
+    "pushToShopping": "Add to Shopping List",
+    "extractIngredients": "Extract Ingredients",
+    "chooseShoppingList": "Choose Shopping List",
+    "selectToAdd": "Select ingredients to add",
+    "alreadyOnList": "Already on list",
+    "addSelected": "Add {{count}} items",
+    "noIngredientsFound": "No ingredients found in this cooking plan",
+    "extractError": "Failed to load ingredients",
+    "pushError": "Failed to add items to shopping list"
   },
   "recurrence": {
     "label": "Repeat",

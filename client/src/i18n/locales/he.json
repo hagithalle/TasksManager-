@@ -406,7 +406,8 @@
     "shopping": "קניות",
     "notes": "הערות",
     "ideas": "רעיונות",
-    "equipment": "ציוד"
+    "equipment": "ציוד",
+    "cookingplan": "תכנון בישול"
   },
   "shoppingDepartment": {
     "fruitsAndVegetables": "פירות וירקות",
@@ -470,6 +471,43 @@
       "occasionalDays": "לא נקנה כבר {{days}} ימים",
       "firstTime": "פריט שכיח ברשימה שלך"
     }
+  },
+  "cooking": {
+    "planTitle": "תכנון בישול",
+    "addDish": "הוסף מנה",
+    "editDish": "ערוך מנה",
+    "dishName": "שם המנה",
+    "plannedDate": "תאריך מתוכנן",
+    "tags": "תגיות",
+    "customTag": "תג מותאם",
+    "tag_shabbat": "שבת",
+    "tag_weekday": "חול",
+    "tag_dairy": "חלבי",
+    "tag_meat": "בשרי",
+    "tag_parve": "פרווה",
+    "tag_quick": "מהיר",
+    "tag_kids": "ילדים",
+    "tag_freezes": "מקפיא",
+    "ingredients": "מרכיבים",
+    "noIngredients": "אין מרכיבים עדיין",
+    "ingredientName": "מרכיב",
+    "qty": "כמות",
+    "unit": "יחידה",
+    "recipeUrl": "קישור למתכון",
+    "notes": "הערות",
+    "ingredientCount": "{{count}} מרכיבים",
+    "viewRecipe": "צפה במתכון",
+    "emptyState": "אין מנות מתוכננות עדיין. הוסיפי את המנה הראשונה!",
+    "suggestions": "מבוסס על היסטוריית הבישול שלך",
+    "pushToShopping": "הוסף לרשימת קניות",
+    "extractIngredients": "חלץ מרכיבים",
+    "chooseShoppingList": "בחרי רשימת קניות",
+    "selectToAdd": "סמני מרכיבים להוספה",
+    "alreadyOnList": "כבר ברשימה",
+    "addSelected": "הוסף {{count}} פריטים",
+    "noIngredientsFound": "לא נמצאו מרכיבים בתכנית הבישול",
+    "extractError": "שגיאה בטעינת המרכיבים",
+    "pushError": "שגיאה בהוספת הפריטים לרשימת הקניות"
   },
   "recurrence": {
     "label": "חזרה",

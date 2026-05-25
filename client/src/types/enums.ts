@@ -102,11 +102,12 @@ export enum TaskStatus {
  * Maps to translation key `listType.<value>`.
  */
 export enum ListType {
-  Checklist = 'checklist',
-  Shopping  = 'shopping',
-  Notes     = 'notes',
-  Ideas     = 'ideas',
-  Equipment = 'equipment',
+  Checklist   = 'checklist',
+  Shopping    = 'shopping',
+  Notes       = 'notes',
+  Ideas       = 'ideas',
+  Equipment   = 'equipment',
+  CookingPlan = 'cookingplan',
 }
 
 /**

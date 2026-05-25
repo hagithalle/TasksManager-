@@ -1,0 +1,283 @@
+import { useCallback, useEffect, useState } from 'react'
+import {
+  Box, Button, Card, CardContent, CardActions, Chip, Fab,
+  Grid, IconButton, Menu, MenuItem, Stack, Tooltip, Typography,
+  Divider,
+} from '@mui/material'
+import AddIcon from '@mui/icons-material/Add'
+import MoreVertIcon from '@mui/icons-material/MoreVert'
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart'
+import OpenInNewIcon from '@mui/icons-material/OpenInNew'
+import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined'
+import { useTranslation } from 'react-i18next'
+import type { CookingItem, PersonalList } from '../../types'
+import { listsApi, type CookingSuggestion } from '../../api/listsApi'
+import CookingItemDialog from './CookingItemDialog'
+import PushToShoppingDialog from './PushToShoppingDialog'
+
+interface Props {
+  list: PersonalList
+  allLists: PersonalList[]
+  onListUpdated: (updated: PersonalList) => void
+}
+
+export default function CookingPlanView({ list, allLists, onListUpdated }: Props) {
+  const { t } = useTranslation()
+
+  const [addOpen, setAddOpen]           = useState(false)
+  const [editItem, setEditItem]         = useState<CookingItem | null>(null)
+  const [pushOpen, setPushOpen]         = useState(false)
+  const [suggestions, setSuggestions]   = useState<CookingSuggestion[]>([])
+  const [menuAnchor, setMenuAnchor]     = useState<{ el: HTMLElement; item: CookingItem } | null>(null)
+
+  // Load cooking suggestions on mount
+  useEffect(() => {
+    listsApi.getCookingSuggestions().then(setSuggestions).catch(() => {})
+  }, [])
+
+  async function reload() {
+    const updated = await listsApi.getById(list.id)
+    onListUpdated(updated)
+  }
+
+  const handleAddSave = useCallback(async (payload: any) => {
+    await listsApi.addCookingItem(list.id, payload)
+    await reload()
+  }, [list.id])
+
+  const handleEditSave = useCallback(async (payload: any) => {
+    if (!editItem) return
+    await listsApi.updateCookingItem(editItem.id, payload)
+    await reload()
+  }, [editItem, list.id])
+
+  async function handleDelete(item: CookingItem) {
+    setMenuAnchor(null)
+    await listsApi.deleteCookingItem(item.id)
+    await reload()
+  }
+
+  async function handleAddFromSuggestion(s: CookingSuggestion) {
+    await listsApi.addCookingItem(list.id, {
+      title:       s.title,
+      tags:        s.tags,
+      ingredients: s.ingredients,
+    })
+    await reload()
+  }
+
+  // Items sorted by sortOrder (already sorted by backend, just display)
+  const items = list.cookingItems ?? []
+
+  // Suggestions to show: exclude titles already in the list
+  const existingTitles = new Set(items.map(i => i.title.trim().toLowerCase()))
+  const relevantSuggestions = suggestions
+    .filter(s => !existingTitles.has(s.title.trim().toLowerCase()))
+    .slice(0, 5)
+
+  return (
+    <Box sx={{ pb: 10 }}>
+      {/* Header row */}
+      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+        <Typography variant="h6">{t('cooking.planTitle', 'Cooking Plan')}</Typography>
+        <Stack direction="row" spacing={1}>
+          <Tooltip title={t('cooking.pushToShopping')}>
+            <span>
+              <Button
+                variant="outlined"
+                startIcon={<ShoppingCartIcon />}
+                size="small"
+                onClick={() => setPushOpen(true)}
+                disabled={items.length === 0}
+              >
+                {t('cooking.extractIngredients')}
+              </Button>
+            </span>
+          </Tooltip>
+        </Stack>
+      </Stack>
+
+      {/* Suggestions banner */}
+      {relevantSuggestions.length > 0 && (
+        <Box
+          sx={{
+            mb: 2, p: 1.5,
+            bgcolor: 'action.hover',
+            borderRadius: 2,
+          }}
+        >
+          <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
+            <LightbulbOutlinedIcon fontSize="small" color="primary" />
+            <Typography variant="body2" fontWeight={500}>
+              {t('cooking.suggestions')}
+            </Typography>
+          </Stack>
+          <Stack direction="row" flexWrap="wrap" gap={0.75}>
+            {relevantSuggestions.map(s => (
+              <Chip
+                key={s.title}
+                label={`${s.title} (×${s.timesCooked})`}
+                size="small"
+                icon={<AddIcon />}
+                onClick={() => handleAddFromSuggestion(s)}
+                variant="outlined"
+              />
+            ))}
+          </Stack>
+        </Box>
+      )}
+
+      {/* Cooking items grid */}
+      {items.length === 0 ? (
+        <Box sx={{ textAlign: 'center', py: 6 }}>
+          <Typography color="text.secondary">{t('cooking.emptyState')}</Typography>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            sx={{ mt: 2 }}
+            onClick={() => setAddOpen(true)}
+          >
+            {t('cooking.addDish')}
+          </Button>
+        </Box>
+      ) : (
+        <Grid container spacing={2}>
+          {items.map(item => (
+            <Grid item xs={12} sm={6} md={4} key={item.id}>
+              <DishCard
+                item={item}
+                onEdit={() => { setEditItem(item) }}
+                onDelete={() => handleDelete(item)}
+                onMenuOpen={(el) => setMenuAnchor({ el, item })}
+              />
+            </Grid>
+          ))}
+        </Grid>
+      )}
+
+      {/* Context menu */}
+      <Menu
+        anchorEl={menuAnchor?.el}
+        open={Boolean(menuAnchor)}
+        onClose={() => setMenuAnchor(null)}
+      >
+        <MenuItem onClick={() => {
+          setEditItem(menuAnchor!.item)
+          setMenuAnchor(null)
+        }}>
+          {t('common.edit', 'Edit')}
+        </MenuItem>
+        <MenuItem onClick={() => handleDelete(menuAnchor!.item)}>
+          {t('common.delete', 'Delete')}
+        </MenuItem>
+      </Menu>
+
+      {/* FAB */}
+      <Fab
+        color="primary"
+        sx={{ position: 'fixed', bottom: 72, right: 24 }}
+        onClick={() => setAddOpen(true)}
+      >
+        <AddIcon />
+      </Fab>
+
+      {/* Add / edit dialogs */}
+      <CookingItemDialog
+        open={addOpen}
+        initial={null}
+        onClose={() => setAddOpen(false)}
+        onSave={handleAddSave}
+      />
+      <CookingItemDialog
+        open={Boolean(editItem)}
+        initial={editItem}
+        onClose={() => setEditItem(null)}
+        onSave={handleEditSave}
+      />
+
+      {/* Push to shopping dialog */}
+      <PushToShoppingDialog
+        open={pushOpen}
+        cookingListId={list.id}
+        allLists={allLists}
+        onClose={() => setPushOpen(false)}
+        onDone={reload}
+      />
+    </Box>
+  )
+}
+
+// ── Dish card ──────────────────────────────────────────────────────────────────
+
+interface DishCardProps {
+  item: CookingItem
+  onEdit: () => void
+  onDelete: () => void
+  onMenuOpen: (el: HTMLElement) => void
+}
+
+function DishCard({ item, onMenuOpen }: DishCardProps) {
+  const { t } = useTranslation()
+
+  return (
+    <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <CardContent sx={{ flex: 1, pb: 0 }}>
+        <Stack direction="row" alignItems="flex-start" justifyContent="space-between">
+          <Typography variant="subtitle1" fontWeight={600} noWrap sx={{ flex: 1, mr: 1 }}>
+            {item.title}
+          </Typography>
+          <IconButton size="small" onClick={e => onMenuOpen(e.currentTarget)}>
+            <MoreVertIcon fontSize="small" />
+          </IconButton>
+        </Stack>
+
+        {item.plannedDate && (
+          <Typography variant="caption" color="text.secondary">
+            📅 {item.plannedDate}
+          </Typography>
+        )}
+
+        {item.tags.length > 0 && (
+          <Stack direction="row" flexWrap="wrap" gap={0.5} sx={{ mt: 0.75 }}>
+            {item.tags.map(tag => (
+              <Chip key={tag} label={tag} size="small" variant="outlined" sx={{ height: 18, fontSize: '0.65rem' }} />
+            ))}
+          </Stack>
+        )}
+
+        {item.ingredients.length > 0 && (
+          <>
+            <Divider sx={{ my: 1 }} />
+            <Typography variant="caption" color="text.secondary">
+              🥦 {t('cooking.ingredientCount', { count: item.ingredients.length })}
+            </Typography>
+          </>
+        )}
+
+        {item.notes && (
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ mt: 1, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
+          >
+            {item.notes}
+          </Typography>
+        )}
+      </CardContent>
+
+      {item.recipeUrl && (
+        <CardActions sx={{ pt: 0 }}>
+          <Button
+            size="small"
+            href={item.recipeUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            endIcon={<OpenInNewIcon fontSize="inherit" />}
+          >
+            {t('cooking.viewRecipe')}
+          </Button>
+        </CardActions>
+      )}
+    </Card>
+  )
+}

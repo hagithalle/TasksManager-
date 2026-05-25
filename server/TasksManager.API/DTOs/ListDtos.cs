@@ -97,6 +97,7 @@ public record PersonalListDto(
     IEnumerable<PersonalListItemDto> Items,
     IEnumerable<ShoppingItemDto> ShoppingItems,
     ShoppingListSettingsDto? ShoppingSettings,
+    IEnumerable<CookingItemDto> CookingItems,
     DateTime CreatedAt,
     DateTime UpdatedAt
 );

@@ -150,5 +150,61 @@ public class PersonalListsController : ControllerBase
         var list = await _service.ClearTripAsync(listId, callerId.Value);
         return list is null ? NotFound() : Ok(list);
     }
-}
 
+    // ── Cooking items ─────────────────────────────────────────────────────────
+
+    [HttpPost("{listId:guid}/cooking-items")]
+    public async Task<IActionResult> AddCookingItem(Guid listId, [FromBody] CreateCookingItemDto dto)
+    {
+        var callerId = GetCallerId();
+        if (callerId is null) return Unauthorized();
+        var item = await _service.AddCookingItemAsync(listId, dto, callerId.Value);
+        return item is null ? NotFound() : CreatedAtAction(nameof(AddCookingItem), new { listId }, item);
+    }
+
+    [HttpPatch("cooking-items/{itemId:guid}")]
+    public async Task<IActionResult> UpdateCookingItem(Guid itemId, [FromBody] UpdateCookingItemDto dto)
+    {
+        var callerId = GetCallerId();
+        if (callerId is null) return Unauthorized();
+        var item = await _service.UpdateCookingItemAsync(itemId, dto, callerId.Value);
+        return item is null ? NotFound() : Ok(item);
+    }
+
+    [HttpDelete("cooking-items/{itemId:guid}")]
+    public async Task<IActionResult> DeleteCookingItem(Guid itemId)
+    {
+        var callerId = GetCallerId();
+        if (callerId is null) return Unauthorized();
+        var ok = await _service.DeleteCookingItemAsync(itemId, callerId.Value);
+        return ok ? NoContent() : NotFound();
+    }
+
+    [HttpGet("{cookingListId:guid}/extract-ingredients")]
+    public async Task<IActionResult> ExtractIngredients(
+        Guid cookingListId, [FromQuery] Guid shoppingListId)
+    {
+        var callerId = GetCallerId();
+        if (callerId is null) return Unauthorized();
+        var result = await _service.ExtractIngredientsAsync(cookingListId, shoppingListId, callerId.Value);
+        return result is null ? NotFound() : Ok(result);
+    }
+
+    [HttpPost("{cookingListId:guid}/push-to-shopping")]
+    public async Task<IActionResult> PushToShopping(Guid cookingListId, [FromBody] PushToShoppingRequestDto dto)
+    {
+        var callerId = GetCallerId();
+        if (callerId is null) return Unauthorized();
+        var ok = await _service.PushIngredientsToShoppingAsync(cookingListId, dto, callerId.Value);
+        return ok ? NoContent() : NotFound();
+    }
+
+    [HttpGet("cooking-suggestions")]
+    public async Task<IActionResult> GetCookingSuggestions()
+    {
+        var callerId = GetCallerId();
+        if (callerId is null) return Unauthorized();
+        var suggestions = await _service.GetCookingSuggestionsAsync(callerId.Value);
+        return Ok(suggestions);
+    }
+}

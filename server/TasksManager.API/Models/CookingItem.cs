@@ -1,0 +1,36 @@
+namespace TasksManager.API.Models;
+
+public class CookingItem
+{
+    public Guid Id { get; set; }
+    public Guid PersonalListId { get; set; }
+
+    /// <summary>Dish or recipe name.</summary>
+    public string Title { get; set; } = string.Empty;
+
+    /// <summary>Optional URL to recipe (website, YouTube, etc.).</summary>
+    public string? RecipeUrl { get; set; }
+
+    /// <summary>JSON array of {title, quantity?, unit?} objects.</summary>
+    public string? IngredientsJson { get; set; }
+
+    /// <summary>Free-text cooking notes.</summary>
+    public string? Notes { get; set; }
+
+    /// <summary>Date this dish is planned to be cooked.</summary>
+    public DateOnly? PlannedDate { get; set; }
+
+    /// <summary>JSON array of tag strings e.g. ["shabbat", "dairy", "quick"].</summary>
+    public string? TagsJson { get; set; }
+
+    /// <summary>Shopping list that ingredients were last pushed to.</summary>
+    public Guid? LinkedShoppingListId { get; set; }
+
+    public int SortOrder { get; set; }
+
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+
+    // Navigation
+    public PersonalList PersonalList { get; set; } = null!;
+}
