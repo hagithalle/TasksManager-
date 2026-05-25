@@ -1,7 +1,9 @@
 import {
   Box, Checkbox, Divider, IconButton, InputBase,
-  List, ListItem, ListItemIcon, ListItemText, Typography,
+  List, ListItem, ListItemIcon, ListItemText, Typography, TextField,
 } from '@mui/material'
+import EditIcon from '@mui/icons-material/Edit'
+import SaveIcon from '@mui/icons-material/Save'
 import CheckCircleRoundedIcon          from '@mui/icons-material/CheckCircleRounded'
 import RadioButtonUncheckedRoundedIcon from '@mui/icons-material/RadioButtonUncheckedRounded'
 import AddRoundedIcon                  from '@mui/icons-material/AddRounded'
@@ -74,6 +76,10 @@ export default function SubTaskList({
   const [subTasks,    setSubTasks]    = useState<SubTask[]>(initialSubTasks)
   const [addingNew,   setAddingNew]   = useState(false)
   const [newTitle,    setNewTitle]    = useState('')
+  const [newDuration, setNewDuration] = useState('')
+  const [editIdx,     setEditIdx]     = useState<number | null>(null)
+  const [editTitle,   setEditTitle]   = useState('')
+  const [editDuration, setEditDuration] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
   const done  = subTasks.filter((s) => s.isCompleted).length
@@ -111,11 +117,26 @@ export default function SubTaskList({
   // ── Add new subtask ───────────────────────────────────────────────────────
   function commitAdd() {
     const title = newTitle.trim()
+    const duration = newDuration.trim() ? Number(newDuration) : undefined
     if (title) {
-      setSubTasks((prev) => [...prev, { id: makeId(), title, isCompleted: false }])
+      setSubTasks((prev) => [...prev, { id: makeId(), title, isCompleted: false, durationMinutes: duration }])
     }
     setNewTitle('')
+    setNewDuration('')
     setAddingNew(false)
+  }
+
+  function startEdit(idx: number, sub: SubTask) {
+    setEditIdx(idx)
+    setEditTitle(sub.title)
+    setEditDuration(sub.durationMinutes?.toString() ?? '')
+  }
+
+  function saveEdit(idx: number) {
+    setSubTasks(prev => prev.map((s, i) => i === idx ? { ...s, title: editTitle.trim(), durationMinutes: editDuration.trim() ? Number(editDuration) : undefined } : s))
+    setEditIdx(null)
+    setEditTitle('')
+    setEditDuration('')
   }
 
   return (
@@ -150,7 +171,7 @@ export default function SubTaskList({
           {subTasks.map((sub, index) => (
             <Box key={sub.id}>
               {index > 0 && <Divider sx={{ ml: 6 }} />}
-              <ListItem disablePadding sx={{ px: 1.5, py: 0.25 }}>
+              <ListItem disablePadding sx={{ px: 1.5, py: 0.25, alignItems: 'flex-start' }}>
                 <ListItemIcon sx={{ minWidth: 32 }}>
                   <Checkbox
                     edge="start"
@@ -170,26 +191,57 @@ export default function SubTaskList({
                     size="small"
                   />
                 </ListItemIcon>
-                <ListItemText
-                  primary={
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        textDecoration: sub.isCompleted ? 'line-through' : 'none',
-                        color:          sub.isCompleted ? 'text.disabled' : 'text.secondary',
-                        fontSize: '0.82rem',
-                      }}
-                    >
-                      {sub.title}
-                    </Typography>
-                  }
-                  secondary={
-                    sub.linkedListId
-                      ? <LinkedListButton listId={sub.linkedListId} />
-                      : undefined
-                  }
-                  secondaryTypographyProps={{ component: 'div' }}
-                />
+                {editIdx === index ? (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, gap: 0.5 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <TextField
+                        value={editTitle}
+                        onChange={e => setEditTitle(e.target.value)}
+                        size="small"
+                        sx={{ flex: 2, fontSize: '0.82rem' }}
+                        inputProps={{ maxLength: 60 }}
+                      />
+                      <TextField
+                        value={editDuration}
+                        onChange={e => setEditDuration(e.target.value.replace(/[^\d]/g, ''))}
+                        size="small"
+                        sx={{ width: 70 }}
+                        placeholder={t('task.minutesShort')}
+                        inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', min: 0 }}
+                      />
+                      <IconButton size="small" onClick={() => saveEdit(index)}>
+                        <SaveIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  </Box>
+                ) : (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          textDecoration: sub.isCompleted ? 'line-through' : 'none',
+                          color:          sub.isCompleted ? 'text.disabled' : 'text.secondary',
+                          fontSize: '0.82rem',
+                          flex: 2,
+                        }}
+                      >
+                        {sub.title}
+                      </Typography>
+                      <Typography variant="caption" color="primary.main" sx={{ minWidth: 40, textAlign: 'right' }}>
+                        {sub.durationMinutes ? `${sub.durationMinutes} ${t('task.minutesShort')}` : ''}
+                      </Typography>
+                      <IconButton size="small" onClick={() => startEdit(index, sub)}>
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                    {sub.linkedListId && (
+                      <Box sx={{ mt: 0.25 }}>
+                        <LinkedListButton listId={sub.linkedListId} />
+                      </Box>
+                    )}
+                  </Box>
+                )}
               </ListItem>
             </Box>
           ))}
@@ -207,6 +259,7 @@ export default function SubTaskList({
             borderTop: total > 0 ? '1px solid' : 'none',
             borderColor: 'divider',
             bgcolor: 'rgba(124,92,255,0.03)',
+            gap: 1,
           }}
         >
           <RadioButtonUncheckedRoundedIcon
@@ -218,12 +271,19 @@ export default function SubTaskList({
             onChange={(e) => setNewTitle(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter')  commitAdd()
-              if (e.key === 'Escape') { setAddingNew(false); setNewTitle('') }
+              if (e.key === 'Escape') { setAddingNew(false); setNewTitle(''); setNewDuration('') }
             }}
             onBlur={commitAdd}
             placeholder={t('task.subtaskPlaceholder')}
-            fullWidth
-            sx={{ fontSize: '0.82rem', color: 'text.primary' }}
+            sx={{ fontSize: '0.82rem', color: 'text.primary', flex: 2 }}
+          />
+          <TextField
+            value={newDuration}
+            onChange={e => setNewDuration(e.target.value.replace(/[^\d]/g, ''))}
+            size="small"
+            placeholder={t('task.minutesShort')}
+            sx={{ width: 70 }}
+            inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', min: 0 }}
           />
         </Box>
       ) : (
