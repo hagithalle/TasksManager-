@@ -29,6 +29,8 @@ import FocusCoachCard    from '../components/coach/FocusCoachCard'
 import StreakCard        from '../components/streak/StreakCard'
 import DailyInsightCard from '../components/streak/DailyInsightCard'
 import { useStreak }    from '../hooks/useStreak'
+
+import DailyHabitsList from '../components/habits/DailyHabitsList'
 import AiAssistantPanel from '../components/AiAssistantPanel'
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
@@ -421,6 +423,10 @@ export default function DashboardPage() {
       ) : (
         <EmptyState text={t('dashboard.noTwoMin')} mb={3} />
       )}
+
+
+      {/* ── Daily Habits (הרגלים יומיים) ── */}
+      <DailyHabitsList />
 
       {/* ── Today's task list ── */}
       <SectionHeader
