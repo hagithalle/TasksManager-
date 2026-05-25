@@ -19,6 +19,20 @@ const DEPT_ICONS: Record<string, string> = {
   other:               '🛒',
 }
 
+// Map possible department keys to i18n keys
+const DEPT_KEYS: Record<string, string> = {
+  fruitsandvegetables: 'fruitsAndVegetables',
+  dairy: 'dairy',
+  meatandfish: 'meatAndFish',
+  bakery: 'bakery',
+  pantry: 'pantry',
+  frozen: 'frozen',
+  cleaning: 'cleaning',
+  disposable: 'disposable',
+  baby: 'baby',
+  other: 'other',
+}
+
 interface Props {
   department: string
   items:      ShoppingItem[]
@@ -33,7 +47,7 @@ export default function ShoppingDepartmentSection({ department, items, onToggle,
   const [open, setOpen] = useState(true)
 
   const remaining = items.filter((i) => !i.isBought).length
-  const icon      = DEPT_ICONS[department] ?? '🛒'
+  const icon      = DEPT_ICONS[DEPT_KEYS[department] || department] ?? '🛒'
 
   return (
     <Box sx={{ mb: 0.5 }}>
@@ -54,7 +68,7 @@ export default function ShoppingDepartmentSection({ department, items, onToggle,
       >
         <Typography sx={{ fontSize: 18, lineHeight: 1 }}>{icon}</Typography>
         <Typography variant="caption" fontWeight={700} sx={{ flex: 1, letterSpacing: 0.3 }}>
-          {t(`shoppingDepartment.${department}`)}
+          {t(`shoppingDepartment.${DEPT_KEYS[department] || department}`)}
         </Typography>
         <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5 }}>
           {remaining}/{items.length}
