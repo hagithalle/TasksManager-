@@ -95,13 +95,20 @@ export function useFocusCoach(tasks: TaskItem[]) {
     )
     if (base.length > 0) return base
     // Fallback: suggest 'promotion' tasks
-    return tasks.filter(tk =>
+    const promo = tasks.filter(tk =>
       !tk.isCompleted &&
       tk.taskNature !== TaskNature.Meeting &&
       tk.taskNature !== TaskNature.Appointment &&
       tk.taskStatus !== TaskStatus.Missed &&
       tk.taskStatus !== TaskStatus.Archived &&
       (!tk.dueDate || tk.dueDate > TODAY)
+    )
+    if (promo.length > 0) return promo
+    // Final fallback: any open, not completed, not archived/missed
+    return tasks.filter(tk =>
+      !tk.isCompleted &&
+      tk.taskStatus !== TaskStatus.Missed &&
+      tk.taskStatus !== TaskStatus.Archived
     )
   }, [tasks, settings.includeCarriedOver])
 
