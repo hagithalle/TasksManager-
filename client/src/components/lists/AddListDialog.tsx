@@ -13,6 +13,7 @@ const LIST_TYPE_OPTIONS: { type: ListType; emoji: string }[] = [
   { type: ListType.Notes,     emoji: '📝' },
   { type: ListType.Ideas,     emoji: '💡' },
   { type: ListType.Equipment, emoji: '🎒' },
+  { type: ListType.CookingPlan, emoji: '🍳' },
 ]
 
 interface AddListDialogProps {
