@@ -3,10 +3,12 @@ import {
   Box, Button, Card, Chip, Collapse, IconButton, LinearProgress,
   Tooltip, Typography,
 } from '@mui/material'
-import RefreshRoundedIcon       from '@mui/icons-material/RefreshRounded'
-import SettingsRoundedIcon      from '@mui/icons-material/SettingsRounded'
-import BoltRoundedIcon          from '@mui/icons-material/BoltRounded'
-import KeyboardArrowDownRounded from '@mui/icons-material/KeyboardArrowDownRounded'
+import RefreshRoundedIcon              from '@mui/icons-material/RefreshRounded'
+import SettingsRoundedIcon             from '@mui/icons-material/SettingsRounded'
+import BoltRoundedIcon                 from '@mui/icons-material/BoltRounded'
+import KeyboardArrowDownRounded        from '@mui/icons-material/KeyboardArrowDownRounded'
+import CheckCircleRoundedIcon          from '@mui/icons-material/CheckCircleRounded'
+import RadioButtonUncheckedRoundedIcon from '@mui/icons-material/RadioButtonUncheckedRounded'
 import { useTranslation }  from 'react-i18next'
 import { useNavigate }     from 'react-router-dom'
 import { useFocusCoach }   from '../../hooks/useFocusCoach'
@@ -16,8 +18,10 @@ import type { TaskItem }   from '../../types'
 import { ExecutionType, Priority } from '../../types'
 
 interface Props {
-  tasks:     TaskItem[]
-  onRefresh: () => void
+  tasks:             TaskItem[]
+  onRefresh:         () => void
+  onToggle?:         (taskId: string) => void
+  onToggleSubTask?:  (taskId: string, subId: string) => void
 }
 
 function taskEmoji(task: TaskItem): string {
@@ -32,7 +36,7 @@ const PRIORITY_COLOR: Record<Priority, string> = {
   [Priority.Low]:      '#94a3b8',
 }
 
-export default function FocusCoachCard({ tasks, onRefresh }: Props) {
+export default function FocusCoachCard({ tasks, onRefresh, onToggle, onToggleSubTask }: Props) {
   const { t }    = useTranslation()
   const navigate = useNavigate()
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -163,6 +167,17 @@ export default function FocusCoachCard({ tasks, onRefresh }: Props) {
               {t('coach.nextLabel')}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              {/* Checkbox */}
+              <Box
+                component="span"
+                onClick={() => onToggle?.(nextTask.id)}
+                sx={{ display: 'flex', alignItems: 'center', flexShrink: 0, cursor: onToggle ? 'pointer' : 'default', borderRadius: '50%', '&:hover': onToggle ? { bgcolor: 'action.selected' } : {}, p: 0.25 }}
+              >
+                {nextTask.isCompleted
+                  ? <CheckCircleRoundedIcon sx={{ fontSize: 20, color: 'primary.main' }} />
+                  : <RadioButtonUncheckedRoundedIcon sx={{ fontSize: 20, color: 'text.disabled' }} />
+                }
+              </Box>
               <Typography sx={{ fontSize: 18, lineHeight: 1, flexShrink: 0 }}>
                 {taskEmoji(nextTask)}
               </Typography>
@@ -186,6 +201,37 @@ export default function FocusCoachCard({ tasks, onRefresh }: Props) {
                 {t('coach.start')}
               </Button>
             </Box>
+
+            {/* Sub-tasks of the next task */}
+            {(nextTask.subTasks ?? []).length > 0 && (
+              <Box sx={{ mt: 1, pl: 3.5 }}>
+                {(nextTask.subTasks ?? []).map(sub => (
+                  <Box key={sub.id} sx={{ display: 'flex', alignItems: 'center', gap: 0.75, py: 0.35 }}>
+                    <Box
+                      component="span"
+                      onClick={() => onToggleSubTask?.(nextTask.id, sub.id)}
+                      sx={{ display: 'flex', alignItems: 'center', flexShrink: 0, cursor: onToggleSubTask ? 'pointer' : 'default', borderRadius: '50%', '&:hover': onToggleSubTask ? { bgcolor: 'action.selected' } : {}, p: 0.2 }}
+                    >
+                      {sub.isCompleted
+                        ? <CheckCircleRoundedIcon sx={{ fontSize: 16, color: 'success.main' }} />
+                        : <RadioButtonUncheckedRoundedIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
+                      }
+                    </Box>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        flex: 1, minWidth: 0,
+                        textDecoration: sub.isCompleted ? 'line-through' : 'none',
+                        color: sub.isCompleted ? 'text.disabled' : 'text.secondary',
+                      }}
+                      noWrap
+                    >
+                      {sub.title}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+            )}
           </Box>
         )}
 
@@ -217,7 +263,7 @@ export default function FocusCoachCard({ tasks, onRefresh }: Props) {
         )}
 
         {/* ── Scrollable full task list ── */}
-        {eligibleTasks.length > 2 && (
+        {eligibleTasks.length > 0 && (
           <Box sx={{ mt: 1.25 }}>
             <Box
               onClick={() => setListOpen(o => !o)}
@@ -243,7 +289,7 @@ export default function FocusCoachCard({ tasks, onRefresh }: Props) {
               <Box
                 sx={{
                   mt: 0.75,
-                  maxHeight: 220,
+                  maxHeight: 280,
                   overflowY: 'auto',
                   borderRadius: 2,
                   bgcolor: 'rgba(255,255,255,0.55)',
@@ -253,45 +299,105 @@ export default function FocusCoachCard({ tasks, onRefresh }: Props) {
                 }}
               >
                 {eligibleTasks.map((tk, i) => (
-                  <Box
-                    key={tk.id}
-                    sx={{
-                      display: 'flex', alignItems: 'center', gap: 1,
-                      px: 1.25, py: 0.75,
-                      borderBottom: i < eligibleTasks.length - 1 ? '1px solid rgba(124,92,255,0.07)' : 'none',
-                    }}
-                  >
-                    {/* Priority dot */}
-                    <Box sx={{
-                      width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
-                      bgcolor: PRIORITY_COLOR[tk.priority],
-                    }} />
-
-                    {/* Time */}
-                    {tk.plannedTime && (
-                      <Typography variant="caption" fontWeight={700} color="primary.main" sx={{ minWidth: 34, fontSize: '0.62rem' }}>
-                        {tk.plannedTime}
-                      </Typography>
-                    )}
-
-                    {/* Duration chip */}
-                    {tk.durationMinutes && (
-                      <Chip
-                        label={`${tk.durationMinutes}m`}
-                        size="small"
-                        sx={{ height: 16, fontSize: '0.58rem', bgcolor: 'rgba(124,92,255,0.08)', color: 'primary.main', '& .MuiChip-label': { px: 0.6 } }}
-                      />
-                    )}
-
-                    {/* Title */}
-                    <Typography
-                      variant="caption"
-                      fontWeight={i === 0 ? 700 : 500}
-                      sx={{ flex: 1, minWidth: 0, lineHeight: 1.4, color: i === 0 ? 'text.primary' : 'text.secondary' }}
-                      noWrap
+                  <Box key={tk.id}>
+                    {/* Parent task row */}
+                    <Box
+                      sx={{
+                        display: 'flex', alignItems: 'center', gap: 1,
+                        px: 1.25, py: 0.75,
+                        borderBottom: '1px solid rgba(124,92,255,0.07)',
+                      }}
                     >
-                      {tk.title}
-                    </Typography>
+                      {/* Checkbox */}
+                      <Box
+                        component="span"
+                        onClick={() => onToggle?.(tk.id)}
+                        sx={{ display: 'flex', alignItems: 'center', flexShrink: 0, cursor: onToggle ? 'pointer' : 'default', borderRadius: '50%', '&:hover': onToggle ? { bgcolor: 'action.selected' } : {}, p: 0.2 }}
+                      >
+                        {tk.isCompleted
+                          ? <CheckCircleRoundedIcon sx={{ fontSize: 18, color: 'primary.main' }} />
+                          : <RadioButtonUncheckedRoundedIcon sx={{ fontSize: 18, color: 'text.disabled' }} />
+                        }
+                      </Box>
+
+                      {/* Priority dot */}
+                      <Box sx={{
+                        width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
+                        bgcolor: PRIORITY_COLOR[tk.priority],
+                      }} />
+
+                      {/* Time */}
+                      {tk.plannedTime && (
+                        <Typography variant="caption" fontWeight={700} color="primary.main" sx={{ minWidth: 34, fontSize: '0.62rem' }}>
+                          {tk.plannedTime}
+                        </Typography>
+                      )}
+
+                      {/* Duration chip */}
+                      {tk.durationMinutes && (
+                        <Chip
+                          label={`${tk.durationMinutes}m`}
+                          size="small"
+                          sx={{ height: 16, fontSize: '0.58rem', bgcolor: 'rgba(124,92,255,0.08)', color: 'primary.main', '& .MuiChip-label': { px: 0.6 } }}
+                        />
+                      )}
+
+                      {/* Title */}
+                      <Typography
+                        variant="caption"
+                        fontWeight={i === 0 ? 700 : 500}
+                        sx={{
+                          flex: 1, minWidth: 0, lineHeight: 1.4,
+                          color: tk.isCompleted ? 'text.disabled' : (i === 0 ? 'text.primary' : 'text.secondary'),
+                          textDecoration: tk.isCompleted ? 'line-through' : 'none',
+                        }}
+                        noWrap
+                      >
+                        {tk.title}
+                      </Typography>
+
+                      {/* Sub-task count badge */}
+                      {(tk.subTasks ?? []).length > 0 && (
+                        <Typography variant="caption" sx={{ fontSize: '0.58rem', color: 'text.disabled', flexShrink: 0 }}>
+                          {(tk.subTasks ?? []).filter(s => s.isCompleted).length}/{(tk.subTasks ?? []).length}
+                        </Typography>
+                      )}
+                    </Box>
+
+                    {/* Sub-task rows */}
+                    {(tk.subTasks ?? []).map(sub => (
+                      <Box
+                        key={sub.id}
+                        sx={{
+                          display: 'flex', alignItems: 'center', gap: 0.75,
+                          pl: 4, pr: 1.25, py: 0.5,
+                          borderBottom: '1px solid rgba(124,92,255,0.04)',
+                          bgcolor: 'rgba(255,255,255,0.35)',
+                        }}
+                      >
+                        <Box
+                          component="span"
+                          onClick={() => onToggleSubTask?.(tk.id, sub.id)}
+                          sx={{ display: 'flex', alignItems: 'center', flexShrink: 0, cursor: onToggleSubTask ? 'pointer' : 'default', borderRadius: '50%', '&:hover': onToggleSubTask ? { bgcolor: 'action.selected' } : {}, p: 0.2 }}
+                        >
+                          {sub.isCompleted
+                            ? <CheckCircleRoundedIcon sx={{ fontSize: 15, color: 'success.main' }} />
+                            : <RadioButtonUncheckedRoundedIcon sx={{ fontSize: 15, color: 'text.disabled' }} />
+                          }
+                        </Box>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            flex: 1, minWidth: 0, fontSize: '0.68rem',
+                            textDecoration: sub.isCompleted ? 'line-through' : 'none',
+                            color: sub.isCompleted ? 'text.disabled' : 'text.secondary',
+                          }}
+                          noWrap
+                        >
+                          {sub.title}
+                        </Typography>
+                      </Box>
+                    ))}
                   </Box>
                 ))}
               </Box>

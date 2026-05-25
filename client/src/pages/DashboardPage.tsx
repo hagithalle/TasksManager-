@@ -176,6 +176,22 @@ export default function DashboardPage() {
     })
   }
 
+  const toggleSubTask = (taskId: string, subId: string) => {
+    const task = tasks.find((t) => t.id === taskId)
+    if (!task) return
+    const currentSub = (task.subTasks ?? []).find((s) => s.id === subId)
+    if (!currentSub) return
+    const newSubs = (task.subTasks ?? []).map((s) =>
+      s.id === subId ? { ...s, isCompleted: !s.isCompleted } : s,
+    )
+    const allDone = newSubs.length > 0 && newSubs.every((s) => s.isCompleted)
+    const updated = { ...task, subTasks: newSubs, isCompleted: allDone ? true : task.isCompleted }
+    setTasks((prev) => prev.map((t) => t.id === taskId ? updated : t))
+    tasksApi.updateSubTask(subId, { isCompleted: !currentSub.isCompleted }).catch(() => {
+      setTasks((prev) => prev.map((t) => t.id === taskId ? task : t))
+    })
+  }
+
   const moveCarriedTask = (taskId: string, when: 'today' | 'tomorrow') => {
     const task = tasks.find((t) => t.id === taskId)
     if (!task) return
@@ -306,6 +322,8 @@ export default function DashboardPage() {
           if (!user) return
           tasksApi.getByUser(user.id).then(setTasks).catch(() => {})
         }}
+        onToggle={toggleTask}
+        onToggleSubTask={toggleSubTask}
       />
 
       {/* ── Task Wheel ── */}
@@ -404,6 +422,15 @@ export default function DashboardPage() {
         <EmptyState text={t('dashboard.noTwoMin')} mb={3} />
       )}
 
+      {/* ── Today's task list ── */}
+      <SectionHeader
+        title={t('dashboard.todayList')}
+        emoji="📋"
+        onAdd={() => setAddTaskOpen(true)}
+        onSeeAll={() => navigate('/tasks')}
+      />
+      <TodayTaskList tasks={todayTasks} onToggle={toggleTask} onNavigate={() => navigate('/tasks')} />
+
       {/* ── Progress by goal ── */}
       <SectionHeader
         title={t('dashboard.goalProgress')}
@@ -461,15 +488,6 @@ export default function DashboardPage() {
           )
         })}
       </Box>
-
-      {/* ── Today's task list ── */}
-      <SectionHeader
-        title={t('dashboard.todayList')}
-        emoji="📋"
-        onAdd={() => setAddTaskOpen(true)}
-        onSeeAll={() => navigate('/tasks')}
-      />
-      <TodayTaskList tasks={todayTasks} onToggle={toggleTask} onNavigate={() => navigate('/tasks')} />
 
       {/* ── Streak + Daily Insight ── */}
       <Box sx={{ display: 'flex', gap: 1.5, mb: 3 }}>
