@@ -25,6 +25,7 @@ public class AppDbContext : DbContext
     public DbSet<CookingItem> CookingItems => Set<CookingItem>();
     public DbSet<ShareInvite>   ShareInvites   => Set<ShareInvite>();
     public DbSet<UserSettings>  UserSettings   => Set<UserSettings>();
+    public DbSet<HabitCompletion> HabitCompletions => Set<HabitCompletion>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -167,6 +168,18 @@ public class AppDbContext : DbContext
              .HasForeignKey(c => c.PersonalListId)
              .OnDelete(DeleteBehavior.Cascade);
         });
+
+        // ── HabitCompletion ────────────────────────────────────────────────
+        modelBuilder.Entity<HabitCompletion>(e =>
+        {
+            e.HasKey(h => h.Id);
+            e.HasIndex(h => new { h.TaskId, h.Date }).IsUnique();
+            e.Property(h => h.Completed).HasDefaultValue(false);
+            e.HasOne(h => h.Task)
+             .WithMany()
+             .HasForeignKey(h => h.TaskId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
         // ── ShareInvite ───────────────────────────────────────────────────────
         modelBuilder.Entity<ShareInvite>(e =>
         {
@@ -199,6 +212,18 @@ public class AppDbContext : DbContext
             e.HasOne(s => s.User)
              .WithOne()
              .HasForeignKey<UserSettings>(s => s.UserId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ── HabitCompletion ────────────────────────────────────────────────
+        modelBuilder.Entity<HabitCompletion>(e =>
+        {
+            e.HasKey(h => h.Id);
+            e.HasIndex(h => new { h.TaskId, h.Date }).IsUnique();
+            e.Property(h => h.Completed).HasDefaultValue(false);
+            e.HasOne(h => h.Task)
+             .WithMany()
+             .HasForeignKey(h => h.TaskId)
              .OnDelete(DeleteBehavior.Cascade);
         });
     }
