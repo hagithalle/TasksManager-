@@ -1,6 +1,6 @@
 import {
   Box, Checkbox, Divider, IconButton, InputBase,
-  List, ListItem, ListItemIcon, ListItemText, Typography, TextField,
+  List, ListItem, ListItemIcon, Typography, TextField,
 } from '@mui/material'
 import EditIcon from '@mui/icons-material/Edit'
 import SaveIcon from '@mui/icons-material/Save'
