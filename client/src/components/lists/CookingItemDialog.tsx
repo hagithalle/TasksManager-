@@ -1,12 +1,25 @@
 import { useEffect, useState } from 'react'
 import CloudUploadIcon from '@mui/icons-material/CloudUpload'
 import { aiApi } from '../../api/aiExtractApi'
+
 type InputMode = 'manual' | 'url' | 'file'
-  const [inputMode, setInputMode] = useState<InputMode>('manual')
-  const [extractUrl, setExtractUrl] = useState('')
-  const [extracting, setExtracting] = useState(false)
+
+export default function CookingItemDialog({ open, initial, onClose, onSave }: Props) {
+  const { t } = useTranslation()
+  const [title, setTitle]             = useState('')
+  const [recipeUrl, setRecipeUrl]     = useState('')
+  const [notes, setNotes]             = useState('')
+  const [plannedDate, setPlannedDate] = useState('')
+  const [tags, setTags]               = useState<string[]>([])
+  const [customTag, setCustomTag]     = useState('')
+  const [ingredients, setIngredients] = useState<CookingIngredient[]>([])
+  const [saving, setSaving]           = useState(false)
+  const [inputMode, setInputMode]     = useState<InputMode>('manual')
+  const [extractUrl, setExtractUrl]   = useState('')
+  const [extracting, setExtracting]   = useState(false)
   const [extractFile, setExtractFile] = useState<File | null>(null)
-  // חילוץ מתכון מ-URL (דמה)
+
+  // חילוץ מתכון מ-URL
   async function handleExtractUrl() {
     if (!extractUrl.trim()) return
     setExtracting(true)
@@ -22,7 +35,7 @@ type InputMode = 'manual' | 'url' | 'file'
     }
   }
 
-  // חילוץ מתכון מקובץ (דמה)
+  // חילוץ מתכון מקובץ
   async function handleExtractFile() {
     if (!extractFile) return
     setExtracting(true)
