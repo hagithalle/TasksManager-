@@ -112,10 +112,10 @@ public class TaskService : ITaskService
         return ToDto(task);
     }
 
-    public async Task<TaskItemDto?> UpdateAsync(Guid id, UpdateTaskItemDto dto)
+    public async Task<TaskItemDto?> UpdateAsync(Guid id, UpdateTaskItemDto dto, Guid callerId)
     {
         var task = await _db.Tasks.Include(t => t.SubTasks).FirstOrDefaultAsync(t => t.Id == id);
-        if (task is null) return null;
+        if (task is null || task.UserId != callerId) return null;
 
         if (dto.Title is not null)         task.Title         = dto.Title;
         if (dto.Notes is not null)          task.Notes         = dto.Notes;
@@ -206,10 +206,10 @@ public class TaskService : ITaskService
         return ToDto(task);
     }
 
-    public async Task<bool> DeleteAsync(Guid id)
+    public async Task<bool> DeleteAsync(Guid id, Guid callerId)
     {
         var task = await _db.Tasks.FirstOrDefaultAsync(t => t.Id == id && t.DeletedAt == null);
-        if (task is null) return false;
+        if (task is null || task.UserId != callerId) return false;
         task.DeletedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
         return true;
@@ -217,8 +217,18 @@ public class TaskService : ITaskService
 
     // ── SubTask ───────────────────────────────────────────────────────────────
 
-    public async Task<SubTaskDto> AddSubTaskAsync(Guid taskId, CreateSubTaskDto dto)
+    private async Task<bool> HasTaskAccessAsync(Guid taskId, Guid callerId)
     {
+        if (await _db.Tasks.AnyAsync(t => t.Id == taskId && t.UserId == callerId)) return true;
+        return await _db.ShareInvites.AnyAsync(s =>
+            s.ResourceId == taskId &&
+            s.ResourceType == Models.ShareResourceType.Task &&
+            s.AcceptedByUserId == callerId);
+    }
+
+    public async Task<SubTaskDto?> AddSubTaskAsync(Guid taskId, CreateSubTaskDto dto, Guid callerId)
+    {
+        if (!await HasTaskAccessAsync(taskId, callerId)) return null;
         var sub = new SubTask
         {
             Id = Guid.NewGuid(),
@@ -234,10 +244,10 @@ public class TaskService : ITaskService
         return ToSubDto(sub);
     }
 
-    public async Task<SubTaskDto?> UpdateSubTaskAsync(Guid subTaskId, UpdateSubTaskDto dto)
+    public async Task<SubTaskDto?> UpdateSubTaskAsync(Guid subTaskId, UpdateSubTaskDto dto, Guid callerId)
     {
         var sub = await _db.SubTasks.FirstOrDefaultAsync(s => s.Id == subTaskId);
-        if (sub is null) return null;
+        if (sub is null || !await HasTaskAccessAsync(sub.TaskItemId, callerId)) return null;
 
         if (dto.Title is not null)           sub.Title           = dto.Title;
         if (dto.IsCompleted.HasValue)          sub.IsCompleted     = dto.IsCompleted.Value;
@@ -270,10 +280,10 @@ public class TaskService : ITaskService
         return ToSubDto(sub);
     }
 
-    public async Task<bool> DeleteSubTaskAsync(Guid subTaskId)
+    public async Task<bool> DeleteSubTaskAsync(Guid subTaskId, Guid callerId)
     {
         var sub = await _db.SubTasks.FirstOrDefaultAsync(s => s.Id == subTaskId);
-        if (sub is null) return false;
+        if (sub is null || !await HasTaskAccessAsync(sub.TaskItemId, callerId)) return false;
         _db.SubTasks.Remove(sub);
         await _db.SaveChangesAsync();
         return true;

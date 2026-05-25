@@ -1,15 +1,17 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace TasksManager.API.DTOs;
 
 public record RegisterDto(
-    string DisplayName,
-    string Email,
-    string Password,
+    [Required][MaxLength(100)] string DisplayName,
+    [Required][EmailAddress][MaxLength(200)] string Email,
+    [Required][MinLength(8)][MaxLength(100)] string Password,
     string Language = "en"
 );
 
 public record LoginDto(
-    string Email,
-    string Password
+    [Required][EmailAddress][MaxLength(200)] string Email,
+    [Required] string Password
 );
 
 public record AuthResponseDto(

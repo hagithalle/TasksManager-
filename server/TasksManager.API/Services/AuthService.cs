@@ -27,6 +27,9 @@ public class AuthService : IAuthService
     {
         var normalizedEmail = dto.Email.Trim().ToLowerInvariant();
 
+        if (dto.Password.Length < 8)
+            throw new InvalidOperationException("Password must be at least 8 characters.");
+
         if (await _db.Users.AnyAsync(u => u.Email == normalizedEmail))
             throw new InvalidOperationException("Email already in use.");
 

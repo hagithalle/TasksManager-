@@ -64,10 +64,10 @@ public class GoalService : IGoalService
         return ToDto(goal);
     }
 
-    public async Task<GoalDto?> UpdateAsync(Guid id, UpdateGoalDto dto)
+    public async Task<GoalDto?> UpdateAsync(Guid id, UpdateGoalDto dto, Guid callerId)
     {
         var goal = await _db.Goals.Include(g => g.Tasks).FirstOrDefaultAsync(g => g.Id == id);
-        if (goal is null) return null;
+        if (goal is null || goal.UserId != callerId) return null;
 
         if (dto.Title is not null)    goal.Title    = dto.Title;
         if (dto.Category is not null) goal.Category = dto.Category;
@@ -80,10 +80,10 @@ public class GoalService : IGoalService
         return ToDto(goal);
     }
 
-    public async Task<bool> DeleteAsync(Guid id)
+    public async Task<bool> DeleteAsync(Guid id, Guid callerId)
     {
         var goal = await _db.Goals.FirstOrDefaultAsync(g => g.Id == id);
-        if (goal is null) return false;
+        if (goal is null || goal.UserId != callerId) return false;
         _db.Goals.Remove(goal);
         await _db.SaveChangesAsync();
         return true;

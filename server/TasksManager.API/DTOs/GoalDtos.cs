@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using TasksManager.API.Models;
 
 namespace TasksManager.API.DTOs;
@@ -18,16 +19,16 @@ public record GoalDto(
 
 public record CreateGoalDto(
     Guid UserId,
-    string Title,
-    string Category,
+    [Required][MaxLength(200)] string Title,
+    [Required][MaxLength(100)] string Category,
     GoalType GoalType,
     DateTime? DueDate,
     bool IsPinned = false
 );
 
 public record UpdateGoalDto(
-    string? Title,
-    string? Category,
+    [MaxLength(200)] string? Title,
+    [MaxLength(100)] string? Category,
     GoalType? GoalType,
     DateTime? DueDate,
     bool? IsPinned

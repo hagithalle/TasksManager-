@@ -91,14 +91,14 @@ public class PersonalListService : IPersonalListService
         return ToDto(list);
     }
 
-    public async Task<PersonalListDto?> UpdateAsync(Guid id, UpdatePersonalListDto dto)
+    public async Task<PersonalListDto?> UpdateAsync(Guid id, UpdatePersonalListDto dto, Guid callerId)
     {
         var list = await _db.PersonalLists
             .Include(l => l.Items)
             .Include(l => l.ShoppingItems)
             .Include(l => l.ShoppingSettings)
             .FirstOrDefaultAsync(l => l.Id == id);
-        if (list is null) return null;
+        if (list is null || list.UserId != callerId) return null;
 
         if (dto.Title is not null) list.Title = dto.Title;
         if (dto.Emoji is not null) list.Emoji = dto.Emoji;
@@ -122,19 +122,29 @@ public class PersonalListService : IPersonalListService
         return ToDto(list);
     }
 
-    public async Task<bool> DeleteAsync(Guid id)
+    public async Task<bool> DeleteAsync(Guid id, Guid callerId)
     {
         var list = await _db.PersonalLists.FirstOrDefaultAsync(l => l.Id == id);
-        if (list is null) return false;
+        if (list is null || list.UserId != callerId) return false;
         _db.PersonalLists.Remove(list);
         await _db.SaveChangesAsync();
         return true;
     }
 
+    private async Task<bool> HasListAccessAsync(Guid listId, Guid callerId)
+    {
+        if (await _db.PersonalLists.AnyAsync(l => l.Id == listId && l.UserId == callerId)) return true;
+        return await _db.ShareInvites.AnyAsync(s =>
+            s.ResourceId == listId &&
+            s.ResourceType == Models.ShareResourceType.List &&
+            s.AcceptedByUserId == callerId);
+    }
+
     // ── Generic items ─────────────────────────────────────────────────────────
 
-    public async Task<PersonalListItemDto> AddItemAsync(Guid listId, CreatePersonalListItemDto dto)
+    public async Task<PersonalListItemDto?> AddItemAsync(Guid listId, CreatePersonalListItemDto dto, Guid callerId)
     {
+        if (!await HasListAccessAsync(listId, callerId)) return null;
         var item = new PersonalListItem
         {
             Id             = Guid.NewGuid(),
@@ -147,10 +157,10 @@ public class PersonalListService : IPersonalListService
         return ToItemDto(item);
     }
 
-    public async Task<PersonalListItemDto?> UpdateItemAsync(Guid itemId, UpdatePersonalListItemDto dto)
+    public async Task<PersonalListItemDto?> UpdateItemAsync(Guid itemId, UpdatePersonalListItemDto dto, Guid callerId)
     {
         var item = await _db.PersonalListItems.FirstOrDefaultAsync(i => i.Id == itemId);
-        if (item is null) return null;
+        if (item is null || !await HasListAccessAsync(item.PersonalListId, callerId)) return null;
 
         if (dto.Title is not null)    item.Title       = dto.Title;
         if (dto.IsCompleted.HasValue) item.IsCompleted = dto.IsCompleted.Value;
@@ -160,10 +170,10 @@ public class PersonalListService : IPersonalListService
         return ToItemDto(item);
     }
 
-    public async Task<bool> DeleteItemAsync(Guid itemId)
+    public async Task<bool> DeleteItemAsync(Guid itemId, Guid callerId)
     {
         var item = await _db.PersonalListItems.FirstOrDefaultAsync(i => i.Id == itemId);
-        if (item is null) return false;
+        if (item is null || !await HasListAccessAsync(item.PersonalListId, callerId)) return false;
         _db.PersonalListItems.Remove(item);
         await _db.SaveChangesAsync();
         return true;
@@ -171,8 +181,9 @@ public class PersonalListService : IPersonalListService
 
     // ── Shopping items ────────────────────────────────────────────────────────
 
-    public async Task<ShoppingItemDto> AddShoppingItemAsync(Guid listId, CreateShoppingItemDto dto)
+    public async Task<ShoppingItemDto?> AddShoppingItemAsync(Guid listId, CreateShoppingItemDto dto, Guid callerId)
     {
+        if (!await HasListAccessAsync(listId, callerId)) return null;
         var dept     = Enum.TryParse<ShoppingDepartment>(dto.Department, ignoreCase: true, out var d) ? d : ShoppingDepartment.Other;
         var itemType = Enum.TryParse<ShoppingItemType>(dto.ItemType, ignoreCase: true, out var t)     ? t : ShoppingItemType.Regular;
 
@@ -199,10 +210,10 @@ public class PersonalListService : IPersonalListService
         return ToShoppingItemDto(item);
     }
 
-    public async Task<ShoppingItemDto?> UpdateShoppingItemAsync(Guid itemId, UpdateShoppingItemDto dto)
+    public async Task<ShoppingItemDto?> UpdateShoppingItemAsync(Guid itemId, UpdateShoppingItemDto dto, Guid callerId)
     {
         var item = await _db.ShoppingItems.FirstOrDefaultAsync(i => i.Id == itemId);
-        if (item is null) return null;
+        if (item is null || !await HasListAccessAsync(item.PersonalListId, callerId)) return null;
 
         if (dto.Title is not null)     item.Title    = dto.Title;
         if (dto.Quantity.HasValue)     item.Quantity = dto.Quantity;
@@ -243,10 +254,10 @@ public class PersonalListService : IPersonalListService
         return ToShoppingItemDto(item);
     }
 
-    public async Task<bool> DeleteShoppingItemAsync(Guid itemId)
+    public async Task<bool> DeleteShoppingItemAsync(Guid itemId, Guid callerId)
     {
         var item = await _db.ShoppingItems.FirstOrDefaultAsync(i => i.Id == itemId);
-        if (item is null) return false;
+        if (item is null || !await HasListAccessAsync(item.PersonalListId, callerId)) return false;
         _db.ShoppingItems.Remove(item);
         await _db.SaveChangesAsync();
         return true;
@@ -260,8 +271,9 @@ public class PersonalListService : IPersonalListService
         return s is null ? null : ToSettingsDto(s);
     }
 
-    public async Task<ShoppingListSettingsDto> UpsertShoppingSettingsAsync(Guid listId, UpdateShoppingListSettingsDto dto)
+    public async Task<ShoppingListSettingsDto?> UpsertShoppingSettingsAsync(Guid listId, UpdateShoppingListSettingsDto dto, Guid callerId)
     {
+        if (!await HasListAccessAsync(listId, callerId)) return null;
         var s = await _db.ShoppingListSettings.FirstOrDefaultAsync(s => s.PersonalListId == listId);
         if (s is null)
         {
@@ -280,14 +292,14 @@ public class PersonalListService : IPersonalListService
 
     // ── Clear trip ────────────────────────────────────────────────────────────
 
-    public async Task<PersonalListDto?> ClearTripAsync(Guid listId)
+    public async Task<PersonalListDto?> ClearTripAsync(Guid listId, Guid callerId)
     {
         var list = await _db.PersonalLists
             .Include(l => l.Items)
             .Include(l => l.ShoppingItems)
             .Include(l => l.ShoppingSettings)
             .FirstOrDefaultAsync(l => l.Id == listId);
-        if (list is null) return null;
+        if (list is null || !await HasListAccessAsync(listId, callerId)) return null;
 
         var now = DateTime.UtcNow;
         foreach (var item in list.ShoppingItems.Where(i => i.IsBought))

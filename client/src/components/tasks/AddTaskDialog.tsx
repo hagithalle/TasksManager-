@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import {
-  Box, Button, Checkbox, Chip, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle,
+  Alert, Box, Button, Checkbox, Chip, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle,
   FormControl, IconButton, InputLabel, MenuItem, Select, TextField, Typography,
 } from '@mui/material'
+import NoteAltRoundedIcon from '@mui/icons-material/NoteAltRounded'
 import AddRoundedIcon    from '@mui/icons-material/AddRounded'
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded'
 import { useTranslation } from 'react-i18next'
@@ -12,6 +13,36 @@ import type { Goal, TaskItem, SubTask } from '../../types'
 import { PRIORITY_STYLE, EXECUTION_STYLE } from '../../utils'
 
 const NEW_GOAL_SENTINEL = '__new__'
+
+// ─── Smart notes suggestion helpers ──────────────────────────────────────────
+
+function normalizeTitle(s: string): string {
+  return s.toLowerCase().replace(/[^\u0590-\u05ffa-z0-9\s]/g, '').trim()
+}
+
+function titleSimilarity(a: string, b: string): number {
+  const wa = new Set(normalizeTitle(a).split(/\s+/).filter((w) => w.length > 1))
+  const wb = new Set(normalizeTitle(b).split(/\s+/).filter((w) => w.length > 1))
+  if (wa.size === 0 || wb.size === 0) return 0
+  let matches = 0
+  for (const w of wa) if (wb.has(w)) matches++
+  return matches / Math.max(wa.size, wb.size)
+}
+
+function findNotesSuggestion(title: string, tasks: TaskItem[], excludeId?: string): TaskItem | null {
+  const norm = normalizeTitle(title)
+  if (norm.length < 2) return null
+  const candidates = tasks.filter((t) => t.id !== excludeId && t.notes && t.notes.trim().length > 0)
+  const scored = candidates
+    .map((t) => ({ t, score: titleSimilarity(title, t.title) }))
+    .filter((x) => x.score >= 0.4)
+    .sort((a, b) => {
+      // prefer completed then by score
+      const diff = (b.t.isCompleted ? 1 : 0) - (a.t.isCompleted ? 1 : 0)
+      return diff !== 0 ? diff : b.score - a.score
+    })
+  return scored[0]?.t ?? null
+}
 
 export interface AddTaskDialogProps {
   open:           boolean
@@ -24,9 +55,11 @@ export interface AddTaskDialogProps {
   defaultTitle?:  string
   editTask?:      TaskItem
   onEdit?:        (task: TaskItem) => void
+  /** All tasks — used for smart notes recall */
+  allTasks?:      TaskItem[]
 }
 
-export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCreated, goals, userId, defaultGoalId, defaultTitle, editTask }: AddTaskDialogProps) {
+export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCreated, goals, userId, defaultGoalId, defaultTitle, editTask, allTasks }: AddTaskDialogProps) {
   const { t } = useTranslation()
   const isEdit = !!editTask
 
@@ -49,6 +82,11 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
   const [titleError,      setTitleError]      = useState(false)
   const [loading,         setLoading]         = useState(false)
 
+  // Smart notes suggestion
+  const [noteSuggestion,        setNoteSuggestion]        = useState<TaskItem | null>(null)
+  const [dismissedSuggestionId, setDismissedSuggestionId] = useState<string | null>(null)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   // existing sub-tasks (edit mode)
   const [existingSubs,    setExistingSubs]    = useState<SubTask[]>([])
   const [deletedSubIds,   setDeletedSubIds]   = useState<Set<string>>(new Set())
@@ -62,6 +100,19 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
     title: string; executionType?: ExecutionType; priority?: Priority; durationMinutes?: number
   }>>([])
   const subInputRef = useRef<HTMLInputElement>(null)
+
+  // Debounced title → smart notes suggestion (new task mode only)
+  useEffect(() => {
+    const excludeTaskId = editTask?.id   // capture before guard narrowing
+    if (!allTasks || isEdit || !open) return
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      const suggestion = findNotesSuggestion(title, allTasks, excludeTaskId)
+      setNoteSuggestion(suggestion)
+    }, 500)
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, allTasks, open])
 
   useEffect(() => {
     if (open && editTask) {
@@ -105,6 +156,8 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
       setSubTasks([])
       setExistingSubs([])
       setDeletedSubIds(new Set())
+      setNoteSuggestion(null)
+      setDismissedSuggestionId(null)
     } else if (!open) {
       setTitle('')
       setNotes('')
@@ -263,6 +316,34 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
             size="small"
             placeholder={t('task.notesPlaceholder')}
           />
+
+          {/* Smart notes suggestion */}
+          {noteSuggestion && noteSuggestion.id !== dismissedSuggestionId && (
+            <Alert
+              icon={<NoteAltRoundedIcon fontSize="small" />}
+              severity="info"
+              sx={{ py: 0.5, '& .MuiAlert-message': { width: '100%' } }}
+              onClose={() => setDismissedSuggestionId(noteSuggestion.id)}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, flexWrap: 'wrap' }}>
+                <Typography variant="caption" sx={{ flex: 1 }}>
+                  {t('task.notesSuggestion')}: <strong>{noteSuggestion.title}</strong>
+                </Typography>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  color="info"
+                  sx={{ fontSize: '0.7rem', py: 0.25, px: 1, minWidth: 0, whiteSpace: 'nowrap' }}
+                  onClick={() => {
+                    setNotes(noteSuggestion.notes!)
+                    setDismissedSuggestionId(noteSuggestion.id)
+                  }}
+                >
+                  {t('task.applyNotes')}
+                </Button>
+              </Box>
+            </Alert>
+          )}
 
           {/* Goal */}
           <FormControl fullWidth size="small">

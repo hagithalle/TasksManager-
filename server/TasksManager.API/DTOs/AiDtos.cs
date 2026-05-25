@@ -1,6 +1,8 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace TasksManager.API.DTOs;
 
-public record AiParseRequestDto(string Text, string? Language = "he");
+public record AiParseRequestDto([Required][MaxLength(2000)] string Text, string? Language = "he");
 
 // ── Day Analysis ──────────────────────────────────────────────────────────────
 

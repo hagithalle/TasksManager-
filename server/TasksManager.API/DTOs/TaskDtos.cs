@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using TasksManager.API.Models;
 
 namespace TasksManager.API.DTOs;
@@ -14,7 +15,7 @@ public record SubTaskDto(
 );
 
 public record CreateSubTaskDto(
-    string Title,
+    [Required][MaxLength(200)] string Title,
     ExecutionType? ExecutionType,
     Priority? Priority,
     int? DurationMinutes,
@@ -57,8 +58,8 @@ public record TaskItemDto(
 
 public record CreateTaskItemDto(
     Guid UserId,
-    string Title,
-    string? Notes,
+    [Required][MaxLength(200)] string Title,
+    [MaxLength(4000)] string? Notes,
     Priority Priority,
     ExecutionType ExecutionType,
     Difficulty? Difficulty,

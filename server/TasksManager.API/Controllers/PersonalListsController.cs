@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using TasksManager.API.DTOs;
 using TasksManager.API.Services.Interfaces;
 
@@ -14,9 +15,19 @@ public class PersonalListsController : ControllerBase
 
     public PersonalListsController(IPersonalListService service) => _service = service;
 
+    private Guid? GetCallerId()
+    {
+        var sub = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+        return Guid.TryParse(sub, out var id) ? id : null;
+    }
+
     [HttpGet("user/{userId:guid}")]
-    public async Task<IActionResult> GetByUser(Guid userId) =>
-        Ok(await _service.GetAllByUserAsync(userId));
+    public async Task<IActionResult> GetByUser(Guid userId)
+    {
+        var callerId = GetCallerId();
+        if (callerId is null || callerId != userId) return Forbid();
+        return Ok(await _service.GetAllByUserAsync(userId));
+    }
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id)
@@ -28,6 +39,9 @@ public class PersonalListsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create(CreatePersonalListDto dto)
     {
+        var callerId = GetCallerId();
+        if (callerId is null) return Unauthorized();
+        dto = dto with { UserId = callerId.Value };
         var created = await _service.CreateAsync(dto);
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
@@ -35,14 +49,18 @@ public class PersonalListsController : ControllerBase
     [HttpPatch("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, UpdatePersonalListDto dto)
     {
-        var updated = await _service.UpdateAsync(id, dto);
+        var callerId = GetCallerId();
+        if (callerId is null) return Unauthorized();
+        var updated = await _service.UpdateAsync(id, dto, callerId.Value);
         return updated is null ? NotFound() : Ok(updated);
     }
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var deleted = await _service.DeleteAsync(id);
+        var callerId = GetCallerId();
+        if (callerId is null) return Unauthorized();
+        var deleted = await _service.DeleteAsync(id, callerId.Value);
         return deleted ? NoContent() : NotFound();
     }
 
@@ -51,21 +69,27 @@ public class PersonalListsController : ControllerBase
     [HttpPost("{listId:guid}/items")]
     public async Task<IActionResult> AddItem(Guid listId, CreatePersonalListItemDto dto)
     {
-        var item = await _service.AddItemAsync(listId, dto);
-        return Created(string.Empty, item);
+        var callerId = GetCallerId();
+        if (callerId is null) return Unauthorized();
+        var item = await _service.AddItemAsync(listId, dto, callerId.Value);
+        return item is null ? NotFound() : Created(string.Empty, item);
     }
 
     [HttpPatch("items/{itemId:guid}")]
     public async Task<IActionResult> UpdateItem(Guid itemId, UpdatePersonalListItemDto dto)
     {
-        var item = await _service.UpdateItemAsync(itemId, dto);
+        var callerId = GetCallerId();
+        if (callerId is null) return Unauthorized();
+        var item = await _service.UpdateItemAsync(itemId, dto, callerId.Value);
         return item is null ? NotFound() : Ok(item);
     }
 
     [HttpDelete("items/{itemId:guid}")]
     public async Task<IActionResult> DeleteItem(Guid itemId)
     {
-        var deleted = await _service.DeleteItemAsync(itemId);
+        var callerId = GetCallerId();
+        if (callerId is null) return Unauthorized();
+        var deleted = await _service.DeleteItemAsync(itemId, callerId.Value);
         return deleted ? NoContent() : NotFound();
     }
 
@@ -74,21 +98,27 @@ public class PersonalListsController : ControllerBase
     [HttpPost("{listId:guid}/shopping-items")]
     public async Task<IActionResult> AddShoppingItem(Guid listId, CreateShoppingItemDto dto)
     {
-        var item = await _service.AddShoppingItemAsync(listId, dto);
-        return Created(string.Empty, item);
+        var callerId = GetCallerId();
+        if (callerId is null) return Unauthorized();
+        var item = await _service.AddShoppingItemAsync(listId, dto, callerId.Value);
+        return item is null ? NotFound() : Created(string.Empty, item);
     }
 
     [HttpPatch("shopping-items/{itemId:guid}")]
     public async Task<IActionResult> UpdateShoppingItem(Guid itemId, UpdateShoppingItemDto dto)
     {
-        var item = await _service.UpdateShoppingItemAsync(itemId, dto);
+        var callerId = GetCallerId();
+        if (callerId is null) return Unauthorized();
+        var item = await _service.UpdateShoppingItemAsync(itemId, dto, callerId.Value);
         return item is null ? NotFound() : Ok(item);
     }
 
     [HttpDelete("shopping-items/{itemId:guid}")]
     public async Task<IActionResult> DeleteShoppingItem(Guid itemId)
     {
-        var deleted = await _service.DeleteShoppingItemAsync(itemId);
+        var callerId = GetCallerId();
+        if (callerId is null) return Unauthorized();
+        var deleted = await _service.DeleteShoppingItemAsync(itemId, callerId.Value);
         return deleted ? NoContent() : NotFound();
     }
 
@@ -104,8 +134,10 @@ public class PersonalListsController : ControllerBase
     [HttpPut("{listId:guid}/shopping-settings")]
     public async Task<IActionResult> UpsertShoppingSettings(Guid listId, UpdateShoppingListSettingsDto dto)
     {
-        var settings = await _service.UpsertShoppingSettingsAsync(listId, dto);
-        return Ok(settings);
+        var callerId = GetCallerId();
+        if (callerId is null) return Unauthorized();
+        var settings = await _service.UpsertShoppingSettingsAsync(listId, dto, callerId.Value);
+        return settings is null ? NotFound() : Ok(settings);
     }
 
     // ── Clear trip ────────────────────────────────────────────────────────────
@@ -113,7 +145,9 @@ public class PersonalListsController : ControllerBase
     [HttpPost("{listId:guid}/clear-trip")]
     public async Task<IActionResult> ClearTrip(Guid listId)
     {
-        var list = await _service.ClearTripAsync(listId);
+        var callerId = GetCallerId();
+        if (callerId is null) return Unauthorized();
+        var list = await _service.ClearTripAsync(listId, callerId.Value);
         return list is null ? NotFound() : Ok(list);
     }
 }

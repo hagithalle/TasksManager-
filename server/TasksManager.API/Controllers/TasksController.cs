@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using TasksManager.API.DTOs;
 using TasksManager.API.Services.Interfaces;
 
@@ -14,9 +15,19 @@ public class TasksController : ControllerBase
 
     public TasksController(ITaskService service) => _service = service;
 
+    private Guid? GetCallerId()
+    {
+        var sub = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+        return Guid.TryParse(sub, out var id) ? id : null;
+    }
+
     [HttpGet("user/{userId:guid}")]
-    public async Task<IActionResult> GetByUser(Guid userId) =>
-        Ok(await _service.GetAllByUserAsync(userId));
+    public async Task<IActionResult> GetByUser(Guid userId)
+    {
+        var callerId = GetCallerId();
+        if (callerId is null || callerId != userId) return Forbid();
+        return Ok(await _service.GetAllByUserAsync(userId));
+    }
 
     [HttpGet("goal/{goalId:guid}")]
     public async Task<IActionResult> GetByGoal(Guid goalId) =>
@@ -32,6 +43,9 @@ public class TasksController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create(CreateTaskItemDto dto)
     {
+        var callerId = GetCallerId();
+        if (callerId is null) return Unauthorized();
+        dto = dto with { UserId = callerId.Value };
         var created = await _service.CreateAsync(dto);
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
@@ -39,14 +53,18 @@ public class TasksController : ControllerBase
     [HttpPatch("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, UpdateTaskItemDto dto)
     {
-        var updated = await _service.UpdateAsync(id, dto);
+        var callerId = GetCallerId();
+        if (callerId is null) return Unauthorized();
+        var updated = await _service.UpdateAsync(id, dto, callerId.Value);
         return updated is null ? NotFound() : Ok(updated);
     }
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var deleted = await _service.DeleteAsync(id);
+        var callerId = GetCallerId();
+        if (callerId is null) return Unauthorized();
+        var deleted = await _service.DeleteAsync(id, callerId.Value);
         return deleted ? NoContent() : NotFound();
     }
 
@@ -55,21 +73,27 @@ public class TasksController : ControllerBase
     [HttpPost("{taskId:guid}/subtasks")]
     public async Task<IActionResult> AddSubTask(Guid taskId, CreateSubTaskDto dto)
     {
-        var sub = await _service.AddSubTaskAsync(taskId, dto);
-        return Created(string.Empty, sub);
+        var callerId = GetCallerId();
+        if (callerId is null) return Unauthorized();
+        var sub = await _service.AddSubTaskAsync(taskId, dto, callerId.Value);
+        return sub is null ? NotFound() : Created(string.Empty, sub);
     }
 
     [HttpPatch("subtasks/{subTaskId:guid}")]
     public async Task<IActionResult> UpdateSubTask(Guid subTaskId, UpdateSubTaskDto dto)
     {
-        var sub = await _service.UpdateSubTaskAsync(subTaskId, dto);
+        var callerId = GetCallerId();
+        if (callerId is null) return Unauthorized();
+        var sub = await _service.UpdateSubTaskAsync(subTaskId, dto, callerId.Value);
         return sub is null ? NotFound() : Ok(sub);
     }
 
     [HttpDelete("subtasks/{subTaskId:guid}")]
     public async Task<IActionResult> DeleteSubTask(Guid subTaskId)
     {
-        var deleted = await _service.DeleteSubTaskAsync(subTaskId);
+        var callerId = GetCallerId();
+        if (callerId is null) return Unauthorized();
+        var deleted = await _service.DeleteSubTaskAsync(subTaskId, callerId.Value);
         return deleted ? NoContent() : NotFound();
     }
 }

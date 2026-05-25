@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using TasksManager.API.DTOs;
 using TasksManager.API.Services;
 
@@ -8,6 +9,7 @@ namespace TasksManager.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
+[EnableRateLimiting("ai")]
 public class AiController : ControllerBase
 {
     private readonly AiService _ai;
