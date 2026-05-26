@@ -22,17 +22,25 @@ export function isArchivedCompleted(task: TaskItem): boolean {
 export type Filter = 'all' | 'today' | 'urgent' | 'completed'
 
 export function applyFilter(tasks: TaskItem[], filter: Filter): TaskItem[] {
+  // Helper: should show daily task today?
+  const isActiveDaily = (t: TaskItem) => {
+    if (t.recurrenceType === 'daily') {
+      // Show only if not completed or dueDate !== TODAY
+      return !t.isCompleted || t.dueDate !== TODAY
+    }
+    return true
+  }
   switch (filter) {
     case 'today':
-      return tasks.filter((t) => !t.isCompleted && t.dueDate?.startsWith(TODAY))
+      return tasks.filter((t) => !t.isCompleted && t.dueDate?.startsWith(TODAY) && isActiveDaily(t))
     case 'urgent':
       return tasks.filter(
-        (t) => !t.isCompleted && (t.priority === Priority.Critical || t.priority === Priority.High),
+        (t) => !t.isCompleted && (t.priority === Priority.Critical || t.priority === Priority.High) && isActiveDaily(t),
       )
     case 'completed':
       return tasks.filter((t) => t.isCompleted)
     default:
-      return tasks
+      return tasks.filter(isActiveDaily)
   }
 }
 
