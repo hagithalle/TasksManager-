@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from 'react'
 import { Priority, ExecutionType, Difficulty, TaskNature, TaskStatus, RecurrenceType } from '../types'
 import type { TaskItem } from '../types'
-import { TODAY } from '../utils'
+import { TODAY, flattenTasks } from '../utils'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -182,11 +182,11 @@ export function useFocusCoach(tasks: TaskItem[]) {
     // Count tasks that match eligible criteria but ARE completed
     const ids = new Set(eligibleTasks.map(t => t.id))
     // Also count completed tasks that would have been eligible
-    const completedToday = tasks.filter(tk => tk.isCompleted && tk.dueDate?.startsWith(TODAY))
+    const completedToday = flattenTasks(tasks).filter(tk => tk.isCompleted && tk.dueDate?.startsWith(TODAY))
     return completedToday.filter(tk => {
       if (settings.includeBeforeTargetTime && tk.plannedTime && timeBefore(tk.plannedTime, settings.targetTime)) return true
       if (settings.includeUrgent && (tk.priority === Priority.Critical || tk.priority === Priority.High)) return true
-      if (settings.includeFrog && tk.id === frogId) return true
+      if (settings.includeFrog && (tk.id === frogId || (tk as any).parentId === frogId)) return true
       if (settings.includeTwoMin && (tk.executionType === ExecutionType.Quick || tk.executionType === ExecutionType.Short || (tk.durationMinutes != null && tk.durationMinutes <= 2))) return true
       if (settings.includeEasy && tk.difficulty === Difficulty.Easy) return true
       return false

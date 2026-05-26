@@ -30,7 +30,7 @@ function isActiveDaily(item: DailyItem): boolean {
   return !item.isCompleted || item.dueDate !== TODAY
 }
 
-function flattenTasks(tasks: TaskItem[]): TaskLike[] {
+export function flattenTasks(tasks: TaskItem[]): TaskLike[] {
   return tasks.flatMap(task => {
     const subTasks =
       task.subTasks?.map(subTask => ({
@@ -49,12 +49,11 @@ function flattenTasks(tasks: TaskItem[]): TaskLike[] {
   })
 }
 
-export function applyFilter(tasks: TaskItem[], filter: Filter): TaskLike[] {
-  const allItems = flattenTasks(tasks)
-
+export function applyFilter(tasks: TaskItem[], filter: Filter): TaskItem[] {
+  // Only operate on main tasks for display purposes (TasksPage shows main tasks only)
   switch (filter) {
     case 'today':
-      return allItems.filter(
+      return tasks.filter(
         task =>
           !task.isCompleted &&
           task.dueDate?.startsWith(TODAY) &&
@@ -62,7 +61,7 @@ export function applyFilter(tasks: TaskItem[], filter: Filter): TaskLike[] {
       )
 
     case 'urgent':
-      return allItems.filter(
+      return tasks.filter(
         task =>
           !task.isCompleted &&
           (task.priority === Priority.Critical || task.priority === Priority.High) &&
@@ -70,11 +69,11 @@ export function applyFilter(tasks: TaskItem[], filter: Filter): TaskLike[] {
       )
 
     case 'completed':
-      return allItems.filter(task => task.isCompleted)
+      return tasks.filter(task => task.isCompleted)
 
     case 'all':
     default:
-      return allItems.filter(isActiveDaily)
+      return tasks.filter(isActiveDaily)
   }
 }
 
