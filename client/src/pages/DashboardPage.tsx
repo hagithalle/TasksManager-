@@ -52,14 +52,17 @@ function TodayTaskList({
   tasks,
   onToggle,
   onNavigate,
+  previewTask,
+  setPreviewTask,
 }: {
   tasks: TaskItem[]
   onToggle: (id: string) => void
   onNavigate: () => void
+  previewTask: TaskItem | null
+  setPreviewTask: (task: TaskItem | null) => void
 }) {
   const { t }         = useTranslation()
   const [showAll, setShowAll] = useState(false)
-  const [previewTask, setPreviewTask] = useState<TaskItem | null>(null)
 
   // Filter: show only tasks that are not completed for today
   const filteredTasks = tasks.filter(tk => !tk.isCompleted)
@@ -163,6 +166,7 @@ function TodayTaskList({
   )
 }
 
+
 export default function DashboardPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -175,6 +179,7 @@ export default function DashboardPage() {
   const [addGoalOpen, setAddGoalOpen] = useState(false)
   const [aiOpen, setAiOpen] = useState(false)
   const [planOpen, setPlanOpen] = useState(false)
+  const [previewTask, setPreviewTask] = useState<TaskItem | null>(null)
 
   useEffect(() => {
     if (!user) return
@@ -455,7 +460,13 @@ export default function DashboardPage() {
         onAdd={() => setAddTaskOpen(true)}
         onSeeAll={() => navigate('/tasks')}
       />
-      <TodayTaskList tasks={todayTasks} onToggle={toggleTask} onNavigate={() => navigate('/tasks')} />
+      <TodayTaskList
+        tasks={todayTasks}
+        onToggle={toggleTask}
+        onNavigate={() => navigate('/tasks')}
+        previewTask={previewTask}
+        setPreviewTask={setPreviewTask}
+      />
 
       {/* ── Progress by goal ── */}
       <SectionHeader

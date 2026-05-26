@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { habitsApi, HabitCompletion } from '../api/habitsApi';
+import { habitsApi, HabitCompletion } from '../../api/habitsApi';
 import { Box, Checkbox, Typography, CircularProgress, Alert, IconButton, Tooltip } from '@mui/material';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import TaskPreviewDrawer from '../tasks/TaskPreviewDrawer';

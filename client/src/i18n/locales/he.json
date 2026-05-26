@@ -349,7 +349,7 @@
     "includeSubtasks": "כלול גם תת-משימות",
     "lightOnly": "משימות קלות בלבד",
     "manageTasks": "ניהול משימות בגלגל",
-    "autoHint": "אוטומטי: כל משימות מהיר וקצר",
+    "autoHint": "אוטומ: כל משימות מהיר וקצר",
     "selectAll": "בחר הכל",
     "clearAll": "נקה הכל"
   },
@@ -547,5 +547,15 @@
     "notifications": "התראות",
     "pushNotifications": "התראות Push",
     "defaultReminderMinutes": "תזכורת ברירת מחדל לפני הזמן"
+  },
+  "focusSession": "פוקוס במשימה",
+  "markDone": "סמן כהושלם",
+  "snooze": "דחה",
+  "stop": "עצור פוקוס",
+  "pickAnother": "בחר אחרת",
+  "timerPlaceholder": "טיימר / התקדמות (בקרוב)",
+  "empty": {
+    "noTasks": "אין משימות פוקוס מתאימות כרגע.",
+    "allDone": "כל משימות הפוקוס הושלמו!"
   }
 }

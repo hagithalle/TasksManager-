@@ -80,6 +80,8 @@ export default function SubTaskList({
   const [editIdx,     setEditIdx]     = useState<number | null>(null)
   const [editTitle,   setEditTitle]   = useState('')
   const [editDuration, setEditDuration] = useState('')
+  const [newDueDate, setNewDueDate] = useState('')
+  const [editDueDate, setEditDueDate] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
   const done  = subTasks.filter((s) => s.isCompleted).length
@@ -118,11 +120,13 @@ export default function SubTaskList({
   function commitAdd() {
     const title = newTitle.trim()
     const duration = newDuration.trim() ? Number(newDuration) : undefined
+    const dueDate = newDueDate.trim() || undefined
     if (title) {
-      setSubTasks((prev) => [...prev, { id: makeId(), title, isCompleted: false, durationMinutes: duration }])
+      setSubTasks((prev) => [...prev, { id: makeId(), title, isCompleted: false, durationMinutes: duration, dueDate }])
     }
     setNewTitle('')
     setNewDuration('')
+    setNewDueDate('')
     setAddingNew(false)
   }
 
@@ -130,13 +134,15 @@ export default function SubTaskList({
     setEditIdx(idx)
     setEditTitle(sub.title)
     setEditDuration(sub.durationMinutes?.toString() ?? '')
+    setEditDueDate(sub.dueDate ?? '')
   }
 
   function saveEdit(idx: number) {
-    setSubTasks(prev => prev.map((s, i) => i === idx ? { ...s, title: editTitle.trim(), durationMinutes: editDuration.trim() ? Number(editDuration) : undefined } : s))
+    setSubTasks(prev => prev.map((s, i) => i === idx ? { ...s, title: editTitle.trim(), durationMinutes: editDuration.trim() ? Number(editDuration) : undefined, dueDate: editDueDate || undefined } : s))
     setEditIdx(null)
     setEditTitle('')
     setEditDuration('')
+    setEditDueDate('')
   }
 
   return (
@@ -208,6 +214,12 @@ export default function SubTaskList({
                         sx={{ width: 70 }}
                         placeholder={t('task.minutesShort')}
                         inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', min: 0 }}
+                      />
+                      <input
+                        type="date"
+                        value={editDueDate}
+                        onChange={e => setEditDueDate(e.target.value)}
+                        style={{ height: 32, fontSize: '0.82rem', borderRadius: 4, border: '1px solid #ccc', padding: '0 8px' }}
                       />
                       <IconButton size="small" onClick={() => saveEdit(index)}>
                         <SaveIcon fontSize="small" />
@@ -284,6 +296,12 @@ export default function SubTaskList({
             placeholder={t('task.minutesShort')}
             sx={{ width: 70 }}
             inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', min: 0 }}
+          />
+          <input
+            type="date"
+            value={newDueDate}
+            onChange={e => setNewDueDate(e.target.value)}
+            style={{ height: 32, fontSize: '0.82rem', borderRadius: 4, border: '1px solid #ccc', padding: '0 8px' }}
           />
         </Box>
       ) : (
