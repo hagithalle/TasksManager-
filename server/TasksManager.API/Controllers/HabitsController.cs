@@ -61,6 +61,13 @@ public class HabitsController : ControllerBase
         if (habit == null) return NotFound();
         habit.Completed = true;
         habit.CompletedAt = DateTime.UtcNow;
+        // Mark the original task as completed too
+        var task = await _db.Tasks.FirstOrDefaultAsync(t => t.Id == habit.TaskId && t.UserId == userId);
+        if (task != null && !task.IsCompleted)
+        {
+            task.IsCompleted = true;
+            task.CompletedAt = DateTime.UtcNow;
+        }
         await _db.SaveChangesAsync();
         return NoContent();
     }

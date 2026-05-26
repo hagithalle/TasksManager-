@@ -12,6 +12,33 @@ namespace TasksManager.API.Controllers;
 [EnableRateLimiting("ai")]
 public class AiController : ControllerBase
 {
+    // POST api/ai/extract-recipe
+    [AllowAnonymous]
+    [HttpPost("extract-recipe")]
+    [RequestSizeLimit(10_000_000)]
+    public async Task<ActionResult> ExtractRecipe([FromForm] string? url, [FromForm] IFormFile? file)
+    {
+        // דמו: מחזיר מתכון "מחולץ" לפי סוג הבקשה
+        if (!string.IsNullOrWhiteSpace(url))
+        {
+            return Ok(new
+            {
+                title = "פסטה בולונז (מחולץ מ-URL)",
+                ingredients = new[] { "פסטה 500 גרם", "בשר טחון 300 גרם", "עגבניות 2" },
+                notes = "לבשל הכל יחד."
+            });
+        }
+        if (file != null)
+        {
+            return Ok(new
+            {
+                title = "עוגת שוקולד (מחולץ מקובץ)",
+                ingredients = new[] { "קקאו 2 כפות", "קמח 1 כוס", "סוכר 1/2 כוס" },
+                notes = "לאפות 30 דקות."
+            });
+        }
+        return BadRequest("יש לספק כתובת או קובץ");
+    }
     private readonly AiService _ai;
     private readonly ILogger<AiController> _logger;
 
