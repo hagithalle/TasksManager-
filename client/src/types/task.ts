@@ -20,6 +20,11 @@ export interface SubTask {
 }
 
 export interface TaskItem {
+    /** If this is a subtask, id of the parent task */
+    parentId?: string
+
+    /** True if this is a subtask (flattened for UI/filtering) */
+    isSubTask?: boolean
   id: string
 
   /** User-facing title */
