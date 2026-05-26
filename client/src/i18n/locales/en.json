@@ -177,6 +177,7 @@
     "q7": "The best time to do it was long ago\u2026 the second best is right now!"
   },
   "coach": {
+      "pickAnother": "Pick another",
     "title": "My Focus Coach",
     "headline": "You have {{count}} tasks before {{time}}",
     "subline": "{{done}} of {{total}} completed",
