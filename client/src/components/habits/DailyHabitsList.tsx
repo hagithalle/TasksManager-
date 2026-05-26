@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import { habitsApi, HabitCompletion } from '../../api/habitsApi';
-import { Box, Checkbox, Typography, CircularProgress, Alert } from '@mui/material';
+import { Box, Checkbox, Typography, CircularProgress, Alert, IconButton, Tooltip } from '@mui/material';
+import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
+import TaskPreviewDrawer from '../tasks/TaskPreviewDrawer';
 
 export default function DailyHabitsList() {
   const [habits, setHabits] = useState<HabitCompletion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [previewTask, setPreviewTask] = useState<any | null>(null);
 
 
   useEffect(() => {
@@ -61,11 +64,19 @@ export default function DailyHabitsList() {
             onChange={() => handleCheck(habit.id)}
             disabled={habit.completed}
           />
-          <Typography sx={{ textDecoration: habit.completed ? 'line-through' : 'none' }}>
+          <Typography sx={{ textDecoration: habit.completed ? 'line-through' : 'none', flex: 1 }}>
             {habit.task?.title}
           </Typography>
+          {habit.task && (
+            <Tooltip title="תצוגה מהירה">
+              <IconButton size="small" onClick={() => setPreviewTask(habit.task)}>
+                <VisibilityRoundedIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
         </Box>
       ))}
+      <TaskPreviewDrawer task={previewTask} onClose={() => setPreviewTask(null)} onEdit={() => {}} />
     </Box>
   );
 }

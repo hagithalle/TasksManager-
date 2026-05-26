@@ -1,8 +1,9 @@
-﻿import {
-  Box, Typography, LinearProgress, Chip, Divider,
+﻿  Box, Typography, LinearProgress, Chip, Divider,
   List, ListItem, ListItemText, ListItemIcon, Checkbox,
-  Collapse, IconButton, Fab, CircularProgress, Alert,
+  Collapse, IconButton, Fab, CircularProgress, Alert, Tooltip,
 } from '@mui/material'
+import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded'
+import TaskPreviewDrawer from '../components/tasks/TaskPreviewDrawer'
 import ExpandMoreRoundedIcon           from '@mui/icons-material/ExpandMoreRounded'
 import ExpandLessRoundedIcon           from '@mui/icons-material/ExpandLessRounded'
 import CheckCircleRoundedIcon          from '@mui/icons-material/CheckCircleRounded'
@@ -23,6 +24,7 @@ import { Filter, applyFilter, PRIORITY_COLOR } from '../utils'
 
 // ─── component ────────────────────────────────────────────────────────────────
 export default function GoalDetailPage() {
+  const [previewTask, setPreviewTask] = useState<TaskItem | null>(null)
   const { id } = useParams<{ id: string }>()
   const { t, i18n } = useTranslation()
   const { user } = useAuth()
@@ -46,42 +48,48 @@ export default function GoalDetailPage() {
       user ? goalsApi.getByUser(user.id) : Promise.resolve([]),
     ])
       .then(([g, tasks, goals]) => {
-        setGoal(g)
-        setLocalTasks(tasks)
-        setAllGoals(goals)
-      })
-      .catch(() => setError(t('error.loadFailed', 'Failed to load')))
-      .finally(() => setLoading(false))
-  }, [id, user, t])
-
-  const toggleTaskComplete = useCallback(async (taskId: string) => {
-    const task = localTasks.find((t) => t.id === taskId)
-    if (!task) return
-    const next = !task.isCompleted
-    setLocalTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, isCompleted: next } : t))
-    try {
-      await tasksApi.update(taskId, { isCompleted: next })
-    } catch {
-      setLocalTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, isCompleted: task.isCompleted } : t))
-    }
-  }, [localTasks])
-
-  const toggleSubComplete = useCallback(async (taskId: string, subId: string) => {
-    const task = localTasks.find((t) => t.id === taskId)
-    const sub  = task?.subTasks?.find((s) => s.id === subId)
-    if (!sub) return
-    const next = !sub.isCompleted
-    const newSubs = (task!.subTasks ?? []).map((s) => s.id === subId ? { ...s, isCompleted: next } : s)
-    const allDone = newSubs.length > 0 && newSubs.every((s) => s.isCompleted)
-    setLocalTasks((prev) => prev.map((t) => {
-      if (t.id !== taskId) return t
-      return { ...t, subTasks: newSubs, isCompleted: allDone ? true : t.isCompleted }
-    }))
-    try {
-      await tasksApi.updateSubTask(subId, { isCompleted: next })
-      if (allDone && !task!.isCompleted) {
-        await tasksApi.update(taskId, { isCompleted: true })
-      }
+                    <ListItemText
+                      primary={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          {/* priority dot */}
+                          <Box
+                            sx={{
+                              width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+                              bgcolor: PRIORITY_COLOR[task.priority] ?? '#999',
+                            }}
+                          />
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              textDecoration: task.isCompleted ? 'line-through' : 'none',
+                              color:          task.isCompleted ? 'text.disabled' : 'text.primary',
+                              fontWeight: 500,
+                              flex: 1,
+                            }}
+                          >
+                            {task.title}
+                          </Typography>
+                          {/* Action buttons inline */}
+                          <Box sx={{ display: 'flex', gap: 0, flexShrink: 0 }}>
+                            <Tooltip title={t('task.preview')}>
+                              <IconButton size="small" onClick={() => setPreviewTask(task)} sx={{ p: 0.25 }}>
+                                <VisibilityRoundedIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <IconButton size="small" onClick={() => setEditTask(task)} sx={{ p: 0.25 }}>
+                              <EditRoundedIcon sx={{ fontSize: 15, color: 'text.disabled' }} />
+                            </IconButton>
+                            {hasSubTasks && (
+                              <IconButton size="small" onClick={() => toggleExpand(task.id)} sx={{ p: 0.25 }}>
+                                {isOpen
+                                  ? <ExpandLessRoundedIcon sx={{ fontSize: 15 }} />
+                                  : <ExpandMoreRoundedIcon sx={{ fontSize: 15 }} />}
+                              </IconButton>
+                            )}
+                          </Box>
+                        </Box>
+                      }
+      <TaskPreviewDrawer task={previewTask} onClose={() => setPreviewTask(null)} onEdit={() => {}} />
     } catch {
       setLocalTasks((prev) => prev.map((t) => {
         if (t.id !== taskId) return t

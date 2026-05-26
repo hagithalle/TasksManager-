@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useState } from 'react'
 import {
   Box, Button, Card, Chip, Collapse, IconButton, LinearProgress,
   Tooltip, Typography,
@@ -9,6 +10,8 @@ import BoltRoundedIcon                 from '@mui/icons-material/BoltRounded'
 import KeyboardArrowDownRounded        from '@mui/icons-material/KeyboardArrowDownRounded'
 import CheckCircleRoundedIcon          from '@mui/icons-material/CheckCircleRounded'
 import RadioButtonUncheckedRoundedIcon from '@mui/icons-material/RadioButtonUncheckedRounded'
+import VisibilityRoundedIcon           from '@mui/icons-material/VisibilityRounded'
+import TaskPreviewDrawer               from '../tasks/TaskPreviewDrawer'
 import { useTranslation }  from 'react-i18next'
 import { useNavigate }     from 'react-router-dom'
 import { useFocusCoach }   from '../../hooks/useFocusCoach'
@@ -41,6 +44,10 @@ export default function FocusCoachCard({ tasks, onRefresh, onToggle, onToggleSub
   const navigate = useNavigate()
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [listOpen,     setListOpen]     = useState(false)
+  // Focus session state
+  const [focusTask, setFocusTask] = useState<TaskItem | null>(null)
+  const [skippedTasks, setSkippedTasks] = useState<string[]>([])
+  const [previewTask, setPreviewTask] = useState<TaskItem | null>(null)
 
   const {
     settings, setSettings,
@@ -51,6 +58,41 @@ export default function FocusCoachCard({ tasks, onRefresh, onToggle, onToggleSub
   } = useFocusCoach(tasks)
 
   const remaining = totalCount - completedCount
+
+  // Exclude the current focus task (if any) or nextTask from the list below
+  const mainTask = focusTask || nextTask
+  const eligibleList = eligibleTasks.filter(t => t.id !== mainTask?.id && !skippedTasks.includes(t.id))
+
+  // Handle focus session start
+  const handleStartFocus = () => {
+    if (mainTask) setFocusTask(mainTask)
+  }
+
+  // Mark as done
+  const handleMarkDone = () => {
+    if (focusTask && onToggle) {
+      onToggle(focusTask.id)
+      setFocusTask(null)
+      setSkippedTasks([])
+    }
+  }
+
+  // Snooze/postpone (just end focus session for now)
+  const handleSnooze = () => {
+    setFocusTask(null)
+  }
+
+  // Stop focus (end session, keep task in list)
+  const handleStopFocus = () => {
+    setFocusTask(null)
+  }
+
+  // Pick another: skip current, focus next eligible
+  const handlePickAnother = () => {
+    if (mainTask) setSkippedTasks(prev => [...prev, mainTask.id])
+    const next = eligibleTasks.find(t => t.id !== mainTask?.id && !skippedTasks.includes(t.id))
+    setFocusTask(next || null)
+  }
 
   return (
     <Card
@@ -154,8 +196,8 @@ export default function FocusCoachCard({ tasks, onRefresh, onToggle, onToggleSub
           </Box>
         </Box>
 
-        {/* ── Next task ── */}
-        {nextTask && (
+        {/* ── Focus session or next task ── */}
+        {mainTask && (
           <Box
             sx={{
               mt: 1.5, p: 1.25, borderRadius: 2,
@@ -164,52 +206,66 @@ export default function FocusCoachCard({ tasks, onRefresh, onToggle, onToggleSub
             }}
           >
             <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" mb={0.5}>
-              {t('coach.nextLabel')}
+              {focusTask ? t('coach.focusSession') : t('coach.nextLabel')}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              {/* Checkbox */}
-              <Box
-                component="span"
-                onClick={() => onToggle?.(nextTask.id)}
-                sx={{ display: 'flex', alignItems: 'center', flexShrink: 0, cursor: onToggle ? 'pointer' : 'default', borderRadius: '50%', '&:hover': onToggle ? { bgcolor: 'action.selected' } : {}, p: 0.25 }}
-              >
-                {nextTask.isCompleted
-                  ? <CheckCircleRoundedIcon sx={{ fontSize: 20, color: 'primary.main' }} />
-                  : <RadioButtonUncheckedRoundedIcon sx={{ fontSize: 20, color: 'text.disabled' }} />
-                }
-              </Box>
+              {/* Checkbox (only if not in focus session) */}
+              {!focusTask && (
+                <Box
+                  component="span"
+                  onClick={() => onToggle?.(mainTask.id)}
+                  sx={{ display: 'flex', alignItems: 'center', flexShrink: 0, cursor: onToggle ? 'pointer' : 'default', borderRadius: '50%', '&:hover': onToggle ? { bgcolor: 'action.selected' } : {}, p: 0.25 }}
+                >
+                  {mainTask.isCompleted
+                    ? <CheckCircleRoundedIcon sx={{ fontSize: 20, color: 'primary.main' }} />
+                    : <RadioButtonUncheckedRoundedIcon sx={{ fontSize: 20, color: 'text.disabled' }} />
+                  }
+                </Box>
+              )}
               <Typography sx={{ fontSize: 18, lineHeight: 1, flexShrink: 0 }}>
-                {taskEmoji(nextTask)}
+                {taskEmoji(mainTask)}
               </Typography>
-              {nextTask.durationMinutes && (
+              {mainTask.durationMinutes && (
                 <Chip
-                  label={`${nextTask.durationMinutes} ${t('task.minutesShort')}`}
+                  label={`${mainTask.durationMinutes} ${t('task.minutesShort')}`}
                   size="small"
                   icon={<BoltRoundedIcon sx={{ fontSize: '12px !important' }} />}
                   sx={{ fontSize: '0.65rem', height: 20, bgcolor: 'rgba(124,92,255,0.12)', color: 'primary.main' }}
                 />
               )}
               <Typography variant="body2" fontWeight={600} sx={{ flex: 1, minWidth: 0 }} noWrap>
-                {nextTask.title}
+                {mainTask.title}
               </Typography>
-              <Button
-                size="small"
-                variant="contained"
-                onClick={() => navigate('/tasks')}
-                sx={{ flexShrink: 0, borderRadius: 2, fontSize: '0.7rem', px: 1.5, py: 0.5, minWidth: 0 }}
-              >
-                {t('coach.start')}
-              </Button>
+              <Tooltip title={t('task.preview')}>
+                <IconButton size="small" onClick={() => setPreviewTask(mainTask)}>
+                  <VisibilityRoundedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              {/* Focus session actions */}
+              {focusTask ? (
+                <>
+                  <Button size="small" variant="contained" color="success" onClick={handleMarkDone} sx={{ borderRadius: 2, fontSize: '0.7rem', px: 1.5, py: 0.5, minWidth: 0 }}>{t('coach.markDone')}</Button>
+                  <Button size="small" variant="outlined" onClick={handleSnooze} sx={{ borderRadius: 2, fontSize: '0.7rem', px: 1, py: 0.5, minWidth: 0, ml: 1 }}>{t('coach.snooze')}</Button>
+                  <Button size="small" variant="text" onClick={handleStopFocus} sx={{ borderRadius: 2, fontSize: '0.7rem', px: 1, py: 0.5, minWidth: 0, ml: 1 }}>{t('coach.stop')}</Button>
+                </>
+              ) : (
+                <Button size="small" variant="contained" onClick={handleStartFocus} sx={{ borderRadius: 2, fontSize: '0.7rem', px: 1.5, py: 0.5, minWidth: 0 }}>{t('coach.start')}</Button>
+              )}
             </Box>
-
-            {/* Sub-tasks of the next task */}
-            {(nextTask.subTasks ?? []).length > 0 && (
+            {/* Timer/progress placeholder */}
+            {focusTask && (
+              <Box sx={{ mt: 1, mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography variant="caption" color="primary" fontWeight={700}>{t('coach.timerPlaceholder')}</Typography>
+              </Box>
+            )}
+            {/* Sub-tasks of the main task */}
+            {(mainTask.subTasks ?? []).length > 0 && (
               <Box sx={{ mt: 1, pl: 3.5 }}>
-                {(nextTask.subTasks ?? []).map(sub => (
+                {(mainTask.subTasks ?? []).map(sub => (
                   <Box key={sub.id} sx={{ display: 'flex', alignItems: 'center', gap: 0.75, py: 0.35 }}>
                     <Box
                       component="span"
-                      onClick={() => onToggleSubTask?.(nextTask.id, sub.id)}
+                      onClick={() => onToggleSubTask?.(mainTask.id, sub.id)}
                       sx={{ display: 'flex', alignItems: 'center', flexShrink: 0, cursor: onToggleSubTask ? 'pointer' : 'default', borderRadius: '50%', '&:hover': onToggleSubTask ? { bgcolor: 'action.selected' } : {}, p: 0.2 }}
                     >
                       {sub.isCompleted
@@ -231,6 +287,10 @@ export default function FocusCoachCard({ tasks, onRefresh, onToggle, onToggleSub
                   </Box>
                 ))}
               </Box>
+            )}
+            {/* Pick another button */}
+            {!focusTask && eligibleList.length > 0 && (
+              <Button size="small" variant="text" onClick={handlePickAnother} sx={{ mt: 1, borderRadius: 2, fontSize: '0.7rem', px: 1, py: 0.5, minWidth: 0 }}>{t('coach.pickAnother')}</Button>
             )}
           </Box>
         )}
@@ -263,7 +323,7 @@ export default function FocusCoachCard({ tasks, onRefresh, onToggle, onToggleSub
         )}
 
         {/* ── Scrollable full task list ── */}
-        {eligibleTasks.length > 0 && (
+        {eligibleList.length > 0 && (
           <Box sx={{ mt: 1.25 }}>
             <Box
               onClick={() => setListOpen(o => !o)}
@@ -274,7 +334,7 @@ export default function FocusCoachCard({ tasks, onRefresh, onToggle, onToggleSub
               }}
             >
               <Typography variant="caption" fontWeight={700} color="primary.main">
-                {t('coach.allTasks', { count: eligibleTasks.length })}
+                {t('coach.allTasks', { count: eligibleList.length })}
               </Typography>
               <KeyboardArrowDownRounded
                 sx={{
@@ -298,7 +358,7 @@ export default function FocusCoachCard({ tasks, onRefresh, onToggle, onToggleSub
                   '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(124,92,255,0.25)', borderRadius: 4 },
                 }}
               >
-                {eligibleTasks.map((tk, i) => (
+                {eligibleList.map((tk, i) => (
                   <Box key={tk.id}>
                     {/* Parent task row */}
                     <Box
@@ -390,6 +450,12 @@ export default function FocusCoachCard({ tasks, onRefresh, onToggle, onToggleSub
                           sx={{
                             flex: 1, minWidth: 0, fontSize: '0.68rem',
                             textDecoration: sub.isCompleted ? 'line-through' : 'none',
+                            {/* Preview icon */}
+                            <Tooltip title={t('task.preview')}>
+                              <IconButton size="small" onClick={() => setPreviewTask(tk)}>
+                                <VisibilityRoundedIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
                             color: sub.isCompleted ? 'text.disabled' : 'text.secondary',
                           }}
                           noWrap
@@ -406,6 +472,19 @@ export default function FocusCoachCard({ tasks, onRefresh, onToggle, onToggleSub
         )}
       </Box>
 
+      {/* ── Empty states */}
+      {totalCount === 0 && (
+        <Box sx={{ mt: 3, textAlign: 'center', color: 'text.secondary', fontWeight: 500 }}>
+          {t('coach.empty.noTasks')}
+        </Box>
+      )}
+      {totalCount > 0 && eligibleList.length === 0 && !mainTask && (
+        <Box sx={{ mt: 3, textAlign: 'center', color: 'text.secondary', fontWeight: 500 }}>
+          {t('coach.empty.allDone')}
+        </Box>
+      )}
+      {/* TODO: Add overloaded schedule state if needed */}
+
       {/* ── Settings panel ── */}
       <CoachSettingsPanel
         open={settingsOpen}
@@ -415,3 +494,6 @@ export default function FocusCoachCard({ tasks, onRefresh, onToggle, onToggleSub
     </Card>
   )
 }
+  {/* Preview drawer */}
+  <TaskPreviewDrawer task={previewTask} onClose={() => setPreviewTask(null)} onEdit={() => {}} />
+  {/* TODO: Add overloaded schedule state if needed */

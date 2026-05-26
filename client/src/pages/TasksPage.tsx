@@ -1,8 +1,10 @@
-import {
   Box, ButtonBase, Checkbox, Chip, Collapse, Divider, Fab,
   IconButton, List, ListItem,
   ListItemIcon, ListItemText, Typography,
+  Tooltip,
 } from '@mui/material'
+import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded'
+import TaskPreviewDrawer from '../components/tasks/TaskPreviewDrawer'
 import AddRoundedIcon                  from '@mui/icons-material/AddRounded'
 import CheckCircleRoundedIcon          from '@mui/icons-material/CheckCircleRounded'
 import RadioButtonUncheckedRoundedIcon from '@mui/icons-material/RadioButtonUncheckedRounded'
@@ -29,6 +31,7 @@ import ShareDialog from '../components/ShareDialog'
 
 // ─── component ───────────────────────────────────────────────────────────────
 export default function TasksPage() {
+  const [previewTask, setPreviewTask] = useState<TaskItem | null>(null)
   const { t, i18n } = useTranslation()
   const navigate     = useNavigate()
   const { user }     = useAuth()
@@ -436,6 +439,7 @@ interface TaskGroupProps {
 function TaskGroup({ tasks, expanded, onToggleExpand, onToggleTask, onToggleSub, onEdit, onDelete, completedInitiallyOpen = false, t, i18n }: TaskGroupProps) {
   const [shareTask, setShareTask] = useState<TaskItem | null>(null)
   const [showDone, setShowDone]   = useState(completedInitiallyOpen)
+  const [previewTask, setPreviewTask] = useState<TaskItem | null>(null)
 
   const activeTasks = tasks.filter((tk) => !tk.isCompleted)
   const doneTasks   = tasks.filter((tk) => tk.isCompleted)
@@ -500,6 +504,11 @@ function TaskGroup({ tasks, expanded, onToggleExpand, onToggleTask, onToggleSub,
                       </Typography>
                       {/* Action buttons inline - no overlap */}
                       <Box sx={{ display: 'flex', gap: 0, flexShrink: 0 }}>
+                        <Tooltip title={t('task.preview')}>
+                          <IconButton size="small" onClick={() => setPreviewTask(task)} sx={{ p: 0.25 }}>
+                            <VisibilityRoundedIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                         <IconButton size="small" onClick={() => onEdit(task)} sx={{ p: 0.25 }}>
                           <EditRoundedIcon sx={{ fontSize: 15, color: 'text.disabled' }} />
                         </IconButton>
@@ -519,6 +528,7 @@ function TaskGroup({ tasks, expanded, onToggleExpand, onToggleTask, onToggleSub,
                       </Box>
                     </Box>
                   }
+                    <TaskPreviewDrawer task={previewTask} onClose={() => setPreviewTask(null)} onEdit={() => {}} />
                   secondary={
                     <Box component="span" sx={{ display: 'flex', gap: 1.5, mt: 0.25, flexWrap: 'wrap' }}>
                       {task.dueDate && (
