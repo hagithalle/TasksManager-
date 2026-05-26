@@ -547,5 +547,7 @@
     "notifications": "Notifications",
     "pushNotifications": "Push notifications",
     "defaultReminderMinutes": "Default reminder before due time"
-  }
+  },
+  "nextUp": "Next up",
+  "showMoreTasks": "Show more tasks"
 }
