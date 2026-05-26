@@ -221,7 +221,7 @@
   "ai": {
     "title": "עוזר AI",
     "dayTitle": "סקירת יום",
-    "tasksToday": "משימות היום",
+    "title": "מאמן היום שלי",
     "moveSuggestion": "שקלי להעביר למחר:",
     "moveTomorrow": "העבר למחר",
     "moved": "הועבר",
@@ -240,6 +240,9 @@
     "insightsTitle": "תובנות התנהגות",
     "goals": {
       "title": "סוכן ניתוח יעדים",
+    "snooze": "דחה",
+    "markDone": "סמן כהושלם",
+    "timerPlaceholder": "טיימר / התקדמות (בקרוב)",
       "subtitle": "מנתח {{count}} יעדים",
       "description": "אנתח את היעדים שלך, אזהה מה בדרך ומה בסכנה, ואתן המלצות מותאמות אישית.",
       "analyzeBtn": "נתח את היעדים שלי",
@@ -323,9 +326,6 @@
     "noFrog": "אין צפרדע היום 🐸",
     "twoMin": "2 דקות",
     "twoMinSub": "ניצחונות קלים",
-    "twoMinSubtitle": "עכשיו — לא מתחמקים",
-    "noTwoMin": "אין משימות מהירות כרגע",
-    "goalProgress": "התקדמות לפי מטרות",
     "todayList": "משימות להיום",
     "noTodayTasks": "כל המשימות הושלמו! 🎉",
     "noTime": "ללא שעה",

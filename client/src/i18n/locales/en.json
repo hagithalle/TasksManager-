@@ -196,6 +196,9 @@
     "dailyTarget": "Daily task target:",
     "noTasks": "I'm here to help you reach your goals",
     "allTasks": "All tasks ({{count}})",
+    "snooze": "Snooze",
+    "markDone": "Mark as done",
+    "timerPlaceholder": "Timer / Progress (coming soon)",
     "insight": {
       "morning":         "Good morning! {{count}} tasks to finish today",
       "morningTip":      "The first frog matters most — eat it before the rest of the day",
