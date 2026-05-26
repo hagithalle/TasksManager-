@@ -30,7 +30,6 @@ import ShareDialog from '../components/ShareDialog'
 
 // ─── component ───────────────────────────────────────────────────────────────
 export default function TasksPage() {
-  const [previewTask, setPreviewTask] = useState<TaskItem | null>(null)
   const { t, i18n } = useTranslation()
   const navigate     = useNavigate()
   const { user }     = useAuth()

@@ -32,7 +32,6 @@ import StreakCard        from '../components/streak/StreakCard'
 import DailyInsightCard from '../components/streak/DailyInsightCard'
 import { useStreak }    from '../hooks/useStreak'
 
-import DailyHabitsList from '../components/habits/DailyHabitsList'
 import AiAssistantPanel from '../components/AiAssistantPanel'
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
