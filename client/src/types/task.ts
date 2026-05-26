@@ -14,6 +14,9 @@ export interface SubTask {
 
   /** Optional link to a PersonalList — navigates to /lists/:id */
   linkedListId?: string
+
+  /** ISO date string, e.g. "2025-06-15" */
+  dueDate?: string
 }
 
 export interface TaskItem {
