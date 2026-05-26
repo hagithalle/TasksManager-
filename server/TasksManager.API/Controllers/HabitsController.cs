@@ -26,11 +26,20 @@ public class HabitsController : ControllerBase
         var habitTasks = await _db.Tasks
             .Where(t => t.UserId == userId && t.RecurrenceType == RecurrenceType.Daily)
             .ToListAsync();
+
+        // DEBUG: הדפס אילו משימות נמצאו
+        Console.WriteLine($"[DEBUG] Daily tasks for user {userId} on {today:yyyy-MM-dd}:");
+        foreach (var t in habitTasks)
+        {
+            Console.WriteLine($"[DEBUG] Task: {t.Id} | {t.Title} | RecurrenceType: {t.RecurrenceType}");
+        }
+
         // עבור כל משימה יומית, ודא שיש מופע להיום
         foreach (var habit in habitTasks)
         {
             if (!await _db.HabitCompletions.AnyAsync(h => h.TaskId == habit.Id && h.Date == today))
             {
+                Console.WriteLine($"[DEBUG] Creating HabitCompletion for task {habit.Id} ({habit.Title})");
                 _db.HabitCompletions.Add(new HabitCompletion
                 {
                     TaskId = habit.Id,
@@ -41,11 +50,20 @@ public class HabitsController : ControllerBase
             }
         }
         await _db.SaveChangesAsync();
+
         // החזר את כל המופעים של היום
         var todayHabits = await _db.HabitCompletions
             .Include(h => h.Task)
             .Where(h => h.UserId == userId && h.Date == today)
             .ToListAsync();
+
+        // DEBUG: הדפס אילו הרגלים יומיים מוחזרים
+        Console.WriteLine($"[DEBUG] Returning {todayHabits.Count} daily habits for user {userId} on {today:yyyy-MM-dd}");
+        foreach (var h in todayHabits)
+        {
+            Console.WriteLine($"[DEBUG] HabitCompletion: {h.Id} | Task: {h.Task?.Title} | Completed: {h.Completed}");
+        }
+
         return todayHabits.Select(h => new HabitCompletionDto(
             h.Id, h.TaskId, h.UserId, h.Date, h.Completed, h.CompletedAt
         )).ToList();
