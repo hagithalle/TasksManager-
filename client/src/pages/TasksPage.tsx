@@ -1,8 +1,7 @@
+import {
   Box, ButtonBase, Checkbox, Chip, Collapse, Divider, Fab,
-  IconButton, List, ListItem,
-  ListItemIcon, ListItemText, Typography,
-  Tooltip,
-} from '@mui/material'
+  IconButton, List, ListItem, ListItemIcon, ListItemText, Typography, Tooltip
+} from '@mui/material';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded'
 import TaskPreviewDrawer from '../components/tasks/TaskPreviewDrawer'
 import AddRoundedIcon                  from '@mui/icons-material/AddRounded'
@@ -528,7 +527,6 @@ function TaskGroup({ tasks, expanded, onToggleExpand, onToggleTask, onToggleSub,
                       </Box>
                     </Box>
                   }
-                    <TaskPreviewDrawer task={previewTask} onClose={() => setPreviewTask(null)} onEdit={() => {}} />
                   secondary={
                     <Box component="span" sx={{ display: 'flex', gap: 1.5, mt: 0.25, flexWrap: 'wrap' }}>
                       {task.dueDate && (
@@ -602,6 +600,9 @@ function TaskGroup({ tasks, expanded, onToggleExpand, onToggleTask, onToggleSub,
       </List>
     </Box>
     )}
+
+    {/* Preview Drawer - מופיע פעם אחת בלבד */}
+    <TaskPreviewDrawer task={previewTask} onClose={() => setPreviewTask(null)} onEdit={() => {}} />
 
     {/* ── Completed section ── */}
     {doneTasks.length > 0 && (
