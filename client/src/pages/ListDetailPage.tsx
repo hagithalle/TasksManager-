@@ -141,9 +141,9 @@ export default function ListDetailPage() {
     setConvertItem(item)
   }
 
-  async function handleTaskCreated(task?: any) {
+  async function handleTaskCreated() {
     // When a task is created from a list item, do not remove the item from the list.
-    // Keep the item and simply clear the convert state. `task` contains the created task.
+    // Keep the item and simply clear the convert state.
     setConvertItem(null)
   }
 

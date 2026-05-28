@@ -263,7 +263,7 @@ interface DishCardProps {
   onToggleCompleted?: () => void
 }
 
-function DishCard({ item, onMenuOpen }: DishCardProps) {
+function DishCard({ item, onMenuOpen, onConvert, onToggleCompleted }: DishCardProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
 

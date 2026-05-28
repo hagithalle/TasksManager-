@@ -86,6 +86,7 @@ export interface UpdateCookingItemPayload {
   plannedDate?: string | null
   tags?: string[]
   linkedShoppingListId?: string | null
+  linkedTaskId?: string | null
   sortOrder?: number
   isCompleted?: boolean | null
 }
