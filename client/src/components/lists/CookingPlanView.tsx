@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
-  Box, Button, Card, CardContent, CardActions, Chip, Fab,
+  Box, Button, Card, CardContent, CardActions, Chip, Fab, Checkbox,
   Grid, IconButton, Menu, MenuItem, Stack, Tooltip, Typography,
   Divider,
 } from '@mui/material'
@@ -9,9 +9,14 @@ import MoreVertIcon from '@mui/icons-material/MoreVert'
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart'
 import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined'
+import AddTaskRoundedIcon from '@mui/icons-material/AddTaskRounded'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 import type { CookingItem, PersonalList } from '../../types'
 import { listsApi, type CookingSuggestion } from '../../api/listsApi'
+// tasksApi imported indirectly via AddTaskDialog when needed
+import { useAuth } from '../../contexts/AuthContext'
+import AddTaskDialog from '../tasks/AddTaskDialog'
 import CookingItemDialog from './CookingItemDialog'
 import PushToShoppingDialog from './PushToShoppingDialog'
 
@@ -29,6 +34,7 @@ export default function CookingPlanView({ list, allLists, onListUpdated }: Props
   const [pushOpen, setPushOpen]         = useState(false)
   const [suggestions, setSuggestions]   = useState<CookingSuggestion[]>([])
   const [menuAnchor, setMenuAnchor]     = useState<{ el: HTMLElement; item: CookingItem } | null>(null)
+  const [convertOpen, setConvertOpen]   = useState<CookingItem | null>(null)
 
   // Load cooking suggestions on mount
   useEffect(() => {
@@ -66,8 +72,35 @@ export default function CookingPlanView({ list, allLists, onListUpdated }: Props
     await reload()
   }
 
+  const { user } = useAuth()
+
+  function openConvertDialog(item: CookingItem) {
+    setConvertOpen(item)
+  }
+
+  async function handleTaskAdded(task: any) {
+    // task created via AddTaskDialog — do not remove cooking item
+    try {
+      if (convertOpen && task?.id) {
+        await listsApi.updateCookingItem(convertOpen.id, { linkedTaskId: task.id })
+        await reload()
+      }
+    } finally {
+      setConvertOpen(null)
+    }
+  }
+
   // Items sorted by sortOrder (already sorted by backend, just display)
   const items = list.cookingItems ?? []
+
+  async function handleToggleCompleted(item: CookingItem) {
+    try {
+      await listsApi.updateCookingItem(item.id, { isCompleted: !item.isCompleted })
+      await reload()
+    } catch {
+      // ignore
+    }
+  }
 
   // Suggestions to show: exclude titles already in the list
   const existingTitles = new Set(items.map(i => i.title.trim().toLowerCase()))
@@ -149,6 +182,8 @@ export default function CookingPlanView({ list, allLists, onListUpdated }: Props
                 onEdit={() => { setEditItem(item) }}
                 onDelete={() => handleDelete(item)}
                 onMenuOpen={(el) => setMenuAnchor({ el, item })}
+                onConvert={() => openConvertDialog(item)}
+                onToggleCompleted={() => handleToggleCompleted(item)}
               />
             </Grid>
           ))}
@@ -195,6 +230,16 @@ export default function CookingPlanView({ list, allLists, onListUpdated }: Props
         onSave={handleEditSave}
       />
 
+      <AddTaskDialog
+        open={Boolean(convertOpen)}
+        onClose={() => setConvertOpen(null)}
+        userId={user?.id}
+        defaultTitle={convertOpen?.title}
+        defaultGoalId={undefined}
+        onAdd={handleTaskAdded}
+        allTasks={[]}
+      />
+
       {/* Push to shopping dialog */}
       <PushToShoppingDialog
         open={pushOpen}
@@ -214,18 +259,29 @@ interface DishCardProps {
   onEdit: () => void
   onDelete: () => void
   onMenuOpen: (el: HTMLElement) => void
+  onConvert?: () => void
+  onToggleCompleted?: () => void
 }
 
 function DishCard({ item, onMenuOpen }: DishCardProps) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
 
   return (
     <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <CardContent sx={{ flex: 1, pb: 0 }}>
         <Stack direction="row" alignItems="flex-start" justifyContent="space-between">
-          <Typography variant="subtitle1" fontWeight={600} noWrap sx={{ flex: 1, mr: 1 }}>
-            {item.title}
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, mr: 1 }}>
+            <Checkbox
+              checked={item.isCompleted}
+              onChange={() => onToggleCompleted?.()}
+              size="small"
+              sx={{ p: 0 }}
+            />
+            <Typography variant="subtitle1" fontWeight={600} noWrap sx={{ flex: 1 }}>
+              {item.title}
+            </Typography>
+          </Box>
           <IconButton size="small" onClick={e => onMenuOpen(e.currentTarget)}>
             <MoreVertIcon fontSize="small" />
           </IconButton>
@@ -265,8 +321,8 @@ function DishCard({ item, onMenuOpen }: DishCardProps) {
         )}
       </CardContent>
 
-      {item.recipeUrl && (
-        <CardActions sx={{ pt: 0 }}>
+      <CardActions sx={{ pt: 0 }}>
+        {item.recipeUrl && (
           <Button
             size="small"
             href={item.recipeUrl}
@@ -276,8 +332,23 @@ function DishCard({ item, onMenuOpen }: DishCardProps) {
           >
             {t('cooking.viewRecipe')}
           </Button>
-        </CardActions>
-      )}
+        )}
+
+        <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <Tooltip title={t('list.convertToTask')}>
+            <IconButton size="small" onClick={() => typeof onConvert === 'function' && onConvert()}>
+              <AddTaskRoundedIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
+          {item.linkedTaskId && (
+            <Tooltip title={t('task.openLinked')}>
+              <IconButton size="small" onClick={() => navigate(`/tasks?focus=${item.linkedTaskId}`)}>
+                <OpenInNewIcon sx={{ fontSize: 16 }} />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Box>
+      </CardActions>
     </Card>
   )
 }

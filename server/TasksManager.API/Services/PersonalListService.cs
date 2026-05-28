@@ -389,6 +389,8 @@ public class PersonalListService : IPersonalListService
             PlannedDate = dto.PlannedDate,
             TagsJson    = dto.Tags is not null ? JsonSerializer.Serialize(dto.Tags) : null,
             SortOrder   = dto.SortOrder,
+            IsCompleted = dto.IsCompleted,
+            LinkedTaskId = null,
             CreatedAt   = DateTime.UtcNow,
             UpdatedAt   = DateTime.UtcNow,
         };
@@ -413,6 +415,10 @@ public class PersonalListService : IPersonalListService
             item.IngredientsJson = JsonSerializer.Serialize(dto.Ingredients);
         if (dto.Tags is not null)
             item.TagsJson = JsonSerializer.Serialize(dto.Tags);
+        if (dto.IsCompleted.HasValue)
+            item.IsCompleted = dto.IsCompleted.Value;
+        if (dto.LinkedTaskId.HasValue)
+            item.LinkedTaskId = dto.LinkedTaskId.Value;
 
         item.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
@@ -647,7 +653,7 @@ public class PersonalListService : IPersonalListService
         return new CookingItemDto(
             c.Id, c.PersonalListId, c.Title, c.RecipeUrl,
             ingredients, c.Notes, c.PlannedDate, tags,
-            c.LinkedShoppingListId, c.SortOrder, c.CreatedAt, c.UpdatedAt
+            c.IsCompleted, c.LinkedShoppingListId, c.LinkedTaskId, c.SortOrder, c.CreatedAt, c.UpdatedAt
         );
     }
 }

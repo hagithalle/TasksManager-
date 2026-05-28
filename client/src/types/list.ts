@@ -60,7 +60,11 @@ export interface CookingItem {
   plannedDate?: string
   tags: string[]
   linkedShoppingListId?: string
+  /** True when the cooking item was marked as completed (cooked) */
+  isCompleted: boolean
   sortOrder: number
+    /** Linked task id (if this cooking item was converted to a task) */
+    linkedTaskId?: string
   createdAt: string
   updatedAt: string
 }

@@ -141,14 +141,9 @@ export default function ListDetailPage() {
     setConvertItem(item)
   }
 
-  async function handleTaskCreated() {
-    if (!convertItem) return
-    // Remove from list
-    await listsApi.deleteItem(convertItem.id).catch(() => {})
-    setList((prev) => prev ? {
-      ...prev,
-      items: prev.items.filter((i) => i.id !== convertItem.id),
-    } : prev)
+  async function handleTaskCreated(task?: any) {
+    // When a task is created from a list item, do not remove the item from the list.
+    // Keep the item and simply clear the convert state. `task` contains the created task.
     setConvertItem(null)
   }
 

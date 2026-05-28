@@ -23,8 +23,14 @@ public class CookingItem
     /// <summary>JSON array of tag strings e.g. ["shabbat", "dairy", "quick"].</summary>
     public string? TagsJson { get; set; }
 
+    /// <summary>Whether this cooking item was marked as completed (cooked).</summary>
+    public bool IsCompleted { get; set; }
+
     /// <summary>Shopping list that ingredients were last pushed to.</summary>
     public Guid? LinkedShoppingListId { get; set; }
+
+    /// <summary>Linked task created from this cooking item (if any).</summary>
+    public Guid? LinkedTaskId { get; set; }
 
     public int SortOrder { get; set; }
 

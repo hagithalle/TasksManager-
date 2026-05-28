@@ -109,6 +109,25 @@ public class TaskService : ITaskService
         };
         _db.Tasks.Add(task);
         await _db.SaveChangesAsync();
+
+        // Propagate completion status to linked cooking items (if any)
+        try
+        {
+            var linkedCooking = await _db.CookingItems.Where(ci => ci.LinkedTaskId == task.Id).ToListAsync();
+            if (linkedCooking.Any())
+            {
+                foreach (var ci in linkedCooking)
+                {
+                    ci.IsCompleted = task.IsCompleted;
+                    ci.UpdatedAt = DateTime.UtcNow;
+                }
+                await _db.SaveChangesAsync();
+            }
+        }
+        catch
+        {
+            // ignore propagation errors
+        }
         return ToDto(task);
     }
 

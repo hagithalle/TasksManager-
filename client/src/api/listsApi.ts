@@ -74,6 +74,8 @@ export interface CreateCookingItemPayload {
   plannedDate?: string
   tags?: string[]
   sortOrder?: number
+  isCompleted?: boolean
+  linkedTaskId?: string
 }
 
 export interface UpdateCookingItemPayload {
@@ -85,6 +87,7 @@ export interface UpdateCookingItemPayload {
   tags?: string[]
   linkedShoppingListId?: string | null
   sortOrder?: number
+  isCompleted?: boolean | null
 }
 
 export interface PushToShoppingPayload {
@@ -152,6 +155,8 @@ function mapCookingItem(raw: any): CookingItem {
     title:                raw.title,
     recipeUrl:            raw.recipeUrl ?? undefined,
     ingredients:          Array.isArray(raw.ingredients) ? raw.ingredients : [],
+    isCompleted:          raw.isCompleted ?? false,
+    linkedTaskId:         raw.linkedTaskId ?? undefined,
     notes:                raw.notes ?? undefined,
     plannedDate:          raw.plannedDate ?? undefined,
     tags:                 Array.isArray(raw.tags) ? raw.tags : [],

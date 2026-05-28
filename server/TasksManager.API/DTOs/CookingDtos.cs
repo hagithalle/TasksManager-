@@ -19,7 +19,9 @@ public record CookingItemDto(
     string? Notes,
     DateOnly? PlannedDate,
     IEnumerable<string> Tags,
+    bool IsCompleted,
     Guid? LinkedShoppingListId,
+    Guid? LinkedTaskId,
     int SortOrder,
     DateTime CreatedAt,
     DateTime UpdatedAt
@@ -32,7 +34,8 @@ public record CreateCookingItemDto(
     string? Notes = null,
     DateOnly? PlannedDate = null,
     IEnumerable<string>? Tags = null,
-    int SortOrder = 0
+    int SortOrder = 0,
+    bool IsCompleted = false
 );
 
 public record UpdateCookingItemDto(
@@ -43,7 +46,9 @@ public record UpdateCookingItemDto(
     DateOnly? PlannedDate = null,
     IEnumerable<string>? Tags = null,
     Guid? LinkedShoppingListId = null,
-    int? SortOrder = null
+    Guid? LinkedTaskId = null,
+    int? SortOrder = null,
+    bool? IsCompleted = null
 );
 
 // ── Ingredient extraction / shopping push ─────────────────────────────────────
