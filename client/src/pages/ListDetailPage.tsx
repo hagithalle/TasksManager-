@@ -4,6 +4,8 @@ import {
 } from '@mui/material'
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded'
+import EmailRoundedIcon from '@mui/icons-material/EmailRounded'
+import WhatsAppIcon from '@mui/icons-material/WhatsApp'
 import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -14,6 +16,7 @@ import { ListType } from '../types/enums'
 import ListItemRow from '../components/lists/ListItemRow'
 import AddTaskDialog from '../components/tasks/AddTaskDialog'
 import ListIntelligenceDialog from '../components/lists/ListIntelligenceDialog'
+import ShareViaDialog from '../components/lists/ShareViaDialog'
 import ShoppingListView from '../components/lists/ShoppingListView'
 import CookingPlanView from '../components/lists/CookingPlanView'
 import { detectDepartment } from '../components/lists/ShoppingItemDialog'
@@ -51,6 +54,7 @@ export default function ListDetailPage() {
   const [goals,      setGoals]      = useState<Goal[]>([])
   const [allLists,   setAllLists]   = useState<PersonalList[]>([])
   const [aiOpen,         setAiOpen]         = useState(false)
+  const [shareViaOpen,   setShareViaOpen]   = useState(false)
   const [typeAnchor,     setTypeAnchor]     = useState<null | HTMLElement>(null)
   const [titleDraft,     setTitleDraft]     = useState('')
   const [editingTitle,   setEditingTitle]   = useState(false)
@@ -257,6 +261,28 @@ export default function ListDetailPage() {
               </IconButton>
             </Tooltip>
           )}
+
+          {/* Share via Email button */}
+          <Tooltip title={t('share.email', 'Email')}>
+            <IconButton
+              size="small"
+              onClick={() => setShareViaOpen(true)}
+              sx={{ bgcolor: 'rgba(124,92,255,0.08)', '&:hover': { bgcolor: 'rgba(124,92,255,0.15)' } }}
+            >
+              <EmailRoundedIcon sx={{ fontSize: 18, color: 'primary.main' }} />
+            </IconButton>
+          </Tooltip>
+
+          {/* Share via WhatsApp button */}
+          <Tooltip title="WhatsApp">
+            <IconButton
+              size="small"
+              onClick={() => setShareViaOpen(true)}
+              sx={{ bgcolor: 'rgba(76,175,80,0.08)', '&:hover': { bgcolor: 'rgba(76,175,80,0.15)' } }}
+            >
+              <WhatsAppIcon sx={{ fontSize: 18, color: '#25D366' }} />
+            </IconButton>
+          </Tooltip>
         </Box>
 
         {/* Progress bar + label */}
@@ -461,6 +487,15 @@ export default function ListDetailPage() {
         }
       }}
     />
+
+    {/* ── Share via dialog ── */}
+    {list && (
+      <ShareViaDialog
+        open={shareViaOpen}
+        onClose={() => setShareViaOpen(false)}
+        list={list}
+      />
+    )}
     </>
   )
 }

@@ -87,7 +87,8 @@
     "progress": "{{done}}/{{total}} done",
     "items": "{{count}} items",
     "convertToTask": "Convert to task",
-    "customEmoji": "Custom icon (emoji)"
+    "customEmoji": "Custom icon (emoji)",
+    "shareVia": "Share via"
   },
   "priority": {
     "low": "Low",
@@ -403,7 +404,15 @@
     "sharedBadge": "Shared",
     "typeList": "list",
     "typeTask": "task",
-    "typeGoal": "goal"
+    "typeGoal": "goal",
+    "email": "Email",
+    "emailAddresses": "Email addresses",
+    "emailInfo": "Click \"Send Email\" to open your default email client, or copy the link to send manually.",
+    "shareWhatsapp": "Share on WhatsApp",
+    "whatsappInfo": "Opens WhatsApp Web on desktop or your WhatsApp app on mobile. Paste the message in any chat.",
+    "preview": "Preview",
+    "sendEmail": "Send Email",
+    "copyMailto": "Copy mailto link"
   },
   "listType": {
     "checklist": "Checklist",

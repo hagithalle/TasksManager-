@@ -87,7 +87,8 @@
     "progress": "{{done}}/{{total}} הושלמו",
     "items": "{{count}} פריטים",
     "convertToTask": "המר למשימה",
-    "customEmoji": "אייקון מותאם אישית"
+    "customEmoji": "אייקון מותאם אישית",
+    "shareVia": "שתף דרך"
   },
   "priority": {
     "low": "נמוכה",
@@ -400,7 +401,15 @@
     "sharedBadge": "משותף",
     "typeList": "רשימה",
     "typeTask": "משימה",
-    "typeGoal": "מטרה"
+    "typeGoal": "מטרה",
+    "email": "דוא״ל",
+    "emailAddresses": "כתובות דוא״ל",
+    "emailInfo": "לחץ על \"שלח דוא״ל\" כדי לפתוח את תוכנית הדוא״ל שלך, או העתק את הקישור כדי לשלוח באופן ידני.",
+    "shareWhatsapp": "שתף ב-WhatsApp",
+    "whatsappInfo": "פותח את WhatsApp Web בשולחן העבודה או את האפליקציה שלך בנייד. הדבק את ההודעה בכל שיחה.",
+    "preview": "תצוגה מקדימה",
+    "sendEmail": "שלח דוא״ל",
+    "copyMailto": "העתק קישור דוא״ל"
   },
   "listType": {
     "checklist": "רשימת משימות",
