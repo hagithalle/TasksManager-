@@ -1,6 +1,23 @@
 import type { PersonalList, PersonalListItem, ShoppingItem, CookingItem } from '../types'
 import { ListType, ShoppingDepartment } from '../types/enums'
 
+// Map department enum to i18n translation key
+export function getDepartmentTranslationKey(dept: ShoppingDepartment): string {
+  const keyMap: Record<ShoppingDepartment, string> = {
+    [ShoppingDepartment.FruitsAndVegetables]: 'shoppingDepartment.fruitsAndVegetables',
+    [ShoppingDepartment.Dairy]: 'shoppingDepartment.dairy',
+    [ShoppingDepartment.MeatAndFish]: 'shoppingDepartment.meatAndFish',
+    [ShoppingDepartment.Bakery]: 'shoppingDepartment.bakery',
+    [ShoppingDepartment.Pantry]: 'shoppingDepartment.pantry',
+    [ShoppingDepartment.Frozen]: 'shoppingDepartment.frozen',
+    [ShoppingDepartment.Cleaning]: 'shoppingDepartment.cleaning',
+    [ShoppingDepartment.Disposable]: 'shoppingDepartment.disposable',
+    [ShoppingDepartment.Baby]: 'shoppingDepartment.baby',
+    [ShoppingDepartment.Other]: 'shoppingDepartment.other',
+  }
+  return keyMap[dept] || 'shoppingDepartment.other'
+}
+
 const DEPARTMENT_EMOJIS: Record<ShoppingDepartment, string> = {
   [ShoppingDepartment.FruitsAndVegetables]: '🥬',
   [ShoppingDepartment.Dairy]: '🧈',
@@ -14,7 +31,11 @@ const DEPARTMENT_EMOJIS: Record<ShoppingDepartment, string> = {
   [ShoppingDepartment.Other]: '📦',
 }
 
-export function formatListForSharing(list: PersonalList): string {
+/**
+ * Format list for sharing. For shopping lists, returns department keys instead of names
+ * so they can be translated by the component using this function.
+ */
+export function formatListForSharing(list: PersonalList, tDept?: (key: string) => string): string {
   const title = list.title
   const emoji = list.emoji || getEmojiForListType(list.listType)
 
@@ -23,7 +44,7 @@ export function formatListForSharing(list: PersonalList): string {
 
   switch (list.listType) {
     case ListType.Shopping:
-      content += formatShoppingList(list.shoppingItems)
+      content += formatShoppingList(list.shoppingItems, tDept)
       break
     case ListType.CookingPlan:
       content += formatCookingList(list.cookingItems)
@@ -41,7 +62,7 @@ export function formatListForSharing(list: PersonalList): string {
   return content
 }
 
-function formatShoppingList(items: ShoppingItem[]): string {
+function formatShoppingList(items: ShoppingItem[], tDept?: (key: string) => string): string {
   if (items.length === 0) return '(empty list)\n'
 
   const activeItems = items.filter(i => i.isActive)
@@ -55,7 +76,8 @@ function formatShoppingList(items: ShoppingItem[]): string {
   sortedDepts.forEach((dept, idx) => {
     if (idx > 0) content += '\n'
     const emoji = DEPARTMENT_EMOJIS[dept] || '📦'
-    content += `${emoji} ${dept}\n`
+    const deptName = tDept ? tDept(getDepartmentTranslationKey(dept)) : dept
+    content += `${emoji} ${deptName}\n`
     byDepartment[dept].forEach(item => {
       const qty = item.quantity && item.unit
         ? ` (${item.quantity}${item.unit})`

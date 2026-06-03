@@ -22,7 +22,7 @@ export default function ShareViaDialog({ open, onClose, list }: Props) {
   const [emails, setEmails] = useState('')
   const [copied, setCopied] = useState(false)
 
-  const formattedText = formatListForSharing(list)
+  const formattedText = formatListForSharing(list, (key) => t(key))
   const emailSubject = `${list.title} (${new Date().toLocaleDateString()})`
 
   const handleCopyMailto = async () => {

@@ -1,14 +1,11 @@
 import { Box, Card, CardActionArea, IconButton, LinearProgress, Typography } from '@mui/material'
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded'
 import ShareRoundedIcon from '@mui/icons-material/ShareRounded'
-import EmailRoundedIcon from '@mui/icons-material/EmailRounded'
-import WhatsAppIcon from '@mui/icons-material/WhatsApp'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { PersonalList } from '../../types'
 import { ListType } from '../../types/enums'
 import ShareDialog from '../ShareDialog'
-import ShareViaDialog from './ShareViaDialog'
 
 const LIST_TYPE_EMOJI: Record<ListType, string> = {
   [ListType.Checklist]:   '✅',
@@ -28,7 +25,6 @@ interface Props {
 export default function PersonalListCard({ list, onClick, onDelete }: Props) {
   const { t } = useTranslation()
   const [shareOpen, setShareOpen] = useState(false)
-  const [shareViaOpen, setShareViaOpen] = useState(false)
 
   const isShopping = list.listType === ListType.Shopping
   const total   = isShopping
@@ -86,12 +82,6 @@ export default function PersonalListCard({ list, onClick, onDelete }: Props) {
                     <DeleteRoundedIcon sx={{ fontSize: 15, color: 'text.disabled' }} />
                   </IconButton>
                 )}
-                <IconButton size="small" onClick={(e) => { e.stopPropagation(); setShareViaOpen(true) }} sx={{ p: 0.25 }}>
-                  <EmailRoundedIcon sx={{ fontSize: 15, color: 'text.disabled' }} />
-                </IconButton>
-                <IconButton size="small" onClick={(e) => { e.stopPropagation(); setShareViaOpen(true) }} sx={{ p: 0.25 }}>
-                  <WhatsAppIcon sx={{ fontSize: 15, color: 'text.disabled' }} />
-                </IconButton>
                 <IconButton size="small" onClick={(e) => { e.stopPropagation(); setShareOpen(true) }} sx={{ p: 0.25 }}>
                   <ShareRoundedIcon sx={{ fontSize: 15, color: 'text.disabled' }} />
                 </IconButton>
@@ -137,12 +127,6 @@ export default function PersonalListCard({ list, onClick, onDelete }: Props) {
         resourceType="List"
         resourceId={list.id}
         resourceTitle={list.title}
-      />
-
-      <ShareViaDialog
-        open={shareViaOpen}
-        onClose={() => setShareViaOpen(false)}
-        list={list}
       />
     </Card>
   )

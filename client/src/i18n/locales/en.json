@@ -12,7 +12,12 @@
     "back": "Back",
     "loading": "Loading...",
     "noData": "No data to display",
-    "required": "Required"
+    "required": "Required",
+    "error": "Error",
+    "refresh": "Refresh",
+    "settings": "Settings",
+    "redirecting": "Redirecting...",
+    "retry": "Retry"
   },
   "task": {
     "new": "New Task",
@@ -49,7 +54,11 @@
       "urgent": "Urgent",
       "today": "Today",
       "total": "Total"
-    }
+    },
+    "preview": "Preview",
+    "openLinked": "Open linked task",
+    "applyNotes": "Apply notes",
+    "notesSuggestion": "Task notes"
   },
   "goal": {
     "new": "New Goal",
@@ -87,8 +96,7 @@
     "progress": "{{done}}/{{total}} done",
     "items": "{{count}} items",
     "convertToTask": "Convert to task",
-    "customEmoji": "Custom icon (emoji)",
-    "shareVia": "Share via"
+    "customEmoji": "Custom icon (emoji)"
   },
   "priority": {
     "low": "Low",
@@ -183,6 +191,7 @@
     "headline": "You have {{count}} tasks before {{time}}",
     "subline": "{{done}} of {{total}} completed",
     "nextLabel": "Best next action:",
+    "nextUp": "Next up",
     "afterLabel": "Then:",
     "start": "Start now",
     "refresh": "Refresh",
@@ -201,6 +210,12 @@
     "snooze": "Snooze",
     "markDone": "Mark as done",
     "timerPlaceholder": "Timer / Progress (coming soon)",
+    "carriedOver": "Carried over",
+    "showMoreTasks": "Show {{count}} more",
+    "empty": {
+      "noTasks": "No tasks available",
+      "allDone": "All done!"
+    },
     "insight": {
       "morning":         "Good morning! {{count}} tasks to finish today",
       "morningTip":      "The first frog matters most — eat it before the rest of the day",
@@ -412,7 +427,13 @@
     "whatsappInfo": "Opens WhatsApp Web on desktop or your WhatsApp app on mobile. Paste the message in any chat.",
     "preview": "Preview",
     "sendEmail": "Send Email",
-    "copyMailto": "Copy mailto link"
+    "copyMailto": "Copy mailto link",
+    "linkExpired": "Link not found or has expired",
+    "joinError": "Error joining",
+    "joinSuccess": "Joined successfully!",
+    "joinButton": "Join",
+    "signInAndJoin": "Sign in and join",
+    "sharedWithYou": "shared with you"
   },
   "listType": {
     "checklist": "Checklist",
@@ -560,6 +581,9 @@
     "notifications": "Notifications",
     "pushNotifications": "Push notifications",
     "defaultReminderMinutes": "Default reminder before due time"
+  },
+  "error": {
+    "loadFailed": "Failed to load"
   },
   "nextUp": "Next up",
   "showMoreTasks": "Show more tasks"

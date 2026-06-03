@@ -12,7 +12,12 @@
     "back": "חזרה",
     "loading": "טוען...",
     "noData": "אין נתונים להצג",
-    "required": "שדה חובה"
+    "required": "שדה חובה",
+    "error": "שגיאה",
+    "refresh": "רענן",
+    "settings": "הגדרות",
+    "redirecting": "מוביל...",
+    "retry": "נסה שוב"
   },
   "task": {
     "new": "משימה חדשה",
@@ -49,7 +54,11 @@
       "urgent": "דחוף",
       "today": "להיום",
       "total": "סהכל"
-    }
+    },
+    "preview": "תצוגה מקדימה",
+    "openLinked": "פתח משימה מקושרת",
+    "applyNotes": "החל הערות",
+    "notesSuggestion": "הערות משימה"
   },
   "goal": {
     "new": "מטרה חדשה",
@@ -182,8 +191,9 @@
     "title": "מאמן היום שלי",
     "headline": "יש לך {{count}} משימות עד {{time}}",
     "subline": "סיימת {{done}} מתוך {{total}}",
+    "nextLabel": "הבא בתור:",
     "nextUp": "הבא בתור",
-    "showMoreTasks": "הצג עוד משימות",
+    "afterLabel": "אחרי כן:",
     "start": "התחל עכשיו",
     "refresh": "רענן",
     "settings": "הגדרות",
@@ -198,6 +208,15 @@
     "dailyTarget": "יעד משימות יומי:",
     "noTasks": "אני כאן כדי לעזור לך להשיג את המטרות שלך",
     "allTasks": "כל המשימות ({{count}})",
+    "snooze": "דחה",
+    "markDone": "סמן כהושלם",
+    "timerPlaceholder": "טיימר / התקדמות (בקרוב)",
+    "carriedOver": "נדחה",
+    "showMoreTasks": "הצג {{count}} משימות נוספות",
+    "empty": {
+      "noTasks": "אין משימות זמינות",
+      "allDone": "הכל הושלם!"
+    },
     "insight": {
       "morning":         "בוקר טוב! יש לך {{count}} משימות לסיים היום",
       "morningTip":      "הקרפד הראשון הוא החשוב ביותר — קח אותו לפני שאר היום",
@@ -409,7 +428,13 @@
     "whatsappInfo": "פותח את WhatsApp Web בשולחן העבודה או את האפליקציה שלך בנייד. הדבק את ההודעה בכל שיחה.",
     "preview": "תצוגה מקדימה",
     "sendEmail": "שלח דוא״ל",
-    "copyMailto": "העתק קישור דוא״ל"
+    "copyMailto": "העתק קישור דוא״ל",
+    "linkExpired": "הקישור לא נמצא או פג תוקפו",
+    "joinError": "שגיאה בהצטרפות",
+    "joinSuccess": "הצטרפת בהצלחה!",
+    "joinButton": "הצטרף",
+    "signInAndJoin": "התחבר והצטרף",
+    "sharedWithYou": "שיתף/ה איתך"
   },
   "listType": {
     "checklist": "רשימת משימות",
@@ -566,5 +591,8 @@
   "empty": {
     "noTasks": "אין משימות פוקוס מתאימות כרגע.",
     "allDone": "כל משימות הפוקוס הושלמו!"
+  },
+  "error": {
+    "loadFailed": "שגיאה בטעינה"
   }
 }
