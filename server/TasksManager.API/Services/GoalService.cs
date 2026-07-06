@@ -69,11 +69,19 @@ public class GoalService : IGoalService
         var goal = await _db.Goals.Include(g => g.Tasks).FirstOrDefaultAsync(g => g.Id == id);
         if (goal is null || goal.UserId != callerId) return null;
 
-        if (dto.Title is not null)    goal.Title    = dto.Title;
-        if (dto.Category is not null) goal.Category = dto.Category;
-        if (dto.GoalType is not null) goal.GoalType = dto.GoalType.Value;
-        if (dto.DueDate.HasValue)     goal.DueDate  = dto.DueDate;
-        if (dto.IsPinned.HasValue)    goal.IsPinned = dto.IsPinned.Value;
+        if (dto.Title is not null)       goal.Title    = dto.Title;
+        if (dto.Category is not null)    goal.Category = dto.Category;
+        if (dto.GoalType is not null)    goal.GoalType = dto.GoalType.Value;
+        if (dto.DueDate.HasValue)        goal.DueDate  = dto.DueDate;
+        if (dto.IsPinned.HasValue)       goal.IsPinned = dto.IsPinned.Value;
+        if (dto.IsCompleted.HasValue)
+        {
+            goal.IsCompleted = dto.IsCompleted.Value;
+            if (dto.IsCompleted.Value && goal.CompletedAt is null)
+                goal.CompletedAt = DateTime.UtcNow;
+            else if (!dto.IsCompleted.Value)
+                goal.CompletedAt = null;
+        }
         goal.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
@@ -91,7 +99,7 @@ public class GoalService : IGoalService
 
     private static GoalDto ToDto(Goal g) => new(
         g.Id, g.UserId, g.Title, g.Category, g.GoalType,
-        g.DueDate, g.IsPinned,
+        g.DueDate, g.IsPinned, g.IsCompleted, g.CompletedAt,
         g.Tasks.Count,
         g.Tasks.Count(t => t.IsCompleted),
         g.CreatedAt, g.UpdatedAt

@@ -120,6 +120,7 @@ export function computeRecurringItems(lists: PersonalList[]): AiListItemStat[] {
       : list.items.map((i) => i.title)
     for (const title of titles) {
       const key = title.toLowerCase().trim()
+      if (!key) continue
       const existing = freq.get(key)
       if (!existing) {
         freq.set(key, { count: 1, lastSeen: list.updatedAt })
@@ -129,14 +130,16 @@ export function computeRecurringItems(lists: PersonalList[]): AiListItemStat[] {
       }
     }
   }
-  return Array.from(freq.entries())
-    .filter(([, v]) => v.count >= 2)
+  const all = Array.from(freq.entries())
     .sort((a, b) => b[1].count - a[1].count)
     .map(([title, v]) => ({
       title,
       occurrences: v.count,
       lastSeenDate: v.lastSeen.slice(0, 10),
     }))
+  // prefer items seen in 2+ lists; fall back to all items if not enough recurring
+  const recurring = all.filter(i => i.occurrences >= 2)
+  return recurring.length >= 5 ? recurring : all
 }
 
 // ── API calls ─────────────────────────────────────────────────────────────────
@@ -233,4 +236,32 @@ async function analyzePlan(text: string, language = 'he'): Promise<AiPlanRespons
   return data
 }
 
-export const aiApi = { analyzeDay, searchTasks, getInsights, analyzeGoals, analyzeLists, analyzePlan }
+// ── Shabbat Planner ───────────────────────────────────────────────────────────
+
+export interface ShabbatPlanDish {
+  title:    string
+  mealSlot: string
+  tags:     string[]
+  notes:    string | null
+  isNew:    boolean
+}
+
+export interface ShabbatPlanResponse {
+  message: string
+  dishes:  ShabbatPlanDish[]
+}
+
+export interface CookingHistoryItem {
+  title:      string
+  timesCooked: number
+  ingredients: { title: string; quantity?: number; unit?: string }[]
+  tags:        string[]
+  lastCooked:  string
+}
+
+async function planShabbat(cookingHistory: CookingHistoryItem[], language = 'he'): Promise<ShabbatPlanResponse> {
+  const { data } = await apiClient.post<ShabbatPlanResponse>('/ai/shabbat-plan', { cookingHistory, language })
+  return data
+}
+
+export const aiApi = { analyzeDay, searchTasks, getInsights, analyzeGoals, analyzeLists, analyzePlan, planShabbat }

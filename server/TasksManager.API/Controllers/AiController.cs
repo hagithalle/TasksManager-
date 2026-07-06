@@ -183,6 +183,26 @@ public class AiController : ControllerBase
         }
     }
 
+    // POST api/ai/shabbat-plan
+    [HttpPost("shabbat-plan")]
+    public async Task<IActionResult> PlanShabbat(ShabbatPlanRequestDto dto)
+    {
+        try
+        {
+            var result = await _ai.PlanShabbatAsync(dto);
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(503, new { code = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected AI error in shabbat-plan");
+            return StatusCode(500, new { code = "AI_ERROR" });
+        }
+    }
+
     // POST api/ai/plan
     [HttpPost("plan")]
     public async Task<IActionResult> AnalyzePlan(AiPlanRequestDto dto)

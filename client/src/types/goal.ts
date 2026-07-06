@@ -27,6 +27,9 @@ export interface Goal {
   /** Show this goal at the top of the goals list */
   isPinned?: boolean
 
+  isCompleted?: boolean
+  completedAt?: string
+
   createdAt: string
   updatedAt: string
 }

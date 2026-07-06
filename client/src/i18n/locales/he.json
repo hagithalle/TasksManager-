@@ -542,7 +542,38 @@
     "addSelected": "הוסף {{count}} פריטים",
     "noIngredientsFound": "לא נמצאו מרכיבים בתכנית הבישול",
     "extractError": "שגיאה בטעינת המרכיבים",
-    "pushError": "שגיאה בהוספת הפריטים לרשימת הקניות"
+    "pushError": "שגיאה בהוספת הפריטים לרשימת הקניות",
+    "mealSlot": "קטגוריה / ארוחה",
+    "cookedTimes": "הוכן {{count}} פעמים",
+    "noItemsInSlot": "אין מנות בקטגוריה זו",
+    "shabbatPlanner": "סוכן שבת",
+    "shabbatPlannerEmpty": "תכנן שבת עם AI",
+    "shabbatPlannerDesc": "הסוכן יתכנן תפריט שלם לשבת — ערב שבת, בוקר שבת, תוספות וסעודה שלישית — בהתבסס על המאגר האישי שלך.",
+    "shabbatPlanError": "שגיאה בתכנון — נסי שוב",
+    "planNow": "תכנן עכשיו",
+    "planning": "מתכנן...",
+    "dishesAdded": "המנות נוספו לרשימה!",
+    "selectDishes": "בחרי את המנות להוספה",
+    "adding": "מוסיף...",
+    "newSuggestion": "חדש",
+    "replan": "תכנן מחדש"
+  },
+  "mealSlot": {
+    "none": "ללא קטגוריה",
+    "fridaydinner": "ערב שבת",
+    "saturdaymorning": "בוקר שבת",
+    "additions": "תוספות",
+    "thirdmeal": "סעודה שלישית",
+    "maindish": "עיקרי",
+    "side": "תוספת",
+    "salad": "סלט",
+    "dessert": "קינוח",
+    "other": "אחר"
+  },
+  "cookingMode": {
+    "label": "סוג תכנון",
+    "regular": "ימי שבוע",
+    "shabbat": "שבת"
   },
   "recurrence": {
     "label": "חזרה",

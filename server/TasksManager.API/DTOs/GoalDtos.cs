@@ -11,6 +11,8 @@ public record GoalDto(
     GoalType GoalType,
     DateTime? DueDate,
     bool IsPinned,
+    bool IsCompleted,
+    DateTime? CompletedAt,
     int TotalTasks,
     int CompletedTasks,
     DateTime CreatedAt,
@@ -31,5 +33,6 @@ public record UpdateGoalDto(
     [MaxLength(100)] string? Category,
     GoalType? GoalType,
     DateTime? DueDate,
-    bool? IsPinned
+    bool? IsPinned,
+    bool? IsCompleted
 );

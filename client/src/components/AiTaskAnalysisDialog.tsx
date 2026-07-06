@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Alert,
   Box,
@@ -23,9 +23,49 @@ import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded'
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded'
 import ExpandLessRoundedIcon from '@mui/icons-material/ExpandLessRounded'
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
+import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded'
 import { useTranslation } from 'react-i18next'
 import { aiApi, type AiPlanGoal, type AiPlanTask, type AiPlanResponse } from '../api/aiApi'
 import { goalsApi, tasksApi } from '../api'
+
+// ── Memory helpers ────────────────────────────────────────────────────────────
+
+interface AiPlanMemoryEntry {
+  id: string
+  date: string          // ISO date
+  userText: string
+  summary: string
+  savedGoals: string[]
+  savedTasks: string[]
+}
+
+function memoryKey(userId: string) { return `ai_plan_memory_${userId}` }
+
+function loadMemory(userId: string): AiPlanMemoryEntry[] {
+  try {
+    return JSON.parse(localStorage.getItem(memoryKey(userId)) ?? '[]')
+  } catch { return [] }
+}
+
+function saveMemory(userId: string, entries: AiPlanMemoryEntry[]) {
+  try {
+    localStorage.setItem(memoryKey(userId), JSON.stringify(entries.slice(-20)))
+  } catch {}
+}
+
+function buildMemoryContext(entries: AiPlanMemoryEntry[], isHe: boolean): string {
+  if (!entries.length) return ''
+  const header = isHe
+    ? 'הקשר מהשיחות הקודמות (לשימוש ה-AI לזכירה ומעקב):\n'
+    : 'Context from previous sessions (for AI memory and follow-up):\n'
+  const lines = entries.map(e => {
+    const date = new Date(e.date).toLocaleDateString(isHe ? 'he-IL' : 'en-US', { day: '2-digit', month: '2-digit', year: '2-digit' })
+    const goals = e.savedGoals.length ? (isHe ? `מטרות: ${e.savedGoals.join(', ')}` : `Goals: ${e.savedGoals.join(', ')}`) : ''
+    const tasks = e.savedTasks.length ? (isHe ? `משימות: ${e.savedTasks.join(', ')}` : `Tasks: ${e.savedTasks.join(', ')}`) : ''
+    return `[${date}] ${e.userText.slice(0, 120)} → ${[goals, tasks].filter(Boolean).join(' | ')}`
+  })
+  return `${header}${lines.join('\n')}\n\n`
+}
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -72,8 +112,15 @@ export default function AiTaskAnalysisDialog({ open, onClose, userId, onCreated 
   const [expandedTasks,  setExpandedTasks]  = useState<Set<number>>(new Set())
   const [saving,         setSaving]         = useState(false)
   const [savedCount,     setSavedCount]     = useState(0)
+  const [memory,         setMemory]         = useState<AiPlanMemoryEntry[]>([])
+  const [memoryOpen,     setMemoryOpen]     = useState(false)
 
   const totalSelected = selectedGoals.size + selectedTasks.size
+
+  // load memory when dialog opens
+  useEffect(() => {
+    if (open && userId) setMemory(loadMemory(userId))
+  }, [open, userId])
 
   // ── Handlers ────────────────────────────────────────────────────────────────
 
@@ -94,7 +141,9 @@ export default function AiTaskAnalysisDialog({ open, onClose, userId, onCreated 
     setLoading(true)
     setError(null)
     try {
-      const res = await aiApi.analyzePlan(text.trim(), lang)
+      const memCtx = buildMemoryContext(memory, isRtl)
+      const fullText = memCtx ? `${memCtx}${isRtl ? 'הנושא הנוכחי:\n' : 'Current topic:\n'}${text.trim()}` : text.trim()
+      const res = await aiApi.analyzePlan(fullText, lang)
       if (!res.goals.length && !res.tasks.length) {
         setError(t('ai.plan.noResults'))
         return
@@ -154,6 +203,21 @@ export default function AiTaskAnalysisDialog({ open, onClose, userId, onCreated 
           })
         }
       }
+
+      // persist to memory
+      const savedGoalTitles = result.goals.filter((_, i) => selectedGoals.has(i)).map(g => g.title)
+      const savedTaskTitles = result.tasks.filter((_, i) => selectedTasks.has(i)).map(t => t.title)
+      const entry: AiPlanMemoryEntry = {
+        id: Date.now().toString(),
+        date: new Date().toISOString(),
+        userText: text.trim(),
+        summary: result.summary ?? '',
+        savedGoals: savedGoalTitles,
+        savedTasks: savedTaskTitles,
+      }
+      const updated = [...memory, entry]
+      setMemory(updated)
+      saveMemory(userId, updated)
 
       setSavedCount(totalSelected)
       setPhase('done')
@@ -234,6 +298,47 @@ export default function AiTaskAnalysisDialog({ open, onClose, userId, onCreated 
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               {t('ai.plan.subtitle')}
             </Typography>
+
+            {/* Memory section */}
+            {memory.length > 0 && (
+              <Box sx={{ mb: 2, borderRadius: 2, border: '1px solid', borderColor: 'rgba(124,92,255,0.2)', overflow: 'hidden' }}>
+                <Box
+                  onClick={() => setMemoryOpen(v => !v)}
+                  sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 1.5, py: 1, cursor: 'pointer', bgcolor: 'rgba(124,92,255,0.05)', '&:hover': { bgcolor: 'rgba(124,92,255,0.09)' } }}
+                >
+                  <HistoryRoundedIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                  <Typography variant="caption" fontWeight={700} color="primary.main" sx={{ flex: 1 }}>
+                    {isRtl ? `זיכרון AI – ${memory.length} שיחות קודמות` : `AI Memory – ${memory.length} past sessions`}
+                  </Typography>
+                  {memoryOpen ? <ExpandLessRoundedIcon sx={{ fontSize: 16, color: 'primary.main' }} /> : <ExpandMoreRoundedIcon sx={{ fontSize: 16, color: 'primary.main' }} />}
+                </Box>
+                <Collapse in={memoryOpen}>
+                  <Box sx={{ maxHeight: 220, overflowY: 'auto', px: 1.5, py: 1 }}>
+                    {[...memory].reverse().map(entry => (
+                      <Box key={entry.id} sx={{ mb: 1.5, pb: 1.5, borderBottom: '1px solid', borderColor: 'divider', '&:last-child': { borderBottom: 'none', mb: 0, pb: 0 } }}>
+                        <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mb: 0.3 }}>
+                          {new Date(entry.date).toLocaleDateString(isRtl ? 'he-IL' : 'en-US', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                        </Typography>
+                        <Typography variant="caption" sx={{ display: 'block', fontStyle: 'italic', mb: 0.3 }}>
+                          {entry.userText.slice(0, 100)}{entry.userText.length > 100 ? '…' : ''}
+                        </Typography>
+                        {entry.savedGoals.length > 0 && (
+                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                            🎯 {entry.savedGoals.join(' · ')}
+                          </Typography>
+                        )}
+                        {entry.savedTasks.length > 0 && (
+                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                            ✅ {entry.savedTasks.slice(0, 3).join(' · ')}{entry.savedTasks.length > 3 ? ` +${entry.savedTasks.length - 3}` : ''}
+                          </Typography>
+                        )}
+                      </Box>
+                    ))}
+                  </Box>
+                </Collapse>
+              </Box>
+            )}
+
             <TextField
               multiline
               minRows={4}

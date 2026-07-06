@@ -11,6 +11,8 @@ public class Goal
 
     public DateTime? DueDate { get; set; }
     public bool IsPinned { get; set; }
+    public bool IsCompleted { get; set; }
+    public DateTime? CompletedAt { get; set; }
 
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }

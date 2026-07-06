@@ -94,6 +94,7 @@ public record PersonalListDto(
     string Title,
     string? Emoji,
     string ListType,
+    string CookingMode,
     IEnumerable<PersonalListItemDto> Items,
     IEnumerable<ShoppingItemDto> ShoppingItems,
     ShoppingListSettingsDto? ShoppingSettings,
@@ -106,7 +107,8 @@ public record CreatePersonalListDto(
     Guid UserId,
     string Title,
     string? Emoji,
-    string ListType = "checklist"
+    string ListType = "checklist",
+    string CookingMode = "regular"
 );
 
 public record UpdatePersonalListDto(

@@ -1,4 +1,4 @@
-import type { ListType, ShoppingDepartment, ShoppingItemType } from './enums'
+import type { ListType, ShoppingDepartment, ShoppingItemType, MealSlot, CookingMode } from './enums'
 
 export interface PersonalListItem {
   id: string
@@ -62,6 +62,8 @@ export interface CookingItem {
   linkedShoppingListId?: string
   /** True when the cooking item was marked as completed (cooked) */
   isCompleted: boolean
+  /** Meal slot this dish belongs to (Shabbat or weekday category) */
+  mealSlot: MealSlot
   sortOrder: number
     /** Linked task id (if this cooking item was converted to a task) */
     linkedTaskId?: string
@@ -90,6 +92,9 @@ export interface PersonalList {
 
   /** The type / purpose of the list */
   listType: ListType
+
+  /** For cooking plan lists: Shabbat or regular weekday mode */
+  cookingMode: CookingMode
 
   /** Generic checklist items (non-shopping lists) */
   items: PersonalListItem[]

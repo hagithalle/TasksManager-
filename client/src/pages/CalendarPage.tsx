@@ -428,8 +428,11 @@ export default function CalendarPage() {
           onClose={() => setEditTask(null)}
           editTask={editTask}
           onEdit={(updated) => {
-            setTasks(prev => prev.map(t => t.id === updated.id ? updated : t))
             setEditTask(null)
+            // refetch all tasks to ensure calendar reflects the latest data
+            if (user) tasksApi.getByUser(user.id).then(setTasks).catch(() => {
+              setTasks(prev => prev.map(t => t.id === updated.id ? updated : t))
+            })
           }}
         />
       )}

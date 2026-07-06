@@ -1,4 +1,4 @@
-import { Card, CardActionArea, Box, Typography, LinearProgress, Chip, IconButton } from '@mui/material'
+import { Card, CardActionArea, Box, Typography, LinearProgress, Chip, IconButton, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import { GoalType } from '../../types'
@@ -7,18 +7,22 @@ import GoalCategoryIcon from './GoalCategoryIcon'
 import EditRoundedIcon from '@mui/icons-material/EditRounded'
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded'
 import ShareRoundedIcon from '@mui/icons-material/ShareRounded'
+import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded'
+import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
 import ShareDialog from '../ShareDialog'
 
 interface Props {
-  goal:    Goal
-  onClick?: () => void
-  onEdit?: (goal: Goal) => void
-  onDelete?: (id: string) => void
+  goal:       Goal
+  onClick?:   () => void
+  onEdit?:    (goal: Goal) => void
+  onDelete?:  (id: string) => void
+  onComplete?: (id: string, done: boolean) => void
 }
 
-export default function GoalCard({ goal, onClick, onEdit, onDelete }: Props) {
+export default function GoalCard({ goal, onClick, onEdit, onDelete, onComplete }: Props) {
   const { t, i18n } = useTranslation()
-  const [shareOpen, setShareOpen] = useState(false)
+  const [shareOpen,   setShareOpen]   = useState(false)
+  const [deleteOpen,  setDeleteOpen]  = useState(false)
 
   const isFinite = goal.goalType === GoalType.Finite
 
@@ -41,14 +45,16 @@ export default function GoalCard({ goal, onClick, onEdit, onDelete }: Props) {
     : null
 
   return (
+    <>
     <Card
       sx={{
         borderRadius: 3,
         border: '1px solid',
-        borderColor: 'rgba(124,92,255,0.12)',
-        boxShadow: '0 2px 10px rgba(124,92,255,0.07)',
+        borderColor: goal.isCompleted ? 'rgba(76,175,80,0.3)' : 'rgba(124,92,255,0.12)',
+        boxShadow: goal.isCompleted ? '0 2px 10px rgba(76,175,80,0.08)' : '0 2px 10px rgba(124,92,255,0.07)',
+        opacity: goal.isCompleted ? 0.82 : 1,
         transition: 'box-shadow 0.2s',
-        '&:hover': { boxShadow: '0 4px 16px rgba(124,92,255,0.13)' },
+        '&:hover': { boxShadow: goal.isCompleted ? '0 4px 16px rgba(76,175,80,0.15)' : '0 4px 16px rgba(124,92,255,0.13)' },
       }}
     >
       <CardActionArea onClick={onClick} sx={{ p: 2 }}>
@@ -78,13 +84,25 @@ export default function GoalCard({ goal, onClick, onEdit, onDelete }: Props) {
               </Typography>
 
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, flexShrink: 0 }}>
+                {onComplete && (
+                  <IconButton
+                    size="small"
+                    onClick={(e) => { e.stopPropagation(); onComplete(goal.id, !goal.isCompleted) }}
+                    sx={{ p: 0.25 }}
+                    title={goal.isCompleted ? t('goal.markIncomplete', 'בטל סיום') : t('goal.markComplete', 'סמן כהושלם')}
+                  >
+                    {goal.isCompleted
+                      ? <CheckCircleRoundedIcon sx={{ fontSize: 15, color: '#4CAF50' }} />
+                      : <CheckCircleOutlineRoundedIcon sx={{ fontSize: 15, color: 'text.disabled' }} />}
+                  </IconButton>
+                )}
                 {onEdit && (
                   <IconButton size="small" onClick={(e) => { e.stopPropagation(); onEdit(goal) }} sx={{ p: 0.25 }}>
                     <EditRoundedIcon sx={{ fontSize: 15, color: 'text.disabled' }} />
                   </IconButton>
                 )}
                 {onDelete && (
-                  <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDelete(goal.id) }} sx={{ p: 0.25 }}>
+                  <IconButton size="small" onClick={(e) => { e.stopPropagation(); setDeleteOpen(true) }} sx={{ p: 0.25 }}>
                     <DeleteRoundedIcon sx={{ fontSize: 15, color: 'text.disabled' }} />
                   </IconButton>
                 )}
@@ -202,6 +220,31 @@ export default function GoalCard({ goal, onClick, onEdit, onDelete }: Props) {
         resourceType="Goal"
         resourceId={goal.id}
         resourceTitle={goal.title}
-      />    </Card>
+      />
+    </Card>
+
+    {/* Delete confirmation dialog */}
+    <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)} PaperProps={{ sx: { borderRadius: 3 } }}>
+      <DialogTitle fontWeight={700}>{t('goal.deleteConfirmTitle', 'מחיקת מטרה')}</DialogTitle>
+      <DialogContent>
+        <DialogContentText>
+          {t('goal.deleteConfirmText', { title: goal.title })}
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions sx={{ px: 2, pb: 2, gap: 1 }}>
+        <Button onClick={() => setDeleteOpen(false)} variant="outlined" sx={{ borderRadius: 2 }}>
+          {t('common.cancel', 'ביטול')}
+        </Button>
+        <Button
+          onClick={() => { setDeleteOpen(false); onDelete?.(goal.id) }}
+          variant="contained"
+          color="error"
+          sx={{ borderRadius: 2 }}
+        >
+          {t('common.delete', 'מחק')}
+        </Button>
+      </DialogActions>
+    </Dialog>
+    </>
   )
 }

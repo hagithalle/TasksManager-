@@ -56,7 +56,11 @@ export default function ShareViaDialog({ open, onClose, list }: Props) {
     }
 
     const mailto = generateMailtoLink(emailList, emailSubject, formattedText)
-    window.location.href = mailto
+    const a = document.createElement('a')
+    a.href = mailto
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
   }
 
   const handleShareWhatsApp = () => {

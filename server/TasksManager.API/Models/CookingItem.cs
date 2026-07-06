@@ -26,6 +26,9 @@ public class CookingItem
     /// <summary>Whether this cooking item was marked as completed (cooked).</summary>
     public bool IsCompleted { get; set; }
 
+    /// <summary>Which meal slot this dish belongs to (Shabbat or weekday category).</summary>
+    public MealSlot MealSlot { get; set; } = MealSlot.None;
+
     /// <summary>Shopping list that ingredients were last pushed to.</summary>
     public Guid? LinkedShoppingListId { get; set; }
 

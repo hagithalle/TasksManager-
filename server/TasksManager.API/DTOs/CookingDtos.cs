@@ -20,6 +20,7 @@ public record CookingItemDto(
     DateOnly? PlannedDate,
     IEnumerable<string> Tags,
     bool IsCompleted,
+    string MealSlot,
     Guid? LinkedShoppingListId,
     Guid? LinkedTaskId,
     int SortOrder,
@@ -35,7 +36,8 @@ public record CreateCookingItemDto(
     DateOnly? PlannedDate = null,
     IEnumerable<string>? Tags = null,
     int SortOrder = 0,
-    bool IsCompleted = false
+    bool IsCompleted = false,
+    string MealSlot = "none"
 );
 
 public record UpdateCookingItemDto(
@@ -48,7 +50,28 @@ public record UpdateCookingItemDto(
     Guid? LinkedShoppingListId = null,
     Guid? LinkedTaskId = null,
     int? SortOrder = null,
-    bool? IsCompleted = null
+    bool? IsCompleted = null,
+    string? MealSlot = null
+);
+
+// ── Shabbat plan ──────────────────────────────────────────────────────────────
+
+public record ShabbatPlanDishDto(
+    string Title,
+    string MealSlot,
+    IEnumerable<string> Tags,
+    string? Notes,
+    bool IsNew                 // true = AI suggestion for new dish; false = from user's history
+);
+
+public record ShabbatPlanResponseDto(
+    string Message,            // friendly intro from AI
+    IEnumerable<ShabbatPlanDishDto> Dishes
+);
+
+public record ShabbatPlanRequestDto(
+    IEnumerable<CookingSuggestionDto> CookingHistory,
+    string Language = "he"
 );
 
 // ── Ingredient extraction / shopping push ─────────────────────────────────────

@@ -1,5 +1,5 @@
 import type { PersonalList } from '../types'
-import { ListType } from '../types/enums'
+import { ListType, CookingMode } from '../types/enums'
 
 export const mockLists: PersonalList[] = [
   {
@@ -7,6 +7,7 @@ export const mockLists: PersonalList[] = [
     title: 'רשימת קניות',
     emoji: '🛒',
     listType: ListType.Checklist,
+    cookingMode: CookingMode.Regular,
     shoppingItems: [],
     cookingItems: [],
     items: [
@@ -27,6 +28,7 @@ export const mockLists: PersonalList[] = [
     title: "צ'ק ליסט לטיסה",
     emoji: '✈️',
     listType: ListType.Checklist,
+    cookingMode: CookingMode.Regular,
     shoppingItems: [],
     cookingItems: [],
     items: [
@@ -49,6 +51,7 @@ export const mockLists: PersonalList[] = [
     title: 'ספרים לקרוא',
     emoji: '📚',
     listType: ListType.Checklist,
+    cookingMode: CookingMode.Regular,
     shoppingItems: [],
     cookingItems: [],
     items: [

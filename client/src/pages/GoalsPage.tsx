@@ -39,8 +39,17 @@ export default function GoalsPage() {
     })
   }
 
-  const pinned = goals.filter((g) => g.isPinned)
-  const rest   = goals.filter((g) => !g.isPinned)
+  const handleCompleteGoal = (id: string, done: boolean) => {
+    setGoals((prev) => prev.map((g) => g.id === id ? { ...g, isCompleted: done } : g))
+    goalsApi.update(id, { isCompleted: done }).catch(() => {
+      goalsApi.getByUser(user!.id).then(setGoals).catch(() => {})
+    })
+  }
+
+  const active    = goals.filter((g) => !g.isCompleted)
+  const completed = goals.filter((g) => g.isCompleted)
+  const pinned    = active.filter((g) => g.isPinned)
+  const rest      = active.filter((g) => !g.isPinned)
 
   return (
     <Box sx={{ px: 2, pt: 2, pb: 4, position: 'relative' }}>
@@ -53,7 +62,7 @@ export default function GoalsPage() {
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-      {!loading && !error && goals.length === 0 && (
+      {!loading && !error && goals.length === 0 && active.length === 0 && (
         <Box
           sx={{
             display: 'flex', flexDirection: 'column', alignItems: 'center',
@@ -70,7 +79,7 @@ export default function GoalsPage() {
         </Box>
       )}
 
-      {!loading && !error && goals.length > 0 && (
+      {!loading && !error && goals.length > 0 && active.length > 0 && (
         <>
       {/* ── AI Agent banner ── */}
       <Box
@@ -117,13 +126,14 @@ export default function GoalsPage() {
                 onClick={() => navigate(`/goals/${goal.id}`)}
                 onEdit={setEditGoal}
                 onDelete={handleDeleteGoal}
+                onComplete={handleCompleteGoal}
               />
             ))}
           </Box>
         </Box>
       )}
 
-      {/* ── All goals section ── */}
+      {/* ── All active goals section ── */}
       {rest.length > 0 && (
         <Box>
           {pinned.length > 0 && (
@@ -144,6 +154,33 @@ export default function GoalsPage() {
                 onClick={() => navigate(`/goals/${goal.id}`)}
                 onEdit={setEditGoal}
                 onDelete={handleDeleteGoal}
+                onComplete={handleCompleteGoal}
+              />
+            ))}
+          </Box>
+        </Box>
+      )}
+
+      {/* ── Completed goals section ── */}
+      {completed.length > 0 && (
+        <Box sx={{ mt: 3 }}>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            fontWeight={700}
+            sx={{ letterSpacing: 0.5, textTransform: 'uppercase', mb: 1, display: 'block' }}
+          >
+            ✅ {t('goal.completed', 'הושלמו')}
+          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+            {completed.map((goal) => (
+              <GoalCard
+                key={goal.id}
+                goal={goal}
+                onClick={() => navigate(`/goals/${goal.id}`)}
+                onEdit={setEditGoal}
+                onDelete={handleDeleteGoal}
+                onComplete={handleCompleteGoal}
               />
             ))}
           </Box>

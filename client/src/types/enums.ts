@@ -140,3 +140,25 @@ export enum ShoppingItemType {
   OneTime    = 'oneTime',
 }
 
+/** Meal slot for a cooking item — Shabbat slots or weekday categories. */
+export enum MealSlot {
+  None            = 'none',
+  // Shabbat meals
+  FridayDinner    = 'fridaydinner',
+  SaturdayMorning = 'saturdaymorning',
+  Additions       = 'additions',
+  ThirdMeal       = 'thirdmeal',
+  // Weekday categories
+  MainDish        = 'maindish',
+  Side            = 'side',
+  Salad           = 'salad',
+  Dessert         = 'dessert',
+  Other           = 'other',
+}
+
+/** Whether a cooking list is structured for Shabbat or regular weekday cooking. */
+export enum CookingMode {
+  Regular = 'regular',
+  Shabbat = 'shabbat',
+}
+

@@ -436,6 +436,77 @@ Rules:
         }
     }
 
+    // ── Shabbat Planner Agent ────────────────────────────────────────────────
+
+    public async Task<ShabbatPlanResponseDto> PlanShabbatAsync(ShabbatPlanRequestDto req)
+    {
+        var apiKey = _config["OpenAI:ApiKey"]
+            ?? throw new InvalidOperationException("OpenAI API key is not configured.");
+
+        var langHe = (req.Language ?? "he") == "he";
+
+        var historyLines = req.CookingHistory
+            .OrderByDescending(c => c.TimesCooked)
+            .Take(50)
+            .Select(c =>
+            {
+                var tags = c.Tags.Any() ? $" | tags: {string.Join(", ", c.Tags)}" : "";
+                return $"- \"{c.Title}\" | cooked {c.TimesCooked}x | last: {c.LastCooked:yyyy-MM-dd}{tags}";
+            });
+
+        var hasHistory = req.CookingHistory.Any();
+        var historySection = hasHistory
+            ? $"User's cooking history:\n{string.Join('\n', historyLines)}"
+            : "No previous cooking history available — suggest classic Shabbat dishes.";
+
+        var prompt = $@"
+You are a Shabbat meal planning assistant for an Israeli Jewish family. Plan a complete Shabbat menu.
+Respond in {(langHe ? "Hebrew (עברית)" : "English")}.
+
+{historySection}
+
+Create a Shabbat menu with dishes distributed across 4 meal slots:
+1. fridaydinner — ערב שבת (Friday dinner: soup, main course, salads, dessert)
+2. saturdaymorning — בוקר שבת (Saturday morning: light dishes, salads, fish if applicable)
+3. additions — תוספות (General additions: challah/challa, juices, condiments, extras)
+4. thirdmeal — סעודה שלישית (Third meal: lighter fare, salads, leftovers)
+
+Return ONLY valid JSON (no markdown):
+{{
+  ""message"": ""friendly 1-2 sentence intro in {(langHe ? "Hebrew" : "English")}"",
+  ""dishes"": [
+    {{
+      ""title"": ""dish name in {(langHe ? "Hebrew" : "English")}"",
+      ""mealSlot"": ""fridaydinner""|""saturdaymorning""|""additions""|""thirdmeal"",
+      ""tags"": [""tag1"", ""tag2""],
+      ""notes"": ""brief tip or null"",
+      ""isNew"": true|false
+    }}
+  ]
+}}
+
+Rules:
+- isNew=false for dishes taken from user's cooking history; isNew=true for new AI suggestions
+- Suggest 2-5 dishes per meal slot (8-15 dishes total)
+- Prefer dishes from history when suitable; add new suggestions to complement them
+- Keep dish titles in Hebrew if the input history is in Hebrew
+- tags examples: ""בשרי"", ""חלבי"", ""פרווה"", ""קל"", ""מרק"", ""עיקרי"", ""קינוח"", ""סלט""
+- Respond entirely in {(langHe ? "Hebrew (עברית)" : "English")}
+";
+
+        var generated = await CallGptAsync(apiKey, prompt, 1200);
+        try
+        {
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            return JsonSerializer.Deserialize<ShabbatPlanResponseDto>(generated, opts)
+                   ?? new ShabbatPlanResponseDto(langHe ? "שגיאה בתכנון" : "Planning error", []);
+        }
+        catch
+        {
+            return new ShabbatPlanResponseDto(langHe ? "שגיאה בתכנון" : "Planning error", []);
+        }
+    }
+
     // ── Task Plan Analysis ────────────────────────────────────────────────────
 
     public async Task<AiPlanResponseDto> AnalyzePlanAsync(string text, string language = "he")

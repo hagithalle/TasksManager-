@@ -2,24 +2,37 @@ import { useEffect, useState } from 'react'
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button,
   TextField, Stack, Chip, Typography, IconButton, Box,
-  Divider,
+  Divider, MenuItem, Select, FormControl, InputLabel,
 } from '@mui/material'
+import Autocomplete from '@mui/material/Autocomplete'
 import AddIcon from '@mui/icons-material/Add'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import { useTranslation } from 'react-i18next'
 import type { CookingItem, CookingIngredient } from '../../types'
-import type { CreateCookingItemPayload, UpdateCookingItemPayload } from '../../api/listsApi'
+import type { CreateCookingItemPayload, UpdateCookingItemPayload, CookingSuggestion } from '../../api/listsApi'
+import { MealSlot, CookingMode } from '../../types/enums'
+
+const SHABBAT_SLOTS: MealSlot[] = [
+  MealSlot.None, MealSlot.FridayDinner, MealSlot.SaturdayMorning,
+  MealSlot.Additions, MealSlot.ThirdMeal,
+]
+const WEEKDAY_SLOTS: MealSlot[] = [
+  MealSlot.None, MealSlot.MainDish, MealSlot.Side,
+  MealSlot.Salad, MealSlot.Dessert, MealSlot.Other,
+]
+
+const PRESET_TAGS = ['shabbat', 'weekday', 'dairy', 'meat', 'parve', 'quick', 'kids', 'freezes']
 
 interface Props {
   open: boolean
   initial?: CookingItem | null
+  cookingMode?: CookingMode
+  suggestions?: CookingSuggestion[]
   onClose: () => void
   onSave: (payload: CreateCookingItemPayload | UpdateCookingItemPayload) => Promise<void>
 }
 
-const PRESET_TAGS = ['shabbat', 'weekday', 'dairy', 'meat', 'parve', 'quick', 'kids', 'freezes']
-
-export default function CookingItemDialog({ open, initial, onClose, onSave }: Props) {
+export default function CookingItemDialog({ open, initial, cookingMode, suggestions = [], onClose, onSave }: Props) {
   const { t } = useTranslation()
   const [title, setTitle]             = useState('')
   const [recipeUrl, setRecipeUrl]     = useState('')
@@ -28,12 +41,13 @@ export default function CookingItemDialog({ open, initial, onClose, onSave }: Pr
   const [tags, setTags]               = useState<string[]>([])
   const [customTag, setCustomTag]     = useState('')
   const [ingredients, setIngredients] = useState<CookingIngredient[]>([])
+  const [mealSlot, setMealSlot]       = useState<MealSlot>(MealSlot.None)
   const [saving, setSaving]           = useState(false)
   const [inputMode, setInputMode]     = useState<'manual' | 'url'>('manual')
 
-  // חילוץ מרכיבים אוטומטי מתוך טקסט חופשי
+  const slots = cookingMode === CookingMode.Shabbat ? SHABBAT_SLOTS : WEEKDAY_SLOTS
+
   function extractIngredientsFromText(text: string) {
-    // דוגמה פשוטה: כל שורה שמכילה מספר/כמות או מתחילה ב-•
     return text.split('\n')
       .map(line => line.trim())
       .filter(line => line.match(/^(•|\d|\d+\/\d|חצי|רבע|שליש|כף|כוס|קילו|גרם|ליטר|קמצוץ|מעט|כמה|\d+\s?)/))
@@ -44,7 +58,6 @@ export default function CookingItemDialog({ open, initial, onClose, onSave }: Pr
     setIngredients(extractIngredientsFromText(notes))
   }
 
-  // Populate from initial item when editing
   useEffect(() => {
     if (initial) {
       setTitle(initial.title)
@@ -53,6 +66,7 @@ export default function CookingItemDialog({ open, initial, onClose, onSave }: Pr
       setPlannedDate(initial.plannedDate ?? '')
       setTags(initial.tags)
       setIngredients(initial.ingredients.map(i => ({ ...i })))
+      setMealSlot(initial.mealSlot ?? MealSlot.None)
     } else {
       setTitle('')
       setRecipeUrl('')
@@ -61,8 +75,16 @@ export default function CookingItemDialog({ open, initial, onClose, onSave }: Pr
       setTags([])
       setCustomTag('')
       setIngredients([])
+      setMealSlot(MealSlot.None)
     }
   }, [initial, open])
+
+  function handleSelectSuggestion(suggestion: CookingSuggestion | null) {
+    if (!suggestion) return
+    setTitle(suggestion.title)
+    if (suggestion.ingredients.length > 0) setIngredients(suggestion.ingredients.map(i => ({ ...i })))
+    if (suggestion.tags.length > 0) setTags(suggestion.tags)
+  }
 
   function toggleTag(tag: string) {
     setTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
@@ -70,9 +92,7 @@ export default function CookingItemDialog({ open, initial, onClose, onSave }: Pr
 
   function addCustomTag() {
     const trimmed = customTag.trim().toLowerCase()
-    if (trimmed && !tags.includes(trimmed)) {
-      setTags(prev => [...prev, trimmed])
-    }
+    if (trimmed && !tags.includes(trimmed)) setTags(prev => [...prev, trimmed])
     setCustomTag('')
   }
 
@@ -93,11 +113,12 @@ export default function CookingItemDialog({ open, initial, onClose, onSave }: Pr
     setSaving(true)
     try {
       const payload: CreateCookingItemPayload = {
-        title: title.trim(),
+        title:       title.trim(),
         recipeUrl:   recipeUrl.trim() || undefined,
         notes:       notes.trim() || undefined,
         plannedDate: plannedDate || undefined,
         tags:        tags.length ? tags : undefined,
+        mealSlot:    mealSlot !== MealSlot.None ? mealSlot : undefined,
         ingredients: ingredients.filter(i => i.title.trim()).map(i => ({
           title:    i.title.trim(),
           quantity: i.quantity,
@@ -118,8 +139,6 @@ export default function CookingItemDialog({ open, initial, onClose, onSave }: Pr
       </DialogTitle>
 
       <DialogContent>
-        {/* בחירת מצב הזנה */}
-
         <Stack direction="row" spacing={1} mb={2}>
           <Chip label="הזנה ידנית" color={inputMode === 'manual' ? 'primary' : 'default'} onClick={() => setInputMode('manual')} />
           <Chip label="קישור מתכון" color={inputMode === 'url' ? 'primary' : 'default'} onClick={() => setInputMode('url')} />
@@ -136,17 +155,65 @@ export default function CookingItemDialog({ open, initial, onClose, onSave }: Pr
           </Stack>
         )}
 
-        {/* טופס ידני תמיד גלוי לעריכה */}
         <Stack spacing={2} sx={{ mt: 1 }}>
-          {/* Title */}
-          <TextField
-            label={t('cooking.dishName')}
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            fullWidth
-            autoFocus
-            required
-          />
+          {/* Autocomplete title from personal dish history */}
+          {suggestions.length > 0 ? (
+            <Autocomplete
+              freeSolo
+              options={suggestions}
+              getOptionLabel={(o) => typeof o === 'string' ? o : o.title}
+              inputValue={title}
+              onInputChange={(_, v) => setTitle(v)}
+              onChange={(_, v) => {
+                if (v && typeof v !== 'string') handleSelectSuggestion(v)
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label={t('cooking.dishName')}
+                  required
+                  autoFocus
+                />
+              )}
+              renderOption={(props, option) => (
+                <li {...props} key={option.title}>
+                  <Box>
+                    <Typography variant="body2">{option.title}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {t('cooking.cookedTimes', { count: option.timesCooked })}
+                    </Typography>
+                  </Box>
+                </li>
+              )}
+            />
+          ) : (
+            <TextField
+              label={t('cooking.dishName')}
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              fullWidth
+              autoFocus
+              required
+            />
+          )}
+
+          {/* Meal slot selector */}
+          {slots.filter(s => s !== MealSlot.None).length > 0 && (
+            <FormControl fullWidth size="small">
+              <InputLabel>{t('cooking.mealSlot', 'קטגוריה / ארוחה')}</InputLabel>
+              <Select
+                value={mealSlot}
+                label={t('cooking.mealSlot', 'קטגוריה / ארוחה')}
+                onChange={(e) => setMealSlot(e.target.value as MealSlot)}
+              >
+                {slots.map(slot => (
+                  <MenuItem key={slot} value={slot}>
+                    {t(`mealSlot.${slot}`, slot)}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
 
           {/* Planned date */}
           <TextField
@@ -261,7 +328,7 @@ export default function CookingItemDialog({ open, initial, onClose, onSave }: Pr
             placeholder="https://..."
           />
 
-          {/* Notes + חילוץ מרכיבים */}
+          {/* Notes + auto-extract */}
           <Stack direction="row" spacing={1} alignItems="flex-start">
             <TextField
               label={t('cooking.notes')}

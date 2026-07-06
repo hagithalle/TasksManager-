@@ -16,6 +16,7 @@ export interface UpdateGoalPayload {
   goalType?: string
   dueDate?: string
   isPinned?: boolean
+  isCompleted?: boolean
 }
 
 // Map API response (camelCase, numeric progress derived client-side) → Goal
@@ -32,6 +33,8 @@ function mapGoal(raw: any): Goal {
                         : 0,
     dueDate:          raw.dueDate ? (raw.dueDate as string).slice(0, 10) : undefined,
     isPinned:         raw.isPinned ?? false,
+    isCompleted:      raw.isCompleted ?? false,
+    completedAt:      raw.completedAt ?? undefined,
     createdAt:        raw.createdAt,
     updatedAt:        raw.updatedAt,
   }

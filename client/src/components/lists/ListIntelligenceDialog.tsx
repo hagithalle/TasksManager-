@@ -37,7 +37,7 @@ export default function ListIntelligenceDialog({ open, onClose, lists, onAddItem
   const [error,   setError]      = useState<string | null>(null)
   const [added,   setAdded]      = useState<Set<string>>(new Set())
 
-  const hasSufficientData = lists.length >= 2
+  const hasSufficientData = lists.length >= 1
 
   const handleAnalyze = async () => {
     setLoading(true)

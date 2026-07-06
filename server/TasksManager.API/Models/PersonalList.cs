@@ -10,6 +10,9 @@ public class PersonalList
 
     public ListType ListType { get; set; } = ListType.Checklist;
 
+    /// <summary>For CookingPlan lists: whether this is a Shabbat or regular weekday plan.</summary>
+    public CookingMode CookingMode { get; set; } = CookingMode.Regular;
+
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 

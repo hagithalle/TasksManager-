@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import {
   Box, Chip, Dialog, DialogActions, DialogContent, DialogTitle,
-  Button, TextField, Typography,
+  Button, TextField, Typography, ToggleButton, ToggleButtonGroup,
 } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import type { PersonalList } from '../../types'
-import { ListType } from '../../types/enums'
+import { ListType, CookingMode } from '../../types/enums'
 
 const LIST_TYPE_OPTIONS: { type: ListType; emoji: string }[] = [
   { type: ListType.Checklist, emoji: '✅' },
@@ -26,23 +26,26 @@ interface AddListDialogProps {
     title: string
     emoji?: string
     listType?: string
+    cookingMode?: string
   }) => Promise<PersonalList>
 }
 
 export default function AddListDialog({ open, onClose, onAdd, userId, createList }: AddListDialogProps) {
   const { t } = useTranslation()
 
-  const [title,      setTitle]      = useState('')
-  const [emoji,      setEmoji]      = useState('')
-  const [listType,   setListType]   = useState<ListType>(ListType.Checklist)
-  const [titleError, setTitleError] = useState(false)
-  const [loading,    setLoading]    = useState(false)
+  const [title,       setTitle]       = useState('')
+  const [emoji,       setEmoji]       = useState('')
+  const [listType,    setListType]    = useState<ListType>(ListType.Checklist)
+  const [cookingMode, setCookingMode] = useState<CookingMode>(CookingMode.Regular)
+  const [titleError,  setTitleError]  = useState(false)
+  const [loading,     setLoading]     = useState(false)
 
   useEffect(() => {
     if (!open) {
       setTitle('')
       setEmoji('')
       setListType(ListType.Checklist)
+      setCookingMode(CookingMode.Regular)
       setTitleError(false)
     }
   }, [open])
@@ -56,6 +59,7 @@ export default function AddListDialog({ open, onClose, onAdd, userId, createList
         title:    title.trim(),
         emoji:    emoji.trim() || undefined,
         listType,
+        cookingMode: listType === ListType.CookingPlan ? cookingMode : undefined,
       })
       onAdd(list)
     } finally {
@@ -89,6 +93,28 @@ export default function AddListDialog({ open, onClose, onAdd, userId, createList
               ))}
             </Box>
           </Box>
+
+          {/* Cooking mode (only for CookingPlan) */}
+          {listType === ListType.CookingPlan && (
+            <Box>
+              <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ mb: 0.75, display: 'block' }}>
+                {t('cookingMode.label', 'סוג תכנון')}
+              </Typography>
+              <ToggleButtonGroup
+                value={cookingMode}
+                exclusive
+                onChange={(_, v) => v && setCookingMode(v)}
+                size="small"
+              >
+                <ToggleButton value={CookingMode.Regular} sx={{ fontWeight: 600 }}>
+                  {t('cookingMode.regular', 'ימי שבוע')}
+                </ToggleButton>
+                <ToggleButton value={CookingMode.Shabbat} sx={{ fontWeight: 600 }}>
+                  {'🕯️ ' + t('cookingMode.shabbat', 'שבת')}
+                </ToggleButton>
+              </ToggleButtonGroup>
+            </Box>
+          )}
 
           {/* Emoji */}
           <TextField

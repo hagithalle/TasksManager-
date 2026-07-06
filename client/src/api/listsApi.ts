@@ -3,13 +3,14 @@ import type {
   PersonalList, PersonalListItem, ShoppingItem, ShoppingListSettings,
   CookingItem, CookingIngredient, SuggestedShoppingItem,
 } from '../types'
-import { ListType, ShoppingDepartment, ShoppingItemType } from '../types/enums'
+import { ListType, ShoppingDepartment, ShoppingItemType, MealSlot, CookingMode } from '../types/enums'
 
 export interface CreateListPayload {
   userId: string
   title: string
   emoji?: string
   listType?: string
+  cookingMode?: string
 }
 
 export interface UpdateListPayload {
@@ -75,6 +76,7 @@ export interface CreateCookingItemPayload {
   tags?: string[]
   sortOrder?: number
   isCompleted?: boolean
+  mealSlot?: string
   linkedTaskId?: string
 }
 
@@ -89,6 +91,7 @@ export interface UpdateCookingItemPayload {
   linkedTaskId?: string | null
   sortOrder?: number
   isCompleted?: boolean | null
+  mealSlot?: string
 }
 
 export interface PushToShoppingPayload {
@@ -157,6 +160,7 @@ function mapCookingItem(raw: any): CookingItem {
     recipeUrl:            raw.recipeUrl ?? undefined,
     ingredients:          Array.isArray(raw.ingredients) ? raw.ingredients : [],
     isCompleted:          raw.isCompleted ?? false,
+    mealSlot:             (raw.mealSlot as MealSlot) ?? MealSlot.None,
     linkedTaskId:         raw.linkedTaskId ?? undefined,
     notes:                raw.notes ?? undefined,
     plannedDate:          raw.plannedDate ?? undefined,
@@ -174,6 +178,7 @@ function mapList(raw: any): PersonalList {
     title:           raw.title,
     emoji:           raw.emoji ?? undefined,
     listType:        (raw.listType as ListType) ?? ListType.Checklist,
+    cookingMode:     (raw.cookingMode as CookingMode) ?? CookingMode.Regular,
     items:           (raw.items ?? []).map(mapItem),
     shoppingItems:   (raw.shoppingItems ?? []).map(mapShoppingItem),
     shoppingSettings: raw.shoppingSettings ? mapSettings(raw.shoppingSettings) : undefined,
@@ -287,65 +292,3 @@ export const listsApi = {
     return data
   },
 }
-
-
-export interface CreateListPayload {
-  userId: string
-  title: string
-  emoji?: string
-  listType?: string
-}
-
-export interface UpdateListPayload {
-  title?: string
-  emoji?: string
-  listType?: string
-}
-
-export interface CreateListItemPayload {
-  title: string
-  sortOrder?: number
-}
-
-export interface UpdateListItemPayload {
-  title?: string
-  isCompleted?: boolean
-  sortOrder?: number
-}
-
-export interface CreateShoppingItemPayload {
-  title: string
-  quantity?: number
-  unit?: string
-  department?: string
-  itemType?: string
-  sortOrder?: number
-  imageUrl?: string
-  preferredBrand?: string
-  alternativeBrands?: string[]
-  noteForBuyer?: string
-}
-
-export interface UpdateShoppingItemPayload {
-  title?: string
-  quantity?: number
-  unit?: string
-  department?: string
-  itemType?: string
-  isActive?: boolean
-  isBought?: boolean
-  sortOrder?: number
-  imageUrl?: string
-  preferredBrand?: string
-  alternativeBrands?: string[]
-  noteForBuyer?: string
-}
-
-export interface UpdateShoppingSettingsPayload {
-  enableSmartSuggestions?: boolean
-  occasionalIntervalDays?: number
-  groupByDepartment?: boolean
-  showBoughtSection?: boolean
-}
-
-// ── Mappers ────────────────────────────────────────────────────────────────────

@@ -541,7 +541,38 @@
     "addSelected": "Add {{count}} items",
     "noIngredientsFound": "No ingredients found in this cooking plan",
     "extractError": "Failed to load ingredients",
-    "pushError": "Failed to add items to shopping list"
+    "pushError": "Failed to add items to shopping list",
+    "mealSlot": "Category / Meal",
+    "cookedTimes": "Cooked {{count}} times",
+    "noItemsInSlot": "No dishes in this category",
+    "shabbatPlanner": "Shabbat Planner",
+    "shabbatPlannerEmpty": "Plan Shabbat with AI",
+    "shabbatPlannerDesc": "The agent will plan a complete Shabbat menu — Friday dinner, Saturday morning, additions, and third meal — based on your personal cooking history.",
+    "shabbatPlanError": "Planning failed — please try again",
+    "planNow": "Plan Now",
+    "planning": "Planning...",
+    "dishesAdded": "Dishes added to the list!",
+    "selectDishes": "Select dishes to add",
+    "adding": "Adding...",
+    "newSuggestion": "New",
+    "replan": "Replan"
+  },
+  "mealSlot": {
+    "none": "Uncategorized",
+    "fridaydinner": "Friday Dinner",
+    "saturdaymorning": "Saturday Morning",
+    "additions": "Additions",
+    "thirdmeal": "Third Meal",
+    "maindish": "Main Dish",
+    "side": "Side Dish",
+    "salad": "Salad",
+    "dessert": "Dessert",
+    "other": "Other"
+  },
+  "cookingMode": {
+    "label": "Plan Type",
+    "regular": "Weekday",
+    "shabbat": "Shabbat"
   },
   "recurrence": {
     "label": "Repeat",

@@ -59,17 +59,19 @@ public class PersonalListService : IPersonalListService
 
     public async Task<PersonalListDto> CreateAsync(CreatePersonalListDto dto)
     {
-        var listType = Enum.TryParse<ListType>(dto.ListType, ignoreCase: true, out var lt) ? lt : ListType.Checklist;
+        var listType    = Enum.TryParse<ListType>(dto.ListType, ignoreCase: true, out var lt) ? lt : ListType.Checklist;
+        var cookingMode = Enum.TryParse<CookingMode>(dto.CookingMode, ignoreCase: true, out var cm) ? cm : CookingMode.Regular;
 
         var list = new PersonalList
         {
-            Id        = Guid.NewGuid(),
-            UserId    = dto.UserId,
-            Title     = dto.Title,
-            Emoji     = dto.Emoji,
-            ListType  = listType,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            Id          = Guid.NewGuid(),
+            UserId      = dto.UserId,
+            Title       = dto.Title,
+            Emoji       = dto.Emoji,
+            ListType    = listType,
+            CookingMode = cookingMode,
+            CreatedAt   = DateTime.UtcNow,
+            UpdatedAt   = DateTime.UtcNow
         };
         _db.PersonalLists.Add(list);
 
@@ -329,6 +331,7 @@ public class PersonalListService : IPersonalListService
         l.Title,
         l.Emoji,
         l.ListType.ToString().ToLower(),
+        l.CookingMode.ToString().ToLower(),
         l.Items.Select(ToItemDto).OrderBy(i => i.SortOrder),
         l.ShoppingItems.Select(ToShoppingItemDto).OrderBy(i => i.SortOrder),
         l.ShoppingSettings is null ? null : ToSettingsDto(l.ShoppingSettings),        l.CookingItems.Select(ToCookingItemDto).OrderBy(i => i.SortOrder),        l.CreatedAt,
@@ -376,6 +379,7 @@ public class PersonalListService : IPersonalListService
     public async Task<CookingItemDto?> AddCookingItemAsync(Guid listId, CreateCookingItemDto dto, Guid callerId)
     {
         if (!await HasListAccessAsync(listId, callerId)) return null;
+        var mealSlot = Enum.TryParse<MealSlot>(dto.MealSlot, ignoreCase: true, out var ms) ? ms : MealSlot.None;
         var item = new CookingItem
         {
             Id             = Guid.NewGuid(),
@@ -390,6 +394,7 @@ public class PersonalListService : IPersonalListService
             TagsJson    = dto.Tags is not null ? JsonSerializer.Serialize(dto.Tags) : null,
             SortOrder   = dto.SortOrder,
             IsCompleted = dto.IsCompleted,
+            MealSlot    = mealSlot,
             LinkedTaskId = null,
             CreatedAt   = DateTime.UtcNow,
             UpdatedAt   = DateTime.UtcNow,
@@ -417,6 +422,8 @@ public class PersonalListService : IPersonalListService
             item.TagsJson = JsonSerializer.Serialize(dto.Tags);
         if (dto.IsCompleted.HasValue)
             item.IsCompleted = dto.IsCompleted.Value;
+        if (dto.MealSlot is not null && Enum.TryParse<MealSlot>(dto.MealSlot, ignoreCase: true, out var updMs))
+            item.MealSlot = updMs;
         if (dto.LinkedTaskId.HasValue)
             item.LinkedTaskId = dto.LinkedTaskId.Value;
 
@@ -653,7 +660,7 @@ public class PersonalListService : IPersonalListService
         return new CookingItemDto(
             c.Id, c.PersonalListId, c.Title, c.RecipeUrl,
             ingredients, c.Notes, c.PlannedDate, tags,
-            c.IsCompleted, c.LinkedShoppingListId, c.LinkedTaskId, c.SortOrder, c.CreatedAt, c.UpdatedAt
+            c.IsCompleted, c.MealSlot.ToString().ToLower(), c.LinkedShoppingListId, c.LinkedTaskId, c.SortOrder, c.CreatedAt, c.UpdatedAt
         );
     }
 }

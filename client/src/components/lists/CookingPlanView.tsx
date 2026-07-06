@@ -10,15 +10,17 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart'
 import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined'
 import AddTaskRoundedIcon from '@mui/icons-material/AddTaskRounded'
+import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import type { CookingItem, PersonalList } from '../../types'
 import { listsApi, type CookingSuggestion } from '../../api/listsApi'
-// tasksApi imported indirectly via AddTaskDialog when needed
+import { CookingMode, MealSlot } from '../../types/enums'
 import { useAuth } from '../../contexts/AuthContext'
 import AddTaskDialog from '../tasks/AddTaskDialog'
 import CookingItemDialog from './CookingItemDialog'
 import PushToShoppingDialog from './PushToShoppingDialog'
+import ShabbatPlannerDialog from './ShabbatPlannerDialog'
 
 interface Props {
   list: PersonalList
@@ -26,17 +28,34 @@ interface Props {
   onListUpdated: (updated: PersonalList) => void
 }
 
+// ── Meal slot section definitions ─────────────────────────────────────────────
+
+const SHABBAT_SECTIONS: { slot: MealSlot; emoji: string; labelKey: string }[] = [
+  { slot: MealSlot.FridayDinner,    emoji: '🕯️', labelKey: 'mealSlot.fridaydinner' },
+  { slot: MealSlot.SaturdayMorning, emoji: '☀️', labelKey: 'mealSlot.saturdaymorning' },
+  { slot: MealSlot.Additions,       emoji: '🥖', labelKey: 'mealSlot.additions' },
+  { slot: MealSlot.ThirdMeal,       emoji: '🌅', labelKey: 'mealSlot.thirdmeal' },
+]
+const WEEKDAY_SECTIONS: { slot: MealSlot; emoji: string; labelKey: string }[] = [
+  { slot: MealSlot.MainDish, emoji: '🥩', labelKey: 'mealSlot.maindish' },
+  { slot: MealSlot.Side,     emoji: '🥗', labelKey: 'mealSlot.side' },
+  { slot: MealSlot.Salad,    emoji: '🥙', labelKey: 'mealSlot.salad' },
+  { slot: MealSlot.Dessert,  emoji: '🍰', labelKey: 'mealSlot.dessert' },
+  { slot: MealSlot.Other,    emoji: '📋', labelKey: 'mealSlot.other' },
+]
+
 export default function CookingPlanView({ list, allLists, onListUpdated }: Props) {
   const { t } = useTranslation()
+  const isShabbat = list.cookingMode === CookingMode.Shabbat
 
-  const [addOpen, setAddOpen]           = useState(false)
-  const [editItem, setEditItem]         = useState<CookingItem | null>(null)
-  const [pushOpen, setPushOpen]         = useState(false)
-  const [suggestions, setSuggestions]   = useState<CookingSuggestion[]>([])
-  const [menuAnchor, setMenuAnchor]     = useState<{ el: HTMLElement; item: CookingItem } | null>(null)
-  const [convertOpen, setConvertOpen]   = useState<CookingItem | null>(null)
+  const [addOpen,          setAddOpen]          = useState(false)
+  const [editItem,         setEditItem]         = useState<CookingItem | null>(null)
+  const [pushOpen,         setPushOpen]         = useState(false)
+  const [shabbatPlanOpen,  setShabbatPlanOpen]  = useState(false)
+  const [suggestions,      setSuggestions]      = useState<CookingSuggestion[]>([])
+  const [menuAnchor,       setMenuAnchor]       = useState<{ el: HTMLElement; item: CookingItem } | null>(null)
+  const [convertOpen,      setConvertOpen]      = useState<CookingItem | null>(null)
 
-  // Load cooking suggestions on mount
   useEffect(() => {
     listsApi.getCookingSuggestions().then(setSuggestions).catch(() => {})
   }, [])
@@ -74,12 +93,7 @@ export default function CookingPlanView({ list, allLists, onListUpdated }: Props
 
   const { user } = useAuth()
 
-  function openConvertDialog(item: CookingItem) {
-    setConvertOpen(item)
-  }
-
   async function handleTaskAdded(task: any) {
-    // task created via AddTaskDialog — do not remove cooking item
     try {
       if (convertOpen && task?.id) {
         await listsApi.updateCookingItem(convertOpen.id, { linkedTaskId: task.id })
@@ -90,23 +104,52 @@ export default function CookingPlanView({ list, allLists, onListUpdated }: Props
     }
   }
 
-  // Items sorted by sortOrder (already sorted by backend, just display)
-  const items = list.cookingItems ?? []
-
   async function handleToggleCompleted(item: CookingItem) {
     try {
       await listsApi.updateCookingItem(item.id, { isCompleted: !item.isCompleted })
       await reload()
-    } catch {
-      // ignore
-    }
+    } catch { /* ignore */ }
   }
 
-  // Suggestions to show: exclude titles already in the list
+  const items = list.cookingItems ?? []
+
+  // Suggestions to show: exclude titles already in list
   const existingTitles = new Set(items.map(i => i.title.trim().toLowerCase()))
   const relevantSuggestions = suggestions
     .filter(s => !existingTitles.has(s.title.trim().toLowerCase()))
     .slice(0, 5)
+
+  // ── Render helpers ────────────────────────────────────────────────────────────
+
+  function renderItemsGrid(subset: CookingItem[]) {
+    return (
+      <Grid container spacing={2}>
+        {subset.map(item => (
+          <Grid item xs={12} sm={6} md={4} key={item.id}>
+            <DishCard
+              item={item}
+              onEdit={() => setEditItem(item)}
+              onDelete={() => handleDelete(item)}
+              onMenuOpen={(el) => setMenuAnchor({ el, item })}
+              onConvert={() => setConvertOpen(item)}
+              onToggleCompleted={() => handleToggleCompleted(item)}
+            />
+          </Grid>
+        ))}
+      </Grid>
+    )
+  }
+
+  // ── Grouped or flat view ──────────────────────────────────────────────────────
+
+  const sections = isShabbat ? SHABBAT_SECTIONS : WEEKDAY_SECTIONS
+  const unslotted = items.filter(i => i.mealSlot === MealSlot.None)
+
+  // In Regular mode, only show sections that actually have items (optional grouping).
+  // In Shabbat mode, always show all 4 sections even if empty.
+  const visibleSections = sections.filter(s =>
+    isShabbat ? true : items.some(i => i.mealSlot === s.slot)
+  )
 
   return (
     <Box sx={{ pb: 10 }}>
@@ -114,6 +157,17 @@ export default function CookingPlanView({ list, allLists, onListUpdated }: Props
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
         <Typography variant="h6">{t('cooking.planTitle', 'Cooking Plan')}</Typography>
         <Stack direction="row" spacing={1}>
+          {isShabbat && (
+            <Button
+              variant="contained"
+              startIcon={<AutoAwesomeRoundedIcon />}
+              size="small"
+              onClick={() => setShabbatPlanOpen(true)}
+              color="secondary"
+            >
+              {t('cooking.shabbatPlanner', 'סוכן שבת')}
+            </Button>
+          )}
           <Tooltip title={t('cooking.pushToShopping')}>
             <span>
               <Button
@@ -132,18 +186,10 @@ export default function CookingPlanView({ list, allLists, onListUpdated }: Props
 
       {/* Suggestions banner */}
       {relevantSuggestions.length > 0 && (
-        <Box
-          sx={{
-            mb: 2, p: 1.5,
-            bgcolor: 'action.hover',
-            borderRadius: 2,
-          }}
-        >
+        <Box sx={{ mb: 2, p: 1.5, bgcolor: 'action.hover', borderRadius: 2 }}>
           <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
             <LightbulbOutlinedIcon fontSize="small" color="primary" />
-            <Typography variant="body2" fontWeight={500}>
-              {t('cooking.suggestions')}
-            </Typography>
+            <Typography variant="body2" fontWeight={500}>{t('cooking.suggestions')}</Typography>
           </Stack>
           <Stack direction="row" flexWrap="wrap" gap={0.75}>
             {relevantSuggestions.map(s => (
@@ -160,34 +206,71 @@ export default function CookingPlanView({ list, allLists, onListUpdated }: Props
         </Box>
       )}
 
-      {/* Cooking items grid */}
+      {/* Content */}
       {items.length === 0 ? (
         <Box sx={{ textAlign: 'center', py: 6 }}>
           <Typography color="text.secondary">{t('cooking.emptyState')}</Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            sx={{ mt: 2 }}
-            onClick={() => setAddOpen(true)}
-          >
-            {t('cooking.addDish')}
-          </Button>
+          <Stack direction="row" spacing={1} justifyContent="center" sx={{ mt: 2 }}>
+            {isShabbat && (
+              <Button
+                variant="outlined"
+                startIcon={<AutoAwesomeRoundedIcon />}
+                onClick={() => setShabbatPlanOpen(true)}
+                color="secondary"
+              >
+                {t('cooking.shabbatPlannerEmpty', 'תכנן שבת עם AI')}
+              </Button>
+            )}
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => setAddOpen(true)}
+            >
+              {t('cooking.addDish')}
+            </Button>
+          </Stack>
         </Box>
+      ) : visibleSections.length > 0 ? (
+        // Grouped by meal slot
+        <Stack spacing={3}>
+          {visibleSections.map(({ slot, emoji, labelKey }) => {
+            const sectionItems = items.filter(i => i.mealSlot === slot)
+            return (
+              <Box key={slot}>
+                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
+                  <Typography variant="subtitle1" fontWeight={700}>
+                    {emoji} {t(labelKey, slot)}
+                  </Typography>
+                  <Chip label={sectionItems.length} size="small" variant="outlined" />
+                </Stack>
+                {sectionItems.length > 0
+                  ? renderItemsGrid(sectionItems)
+                  : (
+                    <Typography variant="body2" color="text.secondary" sx={{ py: 1, pl: 1 }}>
+                      {t('cooking.noItemsInSlot', 'אין מנות בקטגוריה זו')}
+                    </Typography>
+                  )
+                }
+              </Box>
+            )
+          })}
+
+          {/* Unslotted items */}
+          {unslotted.length > 0 && (
+            <Box>
+              <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
+                <Typography variant="subtitle1" fontWeight={700}>
+                  📋 {t('mealSlot.none', 'ללא קטגוריה')}
+                </Typography>
+                <Chip label={unslotted.length} size="small" variant="outlined" />
+              </Stack>
+              {renderItemsGrid(unslotted)}
+            </Box>
+          )}
+        </Stack>
       ) : (
-        <Grid container spacing={2}>
-          {items.map(item => (
-            <Grid item xs={12} sm={6} md={4} key={item.id}>
-              <DishCard
-                item={item}
-                onEdit={() => { setEditItem(item) }}
-                onDelete={() => handleDelete(item)}
-                onMenuOpen={(el) => setMenuAnchor({ el, item })}
-                onConvert={() => openConvertDialog(item)}
-                onToggleCompleted={() => handleToggleCompleted(item)}
-              />
-            </Grid>
-          ))}
-        </Grid>
+        // No grouping (Regular mode with no slotted items)
+        renderItemsGrid(items)
       )}
 
       {/* Context menu */}
@@ -196,10 +279,7 @@ export default function CookingPlanView({ list, allLists, onListUpdated }: Props
         open={Boolean(menuAnchor)}
         onClose={() => setMenuAnchor(null)}
       >
-        <MenuItem onClick={() => {
-          setEditItem(menuAnchor!.item)
-          setMenuAnchor(null)
-        }}>
+        <MenuItem onClick={() => { setEditItem(menuAnchor!.item); setMenuAnchor(null) }}>
           {t('common.edit', 'Edit')}
         </MenuItem>
         <MenuItem onClick={() => handleDelete(menuAnchor!.item)}>
@@ -220,12 +300,16 @@ export default function CookingPlanView({ list, allLists, onListUpdated }: Props
       <CookingItemDialog
         open={addOpen}
         initial={null}
+        cookingMode={list.cookingMode}
+        suggestions={suggestions}
         onClose={() => setAddOpen(false)}
         onSave={handleAddSave}
       />
       <CookingItemDialog
         open={Boolean(editItem)}
         initial={editItem}
+        cookingMode={list.cookingMode}
+        suggestions={suggestions}
         onClose={() => setEditItem(null)}
         onSave={handleEditSave}
       />
@@ -240,7 +324,6 @@ export default function CookingPlanView({ list, allLists, onListUpdated }: Props
         allTasks={[]}
       />
 
-      {/* Push to shopping dialog */}
       <PushToShoppingDialog
         open={pushOpen}
         cookingListId={list.id}
@@ -248,6 +331,16 @@ export default function CookingPlanView({ list, allLists, onListUpdated }: Props
         onClose={() => setPushOpen(false)}
         onDone={reload}
       />
+
+      {isShabbat && (
+        <ShabbatPlannerDialog
+          open={shabbatPlanOpen}
+          listId={list.id}
+          suggestions={suggestions}
+          onClose={() => setShabbatPlanOpen(false)}
+          onDone={reload}
+        />
+      )}
     </Box>
   )
 }
@@ -268,7 +361,8 @@ function DishCard({ item, onMenuOpen, onConvert, onToggleCompleted }: DishCardPr
   const navigate = useNavigate()
 
   return (
-    <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column',
+      opacity: item.isCompleted ? 0.6 : 1 }}>
       <CardContent sx={{ flex: 1, pb: 0 }}>
         <Stack direction="row" alignItems="flex-start" justifyContent="space-between">
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, mr: 1 }}>
@@ -278,7 +372,12 @@ function DishCard({ item, onMenuOpen, onConvert, onToggleCompleted }: DishCardPr
               size="small"
               sx={{ p: 0 }}
             />
-            <Typography variant="subtitle1" fontWeight={600} noWrap sx={{ flex: 1 }}>
+            <Typography
+              variant="subtitle1"
+              fontWeight={600}
+              noWrap
+              sx={{ flex: 1, textDecoration: item.isCompleted ? 'line-through' : 'none' }}
+            >
               {item.title}
             </Typography>
           </Box>

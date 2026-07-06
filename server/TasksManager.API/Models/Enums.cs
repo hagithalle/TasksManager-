@@ -83,3 +83,27 @@ public enum ShoppingItemType
     Occasional = 1,  // suggest again after X days
     OneTime    = 2,  // never auto-suggest
 }
+
+/// <summary>Which meal slot a cooking item belongs to.</summary>
+public enum MealSlot
+{
+    None            = 0,
+    // Shabbat meals
+    FridayDinner    = 1,   // ערב שבת
+    SaturdayMorning = 2,   // בוקר שבת
+    Additions       = 3,   // תוספות (חלות, מיצים...)
+    ThirdMeal       = 4,   // סעודה שלישית
+    // Weekday categories
+    MainDish        = 10,  // עיקרי
+    Side            = 11,  // תוספת
+    Salad           = 12,  // סלט
+    Dessert         = 13,  // קינוח
+    Other           = 99,
+}
+
+/// <summary>How a cooking list is structured.</summary>
+public enum CookingMode
+{
+    Regular = 0,  // weekday cooking – optional category grouping
+    Shabbat = 1,  // Shabbat cooking – divided by meal slots
+}

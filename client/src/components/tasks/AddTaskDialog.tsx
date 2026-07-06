@@ -14,6 +14,23 @@ import { PRIORITY_STYLE, EXECUTION_STYLE } from '../../utils'
 
 const NEW_GOAL_SENTINEL = '__new__'
 
+function computeEndTime(start: string, durationMins: number | null): string {
+  if (!start || !durationMins) return ''
+  const [h, m] = start.split(':').map(Number)
+  const total = h * 60 + m + durationMins
+  const eh = Math.floor(total / 60) % 24
+  const em = total % 60
+  return `${String(eh).padStart(2, '0')}:${String(em).padStart(2, '0')}`
+}
+
+function computeDuration(start: string, end: string): number | null {
+  if (!start || !end) return null
+  const [sh, sm] = start.split(':').map(Number)
+  const [eh, em] = end.split(':').map(Number)
+  const diff = (eh * 60 + em) - (sh * 60 + sm)
+  return diff > 0 ? diff : null
+}
+
 // ─── Smart notes suggestion helpers ──────────────────────────────────────────
 
 function normalizeTitle(s: string): string {
@@ -74,6 +91,7 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
   const [executionType,   setExecutionType]   = useState<ExecutionType>(ExecutionType.Short)
   const [dueDate,         setDueDate]         = useState('')
   const [plannedTime,     setPlannedTime]     = useState('')
+  const [endTime,         setEndTime]         = useState('')
   const [durationMinutes, setDurationMinutes] = useState('')
   const [reminderAt,      setReminderAt]      = useState('')
   const [recurrenceType,  setRecurrenceType]  = useState<RecurrenceType>(RecurrenceType.None)
@@ -124,6 +142,7 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
       setDueDate(editTask.dueDate ?? '')
       setPlannedTime(editTask.plannedTime ?? '')
       setDurationMinutes(editTask.durationMinutes?.toString() ?? '')
+      setEndTime(computeEndTime(editTask.plannedTime ?? '', editTask.durationMinutes ?? null))
       setReminderAt(editTask.reminderAt ? editTask.reminderAt.slice(0, 16) : '')
       setRecurrenceType(editTask.recurrenceType ?? RecurrenceType.None)
       setRecurrenceInterval(editTask.recurrenceInterval ?? 1)
@@ -143,6 +162,7 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
       setExecutionType(ExecutionType.Short)
       setDueDate('')
       setPlannedTime('')
+      setEndTime('')
       setDurationMinutes('')
       setReminderAt('')
       setRecurrenceType(RecurrenceType.None)
@@ -166,6 +186,7 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
       setExecutionType(ExecutionType.Short)
       setDueDate('')
       setPlannedTime('')
+      setEndTime('')
       setDurationMinutes('')
       setReminderAt('')
       setRecurrenceType(RecurrenceType.None)
@@ -508,34 +529,49 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
             </Box>
           </Box>
 
-          {/* Due Date + Time + Duration */}
-          <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+          {/* Due Date */}
+          <TextField
+            label={t('task.dueDate')}
+            type="date"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+            size="small"
+            fullWidth
+            InputLabelProps={{ shrink: true }}
+          />
+
+          {/* Time range: from X to Y */}
+          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
             <TextField
-              label={t('task.dueDate')}
-              type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-              size="small"
-              sx={{ flex: '1 1 130px' }}
-              InputLabelProps={{ shrink: true }}
-            />
-            <TextField
-              label={t('task.plannedTime')}
+              label={t('task.fromTime', 'משעה')}
               type="time"
               value={plannedTime}
-              onChange={(e) => setPlannedTime(e.target.value)}
+              onChange={(e) => {
+                setPlannedTime(e.target.value)
+                if (e.target.value && endTime) {
+                  const dur = computeDuration(e.target.value, endTime)
+                  setDurationMinutes(dur != null ? String(dur) : '')
+                } else if (e.target.value && durationMinutes) {
+                  setEndTime(computeEndTime(e.target.value, Number(durationMinutes)))
+                }
+              }}
               size="small"
-              sx={{ width: 110 }}
+              sx={{ flex: 1 }}
               InputLabelProps={{ shrink: true }}
             />
+            <Typography variant="body2" color="text.secondary" sx={{ flexShrink: 0 }}>—</Typography>
             <TextField
-              label={t('task.durationLabel')}
-              type="number"
-              value={durationMinutes}
-              onChange={(e) => setDurationMinutes(e.target.value)}
+              label={t('task.toTime', 'עד שעה')}
+              type="time"
+              value={endTime}
+              onChange={(e) => {
+                setEndTime(e.target.value)
+                const dur = computeDuration(plannedTime, e.target.value)
+                setDurationMinutes(dur != null ? String(dur) : '')
+              }}
               size="small"
-              sx={{ width: 100 }}
-              inputProps={{ min: 1, max: 480 }}
+              sx={{ flex: 1 }}
+              InputLabelProps={{ shrink: true }}
             />
           </Box>
 
