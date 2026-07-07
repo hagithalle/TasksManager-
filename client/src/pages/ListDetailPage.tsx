@@ -249,8 +249,8 @@ export default function ListDetailPage() {
               {t('list.items', { count: total })}
             </Typography>
           </Box>
-          {/* AI button */}
-          {allLists.length >= 2 && (
+          {/* AI button — hidden for cooking plans (they have their own AI) */}
+          {allLists.length >= 2 && list?.listType !== ListType.CookingPlan && (
             <Tooltip title={t('ai.lists.analyzeBtn')}>
               <IconButton
                 size="small"

@@ -92,6 +92,12 @@ public class GoalService : IGoalService
     {
         var goal = await _db.Goals.FirstOrDefaultAsync(g => g.Id == id);
         if (goal is null || goal.UserId != callerId) return false;
+
+        // Unlink tasks before removing — GoalId FK is optional with NoAction delete
+        await _db.Tasks
+            .Where(t => t.GoalId == id)
+            .ExecuteUpdateAsync(s => s.SetProperty(t => t.GoalId, (Guid?)null));
+
         _db.Goals.Remove(goal);
         await _db.SaveChangesAsync();
         return true;

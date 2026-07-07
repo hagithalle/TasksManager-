@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 import { listsApi }       from '../api'
 import { useAuth }        from '../contexts/AuthContext'
 import type { PersonalList } from '../types'
+import { ListType }       from '../types/enums'
 import PersonalListCard   from '../components/lists/PersonalListCard'
 import AddListDialog      from '../components/lists/AddListDialog'
 import ListIntelligenceDialog from '../components/lists/ListIntelligenceDialog'
@@ -51,8 +52,8 @@ export default function ListsPage() {
         {t('list.all')}
       </Typography>
 
-      {/* ── AI banner (shown when 2+ lists exist) ── */}
-      {lists.length >= 2 && (
+      {/* ── AI banner (shown when 2+ non-cooking lists exist) ── */}
+      {lists.filter(l => l.listType !== ListType.CookingPlan).length >= 2 && (
         <Box
           onClick={() => setAiOpen(true)}
           sx={{

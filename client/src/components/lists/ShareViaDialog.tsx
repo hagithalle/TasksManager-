@@ -29,13 +29,12 @@ export default function ShareViaDialog({ open, onClose, list }: Props) {
     const emailList = emails
       .split(/[\n,]+/)
       .map(e => e.trim())
-      .filter(e => e)
+      .filter(e => e.includes('@'))
 
-    if (emailList.length === 0) {
-      return
-    }
+    if (emailList.length === 0) return
 
     const mailto = generateMailtoLink(emailList, emailSubject, formattedText)
+    if (!mailto) return
     try {
       await navigator.clipboard.writeText(mailto)
       setCopied(true)
@@ -49,18 +48,14 @@ export default function ShareViaDialog({ open, onClose, list }: Props) {
     const emailList = emails
       .split(/[\n,]+/)
       .map(e => e.trim())
-      .filter(e => e)
+      .filter(e => e.includes('@'))
 
-    if (emailList.length === 0) {
-      return
-    }
+    if (emailList.length === 0) return
 
     const mailto = generateMailtoLink(emailList, emailSubject, formattedText)
-    const a = document.createElement('a')
-    a.href = mailto
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
+    if (!mailto) return
+
+    window.location.href = mailto
   }
 
   const handleShareWhatsApp = () => {
