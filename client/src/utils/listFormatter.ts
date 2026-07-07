@@ -160,17 +160,26 @@ export function encodeForUrl(text: string): string {
   return encodeURIComponent(text)
 }
 
-export function generateMailtoLink(recipientEmails: string[], subject: string, body: string): string {
-  const validEmails = recipientEmails
-    .map(e => e.trim())
-    .filter(e => e.includes('@'))
+// Desktop email clients (Outlook etc.) fail silently on mailto URLs > ~2000 chars
+const MAILTO_MAX_LENGTH = 1900
 
-  if (validEmails.length === 0) return ''
+export function generateMailtoLink(
+  recipientEmails: string[],
+  subject: string,
+  body: string,
+): { url: string; bodyTruncated: boolean } {
+  const validEmails = recipientEmails.map(e => e.trim()).filter(e => e.includes('@'))
+  if (validEmails.length === 0) return { url: '', bodyTruncated: false }
 
-  const encodedSubject = encodeURIComponent(subject)
+  const base = `mailto:${validEmails.join(',')}?subject=${encodeURIComponent(subject)}&body=`
   const encodedBody = encodeURIComponent(body)
 
-  return `mailto:${validEmails.join(',')}?subject=${encodedSubject}&body=${encodedBody}`
+  if (base.length + encodedBody.length <= MAILTO_MAX_LENGTH) {
+    return { url: base + encodedBody, bodyTruncated: false }
+  }
+
+  // Body too long — return URL without body so the caller can handle it
+  return { url: base, bodyTruncated: true }
 }
 
 export function generateWhatsAppLink(text: string): string {

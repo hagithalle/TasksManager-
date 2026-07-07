@@ -390,13 +390,31 @@ export default function FocusCoachCard({ tasks, onRefresh, onToggle, onToggleSub
             <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
               📅 {t('coach.todaySchedule', 'לוח זמנים')}
             </Typography>
-            <Stack spacing={0.25}>
+            <Stack spacing={0.4}>
               {plan.scheduledEvents.map(e => (
-                <Stack key={e.task.id} direction="row" gap={1} alignItems="center">
-                  <Typography variant="caption" fontWeight={700} color="primary.main" sx={{ minWidth: 42 }}>
+                <Stack key={e.task.id} direction="row" gap={0.75} alignItems="center">
+                  <Box
+                    component="span"
+                    onClick={() => onToggle?.(e.task.id)}
+                    sx={{ display: 'flex', cursor: 'pointer', flexShrink: 0 }}
+                  >
+                    {e.task.isCompleted
+                      ? <CheckCircleRoundedIcon sx={{ fontSize: 15, color: 'success.main' }} />
+                      : <RadioButtonUncheckedRoundedIcon sx={{ fontSize: 15, color: 'text.disabled' }} />
+                    }
+                  </Box>
+                  <Typography variant="caption" fontWeight={700} color="primary.main" sx={{ minWidth: 38, flexShrink: 0 }}>
                     {e.time}
                   </Typography>
-                  <Typography variant="caption" noWrap sx={{ flex: 1 }}>
+                  <Typography
+                    variant="caption"
+                    noWrap
+                    sx={{
+                      flex: 1,
+                      textDecoration: e.task.isCompleted ? 'line-through' : 'none',
+                      color: e.task.isCompleted ? 'text.disabled' : 'text.primary',
+                    }}
+                  >
                     {e.task.title}
                   </Typography>
                 </Stack>
