@@ -9,6 +9,7 @@ import BoltRoundedIcon            from '@mui/icons-material/BoltRounded'
 import CheckCircleRoundedIcon     from '@mui/icons-material/CheckCircleRounded'
 import RadioButtonUncheckedRoundedIcon from '@mui/icons-material/RadioButtonUncheckedRounded'
 import VisibilityRoundedIcon      from '@mui/icons-material/VisibilityRounded'
+import NavigateNextRoundedIcon    from '@mui/icons-material/NavigateNextRounded'
 import { useTranslation }         from 'react-i18next'
 
 import TaskPreviewDrawer   from '../tasks/TaskPreviewDrawer'
@@ -20,10 +21,11 @@ import { Priority }        from '../../types'
 import type { ScoredRecommendation, ReasonKey } from '../../hooks/focusEngine'
 
 interface Props {
-  tasks:           TaskItem[]
-  onRefresh:       () => void
-  onToggle?:       (taskId: string) => void
+  tasks:            TaskItem[]
+  onRefresh:        () => void
+  onToggle?:        (taskId: string) => void
   onToggleSubTask?: (taskId: string, subId: string) => void
+  onEdit?:          (task: TaskItem) => void
 }
 
 // ── Reason chip display map ────────────────────────────────────────────────────
@@ -109,13 +111,15 @@ function ReasonChips({ reasons, max = 3 }: { reasons: ReasonKey[]; max?: number 
 function MainRecCard({
   rec,
   onDone,
-  onSkip,
+  onNext,
   onPreview,
+  position,
 }: {
   rec:       ScoredRecommendation
   onDone:    () => void
-  onSkip:    () => void
+  onNext:    () => void
   onPreview: () => void
+  position?: { current: number; total: number }
 }) {
   const { t } = useTranslation()
   const { candidate: c, reasons, estimatedMinutes } = rec
@@ -169,13 +173,22 @@ function MainRecCard({
       </Stack>
 
       {/* Action row */}
-      <Stack direction="row" gap={1} sx={{ mt: 1.25 }}>
+      <Stack direction="row" gap={1} alignItems="center" sx={{ mt: 1.25 }}>
         <Button size="small" variant="contained" color="success" onClick={onDone} sx={{ flex: 1, py: 0.25 }}>
           {t('coach.markDone', 'בוצע ✓')}
         </Button>
-        <Button size="small" variant="text" color="inherit" onClick={onSkip} sx={{ py: 0.25 }}>
-          {t('coach.skip', 'דלג')}
-        </Button>
+        {position && position.total > 1 && (
+          <Stack direction="row" alignItems="center" gap={0.25} sx={{ flexShrink: 0 }}>
+            <Typography variant="caption" color="text.disabled" sx={{ fontSize: '0.6rem' }}>
+              {position.current}/{position.total}
+            </Typography>
+            <Tooltip title={t('coach.next', 'הבא')}>
+              <IconButton size="small" sx={{ p: 0.25 }} onClick={onNext}>
+                <NavigateNextRoundedIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Tooltip>
+          </Stack>
+        )}
       </Stack>
     </Box>
   )
@@ -258,17 +271,17 @@ function CompactRecRow({
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
-export default function FocusCoachCard({ tasks, onRefresh, onToggle, onToggleSubTask }: Props) {
+export default function FocusCoachCard({ tasks, onRefresh, onToggle, onToggleSubTask, onEdit }: Props) {
   const { t } = useTranslation()
 
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [previewTask,  setPreviewTask]  = useState<TaskItem | null>(null)
-  const [skippedKeys,  setSkippedKeys]  = useState<Set<string>>(new Set())
+  const [mainIndex,    setMainIndex]    = useState(0)
 
   const { settings, setSettings, plan, refresh, completedToday, totalToday, progress } = useFocusCoach(tasks)
 
   const handleRefresh = () => {
-    setSkippedKeys(new Set())
+    setMainIndex(0)
     refresh()
     onRefresh()
   }
@@ -282,12 +295,15 @@ export default function FocusCoachCard({ tasks, onRefresh, onToggle, onToggleSub
     }
   }
 
-  function handleSkip(key: string) {
-    setSkippedKeys(prev => new Set([...prev, key]))
+  function handleNext() {
+    const len = plan.recommendations.length
+    if (len > 1) setMainIndex(prev => (prev + 1) % len)
   }
 
-  const visible = plan.recommendations.filter(r => !skippedKeys.has(r.candidate.key))
-  const [mainRec, ...restRecs] = visible
+  const recs    = plan.recommendations
+  const mainIdx = recs.length > 0 ? mainIndex % recs.length : 0
+  const mainRec = recs[mainIdx]
+  const restRecs = recs.filter((_, i) => i !== mainIdx)
 
   const remaining = totalToday - completedToday
   const timeLabel = formatRemaining(plan.availableMinutes, settings.targetTime)
@@ -401,8 +417,9 @@ export default function FocusCoachCard({ tasks, onRefresh, onToggle, onToggleSub
           <MainRecCard
             rec={mainRec}
             onDone={() => handleDone(mainRec)}
-            onSkip={() => handleSkip(mainRec.candidate.key)}
+            onNext={handleNext}
             onPreview={() => setPreviewTask(mainRec.candidate.sourceTask)}
+            position={{ current: mainIdx + 1, total: recs.length }}
           />
         )}
 
@@ -428,7 +445,7 @@ export default function FocusCoachCard({ tasks, onRefresh, onToggle, onToggleSub
         )}
 
         {/* ── Already done row (completed task indicator) ── */}
-        {completedToday > 0 && visible.length === 0 && (
+        {completedToday > 0 && recs.length === 0 && (
           <Box sx={{ mt: 1.5, textAlign: 'center' }}>
             <CheckCircleRoundedIcon sx={{ color: 'success.main', fontSize: 28 }} />
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
@@ -438,7 +455,7 @@ export default function FocusCoachCard({ tasks, onRefresh, onToggle, onToggleSub
         )}
 
         {/* ── Empty state ── */}
-        {visible.length === 0 && completedToday === 0 && (
+        {recs.length === 0 && completedToday === 0 && (
           <Box sx={{ mt: 2, textAlign: 'center', color: 'text.secondary', fontWeight: 500 }}>
             {t('coach.empty.noTasks')}
           </Box>
@@ -450,7 +467,7 @@ export default function FocusCoachCard({ tasks, onRefresh, onToggle, onToggleSub
       <TaskPreviewDrawer
         task={previewTask}
         onClose={() => setPreviewTask(null)}
-        onEdit={() => {}}
+        onEdit={(task) => { onEdit?.(task); setPreviewTask(null) }}
       />
     </Card>
   )

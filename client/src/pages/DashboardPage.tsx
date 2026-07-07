@@ -43,128 +43,6 @@ const PRIORITY_ORDER: Record<Priority, number> = {
   [Priority.Low]:      3,
 }
 
-// ─── TodayTaskList ────────────────────────────────────────────────────────────
-
-const INITIAL_SHOW = 5
-
-function TodayTaskList({
-  tasks,
-  onToggle,
-  onNavigate,
-  previewTask,
-  setPreviewTask,
-}: {
-  tasks: TaskItem[]
-  onToggle: (id: string) => void
-  onNavigate: () => void
-  previewTask: TaskItem | null
-  setPreviewTask: (task: TaskItem | null) => void
-}) {
-  const { t }         = useTranslation()
-  const [showAll, setShowAll] = useState(false)
-
-  // Filter: show only tasks that are not completed for today
-  const filteredTasks = tasks.filter(tk => !tk.isCompleted)
-
-  if (filteredTasks.length === 0) return <EmptyState text={t('dashboard.noTodayTasks')} mb={3} />
-
-  // Group: tasks with plannedTime vs without
-  const withTime    = filteredTasks.filter(tk => tk.plannedTime).sort((a, b) => (a.plannedTime ?? '').localeCompare(b.plannedTime ?? ''))
-  const withoutTime = filteredTasks.filter(tk => !tk.plannedTime)
-  const ordered     = [...withTime, ...withoutTime]
-
-  const visible  = showAll ? ordered : ordered.slice(0, INITIAL_SHOW)
-  const hiddenCount = ordered.length - INITIAL_SHOW
-
-  // Split by planned time groups: "before noon", "after noon" (or just "no time")
-  let lastTimeGroup: string | null = null
-
-  return (
-    <>
-      <Card sx={{ borderRadius: 3, mb: 3, border: '1px solid', borderColor: 'divider', boxShadow: '0 1px 6px rgba(124,92,255,0.05)' }}>
-        <List disablePadding>
-          {visible.map((tk, i) => {
-            // Time group label
-            let groupHeader: string | null = null
-            const tg = tk.plannedTime ? tk.plannedTime.slice(0, 5) : t('dashboard.noTime')
-            if (tg !== lastTimeGroup) { groupHeader = tg; lastTimeGroup = tg }
-
-            return (
-              <Box key={tk.id}>
-                {groupHeader && (
-                  <Box sx={{ px: 2, pt: i === 0 ? 1 : 0.75, pb: 0.25, display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <Typography variant="caption" color="primary.main" fontWeight={700} sx={{ fontSize: '0.65rem' }}>
-                      {tk.plannedTime ? `⏰ ${groupHeader}` : `📌 ${groupHeader}`}
-                    </Typography>
-                    <Divider sx={{ flex: 1 }} />
-                  </Box>
-                )}
-                {!groupHeader && i > 0 && <Divider sx={{ ml: 5 }} />}
-                <ListItem
-                  sx={{ px: 2, py: 0.75, alignItems: 'center', cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
-                  onClick={onNavigate}
-                >
-                  <Box
-                    component="span"
-                    onClick={(e) => { e.stopPropagation(); onToggle(tk.id) }}
-                    sx={{ display: 'flex', alignItems: 'center', mr: 1.5, flexShrink: 0, cursor: 'pointer', borderRadius: '50%', '&:hover': { bgcolor: 'action.selected' }, p: 0.25 }}
-                  >
-                    {tk.isCompleted
-                      ? <CheckCircleRoundedIcon sx={{ fontSize: 22, color: 'primary.main' }} />
-                      : <RadioButtonUncheckedRoundedIcon sx={{ fontSize: 22, color: 'text.disabled' }} />
-                    }
-                  </Box>
-                  <ListItemText
-                    primary={
-                      <Typography
-                        variant="body2"
-                        fontWeight={tk.isCompleted ? 400 : 500}
-                        sx={{
-                          textDecoration: tk.isCompleted ? 'line-through' : 'none',
-                          color:          tk.isCompleted ? 'text.disabled' : 'text.primary',
-                          lineHeight: 1.4,
-                        }}
-                      >
-                        {tk.title}
-                      </Typography>
-                    }
-                  />
-                  {tk.durationMinutes && (
-                    <Chip
-                      label={`${tk.durationMinutes}${t('task.minutesShort')}`}
-                      size="small"
-                      sx={{ height: 18, fontSize: '0.6rem', ml: 0.5, flexShrink: 0 }}
-                    />
-                  )}
-                  <PriorityChip priority={tk.priority} />
-                  <Tooltip title={t('task.preview')}>
-                    <IconButton size="small" onClick={e => { e.stopPropagation(); setPreviewTask(tk) }}>
-                      <VisibilityRoundedIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </ListItem>
-              </Box>
-            )
-          })}
-        </List>
-
-        {hiddenCount > 0 && (
-          <Box
-            onClick={() => setShowAll(o => !o)}
-            sx={{ px: 2, py: 0.875, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, cursor: 'pointer', borderTop: '1px solid', borderColor: 'divider', '&:hover': { bgcolor: 'action.hover' } }}
-          >
-            {showAll
-              ? <><ExpandLessRoundedIcon sx={{ fontSize: 16, color: 'primary.main' }} /><Typography variant="caption" color="primary.main" fontWeight={600}>{t('dashboard.showLess')}</Typography></>
-              : <><ExpandMoreRoundedIcon sx={{ fontSize: 16, color: 'primary.main' }} /><Typography variant="caption" color="primary.main" fontWeight={600}>{t('dashboard.showMore', { count: hiddenCount })}</Typography></>
-            }
-          </Box>
-        )}
-      </Card>
-      <TaskPreviewDrawer task={previewTask} onClose={() => setPreviewTask(null)} onEdit={() => {}} />
-    </>
-  )
-}
-
 
 export default function DashboardPage() {
   const { t } = useTranslation()
@@ -179,6 +57,7 @@ export default function DashboardPage() {
   const [aiOpen, setAiOpen] = useState(false)
   const [planOpen, setPlanOpen] = useState(false)
   const [previewTask, setPreviewTask] = useState<TaskItem | null>(null)
+  const [editTask,    setEditTask]    = useState<TaskItem | null>(null)
 
   useEffect(() => {
     if (!user) return
@@ -344,6 +223,7 @@ export default function DashboardPage() {
         }}
         onToggle={toggleTask}
         onToggleSubTask={toggleSubTask}
+        onEdit={setEditTask}
       />
 
       {/* ── Task Wheel ── */}
@@ -446,26 +326,11 @@ export default function DashboardPage() {
               </Box>
             ))}
           </List>
-          <TaskPreviewDrawer task={previewTask} onClose={() => setPreviewTask(null)} onEdit={() => {}} />
+          <TaskPreviewDrawer task={previewTask} onClose={() => setPreviewTask(null)} onEdit={setEditTask} />
         </Card>
       ) : (
         <EmptyState text={t('dashboard.noTwoMin')} mb={3} />
       )}
-
-      {/* ── Today's task list ── */}
-      <SectionHeader
-        title={t('dashboard.todayList')}
-        emoji="📋"
-        onAdd={() => setAddTaskOpen(true)}
-        onSeeAll={() => navigate('/tasks')}
-      />
-      <TodayTaskList
-        tasks={todayTasks}
-        onToggle={toggleTask}
-        onNavigate={() => navigate('/tasks')}
-        previewTask={previewTask}
-        setPreviewTask={setPreviewTask}
-      />
 
       {/* ── Progress by goal ── */}
       <SectionHeader
@@ -567,6 +432,16 @@ export default function DashboardPage() {
         onAdd={(task) => { setTasks((prev) => [task, ...prev]); setAddTaskOpen(false) }}
         goals={goals}
         userId={user?.id ?? ''}
+      />
+
+      <AddTaskDialog
+        open={!!editTask}
+        onClose={() => setEditTask(null)}
+        editTask={editTask ?? undefined}
+        onEdit={(updated) => { setTasks(prev => prev.map(t => t.id === updated.id ? updated : t)); setEditTask(null) }}
+        goals={goals}
+        userId={user?.id ?? ''}
+        allTasks={tasks}
       />
 
       <AddGoalDialog
