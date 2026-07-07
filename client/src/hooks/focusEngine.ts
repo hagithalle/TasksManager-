@@ -101,8 +101,7 @@ export function extractScheduledEvents(tasks: TaskItem[]): ScheduledEvent[] {
       !t.isCompleted &&
       t.taskStatus !== TaskStatus.Archived &&
       t.taskStatus !== TaskStatus.Missed &&
-      (t.taskNature === TaskNature.Meeting || t.taskNature === TaskNature.Appointment) &&
-      !!t.plannedTime
+      !!t.plannedTime   // any task with a fixed time goes here
     )
     .map(t => ({ task: t, time: t.plannedTime! }))
     .sort((a, b) => a.time.localeCompare(b.time))
@@ -166,18 +165,10 @@ function flattenCandidates(tasks: TaskItem[]): FlatCandidate[] {
 
 // ── Step 3: filter eligible candidates ────────────────────────────────────────
 
-function isEligible(c: FlatCandidate, now: Date, scheduledIds: Set<string>): boolean {
+function isEligible(c: FlatCandidate, scheduledIds: Set<string>): boolean {
   if (scheduledIds.has(c.sourceTask.id)) return false
-  if (c.taskNature === TaskNature.Meeting || c.taskNature === TaskNature.Appointment) return false
-
-  // Defer tasks whose plannedTime is still in the future today
-  if (!c.isSubTask && c.plannedTime) {
-    const [h, m] = c.plannedTime.split(':').map(Number)
-    const taskAt = new Date(now)
-    taskAt.setHours(h, m, 0, 0)
-    if (taskAt > now) return false
-  }
-
+  // Timed tasks belong in Today's Schedule, never in recommendations
+  if (!c.isSubTask && c.plannedTime) return false
   return true
 }
 
@@ -284,7 +275,7 @@ export function buildFocusPlan(
 
   // Flatten and filter candidates
   const flat     = flattenCandidates(tasks)
-  const eligible = flat.filter(c => isEligible(c, now, scheduledIds))
+  const eligible = flat.filter(c => isEligible(c, scheduledIds))
 
   // Frog: highest-priority candidate due today
   const todayCands = eligible.filter(c => c.dueDate === today)
@@ -315,15 +306,13 @@ export function buildFocusPlan(
 
   for (const rec of scored) {
     if (selected.length >= settings.maxTasks) break
-    if (rec.estimatedMinutes > remaining && selected.length > 0) continue
 
-    // Soft diversity: after 2 tasks of the same executionType, check for alternatives
+    // Soft diversity: prefer variety over 3+ tasks of the same executionType
     const tc = typeCount.get(rec.candidate.executionType) ?? 0
     if (tc >= 2) {
       const hasAlternative = scored.some(x =>
         !selected.includes(x) &&
-        x.candidate.executionType !== rec.candidate.executionType &&
-        x.estimatedMinutes <= remaining
+        x.candidate.executionType !== rec.candidate.executionType
       )
       if (hasAlternative) continue
     }

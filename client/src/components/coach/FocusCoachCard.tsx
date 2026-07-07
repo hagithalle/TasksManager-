@@ -308,7 +308,7 @@ export default function FocusCoachCard({ tasks, onRefresh, onToggle, onToggleSub
           progress={progress}
           completedCount={completedToday}
           remaining={remaining}
-          dailyTarget={settings.maxTasks}
+          dailyTarget={totalToday}
           tasks={tasks}
         />
       )}
