@@ -1,49 +1,24 @@
 import { useState, useCallback, useMemo } from 'react'
-import { Priority, ExecutionType, Difficulty, TaskNature, TaskStatus, RecurrenceType } from '../types'
 import type { TaskItem } from '../types'
-import { TODAY, flattenTasks } from '../utils'
+import {
+  buildFocusPlan,
+  DEFAULT_COACH_SETTINGS,
+  type CoachSettings,
+  type FocusPlan,
+} from './focusEngine'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+export type { CoachSettings, FocusPlan } from './focusEngine'
+export { DEFAULT_COACH_SETTINGS } from './focusEngine'
 
-export interface CoachSettings {
-  /** Target time in "HH:mm" format, e.g. "11:00" */
-  targetTime: string
-  /** Include tasks with plannedTime before targetTime */
-  includeBeforeTargetTime: boolean
-  /** Include Critical/High priority tasks */
-  includeUrgent: boolean
-  /** Include the single highest-priority incomplete task today (frog) */
-  includeFrog: boolean
-  /** Include Quick execution or duration ≤ 2 min */
-  includeTwoMin: boolean
-  /** Include tasks with difficulty === Easy */
-  includeEasy: boolean
-  /** Include carried-over tasks from previous days */
-  includeCarriedOver: boolean
-  /** Target number of tasks to complete per day */
-  dailyTaskTarget: number
-}
-
-export const DEFAULT_SETTINGS: CoachSettings = {
-  targetTime:              '11:00',
-  includeBeforeTargetTime: true,
-  includeUrgent:           true,
-  includeFrog:             true,
-  includeTwoMin:           true,
-  includeEasy:             false,
-  includeCarriedOver:      false,
-  dailyTaskTarget:         5,
-}
-
-const STORAGE_KEY = 'focusCoachSettings'
+const STORAGE_KEY = 'focusCoachSettingsV2'
 
 function loadSettings(): CoachSettings {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return DEFAULT_SETTINGS
-    return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) }
+    if (!raw) return DEFAULT_COACH_SETTINGS
+    return { ...DEFAULT_COACH_SETTINGS, ...JSON.parse(raw) }
   } catch {
-    return DEFAULT_SETTINGS
+    return DEFAULT_COACH_SETTINGS
   }
 }
 
@@ -51,22 +26,9 @@ function saveSettings(s: CoachSettings) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(s))
 }
 
-// Compare "HH:mm" strings
-function timeBefore(t: string, target: string): boolean {
-  return t.localeCompare(target) < 0
-}
-
-const PRIORITY_ORDER: Record<Priority, number> = {
-  [Priority.Critical]: 0,
-  [Priority.High]:     1,
-  [Priority.Medium]:   2,
-  [Priority.Low]:      3,
-}
-
-// ─── Hook ─────────────────────────────────────────────────────────────────────
-
 export function useFocusCoach(tasks: TaskItem[]) {
   const [settings, setSettingsState] = useState<CoachSettings>(loadSettings)
+  const [tick, setTick] = useState(0)
 
   const setSettings = useCallback((patch: Partial<CoachSettings>) => {
     setSettingsState(prev => {
@@ -76,142 +38,24 @@ export function useFocusCoach(tasks: TaskItem[]) {
     })
   }, [])
 
-  const todayIncomplete = useMemo(
-    () => tasks.filter(tk => !tk.isCompleted && tk.dueDate?.startsWith(TODAY)),
-    [tasks],
+  const refresh = useCallback(() => setTick(t => t + 1), [])
+
+  // Rebuild the plan whenever tasks, settings, or a manual refresh changes.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const plan: FocusPlan = useMemo(() => buildFocusPlan(tasks, settings), [tasks, settings, tick])
+
+  // Completed today (based on completedAt or dueDate = today and isCompleted)
+  const today = new Date().toISOString().slice(0, 10)
+  const completedToday = useMemo(
+    () => tasks.filter(t => t.isCompleted && (t.completedAt?.startsWith(today) ?? t.dueDate === today)).length,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [tasks, today]
   )
-
-  // Tasks eligible for today's coach: no due date, due today, or overdue.
-  // If none exist, fallback to 'promotion' tasks: open, not completed, not archived/missed, dueDate in future or missing.
-  const dateEligible = useMemo(() => {
-    const base = tasks.filter(tk =>
-      !tk.isCompleted &&
-      (
-        (!tk.dueDate || tk.dueDate <= TODAY) ||
-        tk.recurrenceType === RecurrenceType.Daily
-      ) &&
-      tk.taskNature !== TaskNature.Meeting &&
-      tk.taskNature !== TaskNature.Appointment &&
-      tk.taskStatus !== TaskStatus.Missed &&
-      tk.taskStatus !== TaskStatus.Archived &&
-      (settings.includeCarriedOver || tk.taskStatus !== TaskStatus.CarriedOver)
-    )
-    if (base.length > 0) return base
-    // Fallback: suggest 'promotion' tasks
-    const promo = tasks.filter(tk =>
-      !tk.isCompleted &&
-      tk.taskNature !== TaskNature.Meeting &&
-      tk.taskNature !== TaskNature.Appointment &&
-      tk.taskStatus !== TaskStatus.Missed &&
-      tk.taskStatus !== TaskStatus.Archived &&
-      (!tk.dueDate || tk.dueDate > TODAY)
-    )
-    if (promo.length > 0) return promo
-    // Final fallback: any open, not completed, not archived/missed
-    return tasks.filter(tk =>
-      !tk.isCompleted &&
-      tk.taskStatus !== TaskStatus.Missed &&
-      tk.taskStatus !== TaskStatus.Archived
-    )
-  }, [tasks, settings.includeCarriedOver])
-
-  // Count of carried-over tasks (for reminder message)
-  const carriedOverCount = useMemo(
-    () => tasks.filter(tk => !tk.isCompleted && tk.taskStatus === TaskStatus.CarriedOver).length,
-    [tasks],
+  const totalToday = useMemo(
+    () => completedToday + plan.recommendations.length,
+    [completedToday, plan.recommendations.length]
   )
+  const progress = totalToday > 0 ? Math.min(100, Math.round((completedToday / totalToday) * 100)) : 0
 
-  // Frog = highest-priority incomplete today task
-  const frogId = useMemo(
-    () => todayIncomplete.sort(
-      (a, b) => PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]
-    )[0]?.id ?? null,
-    [todayIncomplete],
-  )
-
-  // Build the eligible set (union of all enabled filters)
-  const eligibleTasks = useMemo(() => {
-    const ids = new Set<string>()
-
-    if (settings.includeBeforeTargetTime) {
-      dateEligible.forEach(tk => {
-        if (tk.plannedTime && timeBefore(tk.plannedTime, settings.targetTime)) ids.add(tk.id)
-      })
-    }
-
-    if (settings.includeUrgent) {
-      dateEligible.forEach(tk => {
-        if (tk.priority === Priority.Critical || tk.priority === Priority.High) ids.add(tk.id)
-      })
-    }
-
-    if (settings.includeFrog && frogId) {
-      ids.add(frogId)
-    }
-
-    if (settings.includeTwoMin) {
-      dateEligible.forEach(tk => {
-        if (
-          tk.executionType === ExecutionType.Quick ||
-          tk.executionType === ExecutionType.Short ||
-          (tk.durationMinutes != null && tk.durationMinutes <= 2)
-        ) ids.add(tk.id)
-      })
-    }
-
-    if (settings.includeEasy) {
-      dateEligible.forEach(tk => {
-        if (tk.difficulty === Difficulty.Easy) ids.add(tk.id)
-      })
-    }
-
-    const list = dateEligible.filter(tk => ids.has(tk.id))
-
-    // Sort: plannedTime first, then priority, then duration
-    return list.sort((a, b) => {
-      if (a.plannedTime && b.plannedTime) return a.plannedTime.localeCompare(b.plannedTime)
-      if (a.plannedTime)  return -1
-      if (b.plannedTime)  return  1
-      const pd = PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]
-      if (pd !== 0) return pd
-      return (a.durationMinutes ?? 99) - (b.durationMinutes ?? 99)
-    })
-  }, [dateEligible, frogId, settings])
-
-  const completedEligible = useMemo(() => {
-    // Count tasks that match eligible criteria but ARE completed
-    const ids = new Set(eligibleTasks.map(t => t.id))
-    // Also count completed tasks that would have been eligible
-    const completedToday = flattenTasks(tasks).filter(tk => tk.isCompleted && tk.dueDate?.startsWith(TODAY))
-    return completedToday.filter(tk => {
-      if (settings.includeBeforeTargetTime && tk.plannedTime && timeBefore(tk.plannedTime, settings.targetTime)) return true
-      if (settings.includeUrgent && (tk.priority === Priority.Critical || tk.priority === Priority.High)) return true
-      if (settings.includeFrog && (tk.id === frogId || (tk as any).parentId === frogId)) return true
-      if (settings.includeTwoMin && (tk.executionType === ExecutionType.Quick || tk.executionType === ExecutionType.Short || (tk.durationMinutes != null && tk.durationMinutes <= 2))) return true
-      if (settings.includeEasy && tk.difficulty === Difficulty.Easy) return true
-      return false
-    }).length + (ids.size > 0 ? 0 : 0) // suppress unused warning
-  }, [tasks, eligibleTasks, settings, frogId])
-
-  // Cap the incomplete list to the remaining slots so totalCount never exceeds dailyTaskTarget
-  const cappedSlots    = Math.max(0, settings.dailyTaskTarget - completedEligible)
-  const cappedEligible = eligibleTasks.slice(0, cappedSlots)
-
-  const totalCount     = cappedEligible.length + completedEligible
-  const completedCount = completedEligible
-  const progress       = Math.min(100, Math.round((completedCount / settings.dailyTaskTarget) * 100))
-  const nextTask       = cappedEligible[0] ?? null
-  const secondTask     = cappedEligible[1] ?? null
-
-  return {
-    settings,
-    setSettings,
-    eligibleTasks: cappedEligible,
-    completedCount,
-    totalCount,
-    progress,
-    nextTask,
-    secondTask,
-    carriedOverCount,
-  }
+  return { settings, setSettings, plan, refresh, completedToday, totalToday, progress }
 }

@@ -1,24 +1,14 @@
 import {
-  Box, Checkbox, Collapse, Divider, FormControlLabel,
-  TextField, Typography,
+  Box, Collapse, Divider, TextField, ToggleButton, ToggleButtonGroup, Typography,
 } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import type { CoachSettings } from '../../hooks/useFocusCoach'
 
 interface Props {
-  open:        boolean
-  settings:    CoachSettings
-  onChange:    (patch: Partial<CoachSettings>) => void
+  open:     boolean
+  settings: CoachSettings
+  onChange: (patch: Partial<CoachSettings>) => void
 }
-
-const FILTER_KEYS: Array<{ key: keyof CoachSettings; i18n: string }> = [
-  { key: 'includeBeforeTargetTime', i18n: 'coach.filterBeforeTime' },
-  { key: 'includeUrgent',           i18n: 'coach.filterUrgent'     },
-  { key: 'includeFrog',             i18n: 'coach.filterFrog'       },
-  { key: 'includeTwoMin',           i18n: 'coach.filterTwoMin'     },
-  { key: 'includeEasy',             i18n: 'coach.filterEasy'       },
-  { key: 'includeCarriedOver',      i18n: 'coach.filterCarriedOver'},
-]
 
 export default function CoachSettingsPanel({ open, settings, onChange }: Props) {
   const { t } = useTranslation()
@@ -27,13 +17,13 @@ export default function CoachSettingsPanel({ open, settings, onChange }: Props) 
     <Collapse in={open}>
       <Divider sx={{ mx: 2 }} />
       <Box sx={{ px: 2, py: 1.5 }}>
-        <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ display: 'block', mb: 1 }}>
+        <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ display: 'block', mb: 1.5 }}>
           {t('coach.settingsTitle')}
         </Typography>
 
         {/* Target time */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
-          <Typography variant="body2" color="text.secondary" sx={{ flexShrink: 0 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ flexShrink: 0, minWidth: 90 }}>
             {t('coach.targetTime')}
           </Typography>
           <TextField
@@ -46,43 +36,46 @@ export default function CoachSettingsPanel({ open, settings, onChange }: Props) 
           />
         </Box>
 
-        {/* Daily task target */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
-          <Typography variant="body2" color="text.secondary" sx={{ flexShrink: 0 }}>
-            {t('coach.dailyTarget')}
+        {/* Max tasks */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ flexShrink: 0, minWidth: 90 }}>
+            {t('coach.maxTasks', 'מקס׳ משימות')}
           </Typography>
           <TextField
             type="number"
             size="small"
-            value={settings.dailyTaskTarget}
-            onChange={e => {
-              const val = Math.max(1, Math.min(50, Number(e.target.value)))
-              onChange({ dailyTaskTarget: val })
-            }}
-            inputProps={{ min: 1, max: 50 }}
+            value={settings.maxTasks}
+            onChange={e => onChange({ maxTasks: Math.max(1, Math.min(20, Number(e.target.value))) })}
+            inputProps={{ min: 1, max: 20 }}
             sx={{ width: 80 }}
           />
         </Box>
 
-        {/* Filter checkboxes */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
-          {FILTER_KEYS.map(({ key, i18n: label }) => (
-            <FormControlLabel
-              key={key}
-              control={
-                <Checkbox
-                  size="small"
-                  checked={settings[key] as boolean}
-                  onChange={e => onChange({ [key]: e.target.checked })}
-                  sx={{ py: 0.25 }}
-                />
-              }
-              label={
-                <Typography variant="body2">{t(label)}</Typography>
-              }
-              sx={{ m: 0 }}
-            />
-          ))}
+        {/* Energy mode */}
+        <Box sx={{ mb: 0.5 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.75 }}>
+            {t('coach.energyModeLabel', 'מצב אנרגיה')}
+          </Typography>
+          <ToggleButtonGroup
+            size="small"
+            exclusive
+            value={settings.energyMode}
+            onChange={(_, v) => v && onChange({ energyMode: v })}
+            sx={{ flexWrap: 'wrap', gap: 0.5 }}
+          >
+            <ToggleButton value="auto"      sx={{ px: 1, py: 0.25, fontSize: '0.7rem' }}>
+              {t('coach.energyAuto', 'אוטומטי')}
+            </ToggleButton>
+            <ToggleButton value="morning"   sx={{ px: 1, py: 0.25, fontSize: '0.7rem' }}>
+              {t('coach.energyMorning', '🌅 בוקר')}
+            </ToggleButton>
+            <ToggleButton value="afternoon" sx={{ px: 1, py: 0.25, fontSize: '0.7rem' }}>
+              {t('coach.energyAfternoon', '☀️ צהריים')}
+            </ToggleButton>
+            <ToggleButton value="evening"   sx={{ px: 1, py: 0.25, fontSize: '0.7rem' }}>
+              {t('coach.energyEvening', '🌙 ערב')}
+            </ToggleButton>
+          </ToggleButtonGroup>
         </Box>
       </Box>
     </Collapse>

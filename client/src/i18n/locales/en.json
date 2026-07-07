@@ -236,6 +236,37 @@
       "morning":   "🧠 {{count}} recent completions: you're most productive in the morning",
       "afternoon": "🧠 {{count}} recent completions: you're most productive in the afternoon",
       "evening":   "🧠 {{count}} recent completions: you're most productive in the evening"
+    },
+    "skip":           "Skip",
+    "maxTasks":       "Max tasks",
+    "energyModeLabel":"Energy mode",
+    "energyAuto":     "Auto",
+    "energyMorning":  "🌅 Morning",
+    "energyAfternoon":"☀️ Afternoon",
+    "energyEvening":  "🌙 Evening",
+    "energy": {
+      "morning":   "Morning — deep work",
+      "afternoon": "Afternoon — balanced",
+      "evening":   "Evening — light tasks"
+    },
+    "todaySchedule":  "Today's Schedule",
+    "nextEvent":      "Next: {{time}} {{title}}",
+    "subtaskOf":      "Step in: {{parent}}",
+    "reason": {
+      "overdue":          "Overdue",
+      "dueToday":         "Due today",
+      "dueTomorrow":      "Due tomorrow",
+      "dueSoon":          "Due soon",
+      "criticalPriority": "Critical",
+      "highPriority":     "High priority",
+      "frog":             "Frog task",
+      "linkedToGoal":     "Goal",
+      "quickWin":         "Quick win",
+      "waitingDays":      "Waiting",
+      "morningDeepWork":  "Deep work",
+      "eveningLightTask": "Light task",
+      "carriedOver":      "Carried over",
+      "actionableSubtask":"Small step"
     }
   },
   "ai": {

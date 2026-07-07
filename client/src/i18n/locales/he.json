@@ -237,6 +237,37 @@
       "morning":   "🧠 {{count}} השלמות אחרונות: אתה הכי פרודוקטיבי בבוקר",
       "afternoon": "🧠 {{count}} השלמות אחרונות: אתה הכי פרודוקטיבי בצהריים",
       "evening":   "🧠 {{count}} השלמות אחרונות: אתה הכי פרודוקטיבי בערב"
+    },
+    "skip":           "דלג",
+    "maxTasks":       "מקס׳ משימות",
+    "energyModeLabel":"מצב אנרגיה",
+    "energyAuto":     "אוטומטי",
+    "energyMorning":  "🌅 בוקר",
+    "energyAfternoon":"☀️ צהריים",
+    "energyEvening":  "🌙 ערב",
+    "energy": {
+      "morning":   "בוקר — עבודה עמוקה",
+      "afternoon": "צהריים — עבודה מאוזנת",
+      "evening":   "ערב — משימות קלות"
+    },
+    "todaySchedule":  "לוח זמנים היום",
+    "nextEvent":      "הבא: {{time}} {{title}}",
+    "subtaskOf":      "שלב ב: {{parent}}",
+    "reason": {
+      "overdue":          "באיחור",
+      "dueToday":         "להיום",
+      "dueTomorrow":      "למחר",
+      "dueSoon":          "בקרוב",
+      "criticalPriority": "קריטי",
+      "highPriority":     "עדיפות גבוהה",
+      "frog":             "צפרדע",
+      "linkedToGoal":     "מטרה",
+      "quickWin":         "מהיר",
+      "waitingDays":      "ממתין",
+      "morningDeepWork":  "עבודה עמוקה",
+      "eveningLightTask": "קל לערב",
+      "carriedOver":      "מאתמול",
+      "actionableSubtask":"שלב קטן"
     }
   },
   "ai": {

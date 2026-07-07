@@ -1,229 +1,296 @@
 import { useState } from 'react'
 import {
-  Box, Button, Card, Chip, Collapse, IconButton, LinearProgress,
-  Tooltip, Typography,
+  Box, Button, Card, Chip, IconButton, LinearProgress,
+  Stack, Tooltip, Typography,
 } from '@mui/material'
-import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded'
-import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded'
-import BoltRoundedIcon from '@mui/icons-material/BoltRounded'
-import KeyboardArrowDownRounded from '@mui/icons-material/KeyboardArrowDownRounded'
-import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
+import RefreshRoundedIcon        from '@mui/icons-material/RefreshRounded'
+import SettingsRoundedIcon        from '@mui/icons-material/SettingsRounded'
+import BoltRoundedIcon            from '@mui/icons-material/BoltRounded'
+import CheckCircleRoundedIcon     from '@mui/icons-material/CheckCircleRounded'
 import RadioButtonUncheckedRoundedIcon from '@mui/icons-material/RadioButtonUncheckedRounded'
-import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded'
-import { useTranslation } from 'react-i18next'
+import VisibilityRoundedIcon      from '@mui/icons-material/VisibilityRounded'
+import { useTranslation }         from 'react-i18next'
 
-import TaskPreviewDrawer from '../tasks/TaskPreviewDrawer'
-import { useFocusCoach } from '../../hooks/useFocusCoach'
-import CoachSettingsPanel from './CoachSettingsPanel'
-import DailyInsightBanner from './DailyInsightBanner'
-import type { TaskItem } from '../../types'
-import { ExecutionType, Priority } from '../../types'
+import TaskPreviewDrawer   from '../tasks/TaskPreviewDrawer'
+import { useFocusCoach }   from '../../hooks/useFocusCoach'
+import CoachSettingsPanel  from './CoachSettingsPanel'
+import DailyInsightBanner  from './DailyInsightBanner'
+import type { TaskItem }   from '../../types'
+import { Priority }        from '../../types'
+import type { ScoredRecommendation, ReasonKey } from '../../hooks/focusEngine'
 
 interface Props {
-  tasks: TaskItem[]
-  onRefresh: () => void
-  onToggle?: (taskId: string) => void
+  tasks:           TaskItem[]
+  onRefresh:       () => void
+  onToggle?:       (taskId: string) => void
   onToggleSubTask?: (taskId: string, subId: string) => void
 }
 
-function taskEmoji(task: TaskItem): string {
-  if (
-    task.executionType === ExecutionType.Quick ||
-    task.executionType === ExecutionType.Short
-  ) {
-    return '⚡'
-  }
+// ── Reason chip display map ────────────────────────────────────────────────────
 
-  return '🐸'
+const REASON_META: Record<ReasonKey, { emoji: string; color: string; i18n: string }> = {
+  overdue:          { emoji: '🔴', color: '#ef4444', i18n: 'coach.reason.overdue' },
+  dueToday:         { emoji: '📅', color: '#f97316', i18n: 'coach.reason.dueToday' },
+  dueTomorrow:      { emoji: '📅', color: '#fb923c', i18n: 'coach.reason.dueTomorrow' },
+  dueSoon:          { emoji: '📅', color: '#fbbf24', i18n: 'coach.reason.dueSoon' },
+  criticalPriority: { emoji: '🔥', color: '#ef4444', i18n: 'coach.reason.criticalPriority' },
+  highPriority:     { emoji: '⚡', color: '#f97316', i18n: 'coach.reason.highPriority' },
+  frog:             { emoji: '🐸', color: '#22c55e', i18n: 'coach.reason.frog' },
+  linkedToGoal:     { emoji: '🎯', color: '#7c5cff', i18n: 'coach.reason.linkedToGoal' },
+  quickWin:         { emoji: '⚡', color: '#10b981', i18n: 'coach.reason.quickWin' },
+  waitingDays:      { emoji: '⏳', color: '#94a3b8', i18n: 'coach.reason.waitingDays' },
+  morningDeepWork:  { emoji: '🌅', color: '#3b82f6', i18n: 'coach.reason.morningDeepWork' },
+  eveningLightTask: { emoji: '🌙', color: '#6366f1', i18n: 'coach.reason.eveningLightTask' },
+  carriedOver:      { emoji: '🔄', color: '#f59e0b', i18n: 'coach.reason.carriedOver' },
+  actionableSubtask:{ emoji: '📌', color: '#7c5cff', i18n: 'coach.reason.actionableSubtask' },
 }
 
 const PRIORITY_COLOR: Record<Priority, string> = {
   [Priority.Critical]: '#ef4444',
-  [Priority.High]: '#f97316',
-  [Priority.Medium]: '#7c5cff',
-  [Priority.Low]: '#94a3b8',
+  [Priority.High]:     '#f97316',
+  [Priority.Medium]:   '#7c5cff',
+  [Priority.Low]:      '#94a3b8',
 }
 
-export default function FocusCoachCard({
-  tasks,
-  onRefresh,
-  onToggle,
-  onToggleSubTask,
-}: Props) {
+const ENERGY_LABELS: Record<string, string> = {
+  morning:   '🌅',
+  afternoon: '☀️',
+  evening:   '🌙',
+}
+
+// ── Utilities ──────────────────────────────────────────────────────────────────
+
+function formatDuration(mins: number): string {
+  if (mins < 60) return `${mins}m`
+  const h = Math.floor(mins / 60)
+  const m = mins % 60
+  return m > 0 ? `${h}h ${m}m` : `${h}h`
+}
+
+function formatRemaining(minutes: number, targetTime: string): string {
+  if (minutes <= 0) return ''
+  if (minutes < 60) return `${minutes}m → ${targetTime}`
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  return m > 0 ? `${h}h ${m}m → ${targetTime}` : `${h}h → ${targetTime}`
+}
+
+// ── Sub-components ─────────────────────────────────────────────────────────────
+
+function ReasonChips({ reasons, max = 3 }: { reasons: ReasonKey[]; max?: number }) {
   const { t } = useTranslation()
-
-  const [settingsOpen, setSettingsOpen] = useState(false)
-  const [listOpen, setListOpen] = useState(false)
-  const [focusTask, setFocusTask] = useState<TaskItem | null>(null)
-  const [skippedTasks, setSkippedTasks] = useState<string[]>([])
-  const [previewTask, setPreviewTask] = useState<TaskItem | null>(null)
-
-  const {
-    settings,
-    setSettings,
-    eligibleTasks,
-    totalCount,
-    completedCount,
-    progress,
-    nextTask,
-    secondTask,
-    carriedOverCount,
-  } = useFocusCoach(tasks)
-
-  const remaining = totalCount - completedCount
-  const mainTask = focusTask || nextTask
-
-  const eligibleList = eligibleTasks.filter(
-    task => task.id !== mainTask?.id && !skippedTasks.includes(task.id)
+  const shown = reasons.slice(0, max)
+  return (
+    <Stack direction="row" flexWrap="wrap" gap={0.5} sx={{ mt: 0.5 }}>
+      {shown.map(r => {
+        const meta = REASON_META[r]
+        return (
+          <Chip
+            key={r}
+            label={`${meta.emoji} ${t(meta.i18n, r)}`}
+            size="small"
+            sx={{
+              height: 18,
+              fontSize: '0.62rem',
+              bgcolor: `${meta.color}18`,
+              color: meta.color,
+              border: `1px solid ${meta.color}40`,
+              fontWeight: 600,
+            }}
+          />
+        )
+      })}
+    </Stack>
   )
+}
 
-  const handleStartFocus = () => {
-    if (mainTask) setFocusTask(mainTask)
-  }
+// ── Main recommendation card (prominent) ──────────────────────────────────────
 
-  const handleMarkDone = () => {
-    if (!focusTask) return
+function MainRecCard({
+  rec,
+  onDone,
+  onSkip,
+  onPreview,
+}: {
+  rec:       ScoredRecommendation
+  onDone:    () => void
+  onSkip:    () => void
+  onPreview: () => void
+}) {
+  const { t } = useTranslation()
+  const { candidate: c, reasons, estimatedMinutes } = rec
 
-    onToggle?.(focusTask.id)
-    setFocusTask(null)
-    setSkippedTasks([])
-  }
-
-  const handlePickAnother = () => {
-    if (mainTask) {
-      setSkippedTasks(prev => [...prev, mainTask.id])
-    }
-
-    const next = eligibleTasks.find(
-      task => task.id !== mainTask?.id && !skippedTasks.includes(task.id)
-    )
-
-    setFocusTask(next || null)
-  }
-
-  const renderTaskRow = (task: TaskItem, index = 0) => (
-    <Box key={task.id}>
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1,
-          px: 1.25,
-          py: 0.75,
-          borderBottom: '1px solid rgba(124,92,255,0.07)',
-        }}
-      >
+  return (
+    <Box
+      sx={{
+        p: 1.5,
+        mb: 1.25,
+        borderRadius: 2,
+        bgcolor: 'rgba(255,255,255,0.8)',
+        border: '1.5px solid rgba(124,92,255,0.2)',
+        boxShadow: '0 2px 8px rgba(124,92,255,0.08)',
+      }}
+    >
+      {/* Title row */}
+      <Stack direction="row" alignItems="flex-start" gap={1}>
         <Box
           component="span"
-          onClick={() => onToggle?.(task.id)}
           sx={{
-            display: 'flex',
-            alignItems: 'center',
-            cursor: onToggle ? 'pointer' : 'default',
-            borderRadius: '50%',
-            p: 0.2,
-          }}
-        >
-          {task.isCompleted ? (
-            <CheckCircleRoundedIcon sx={{ fontSize: 18, color: 'primary.main' }} />
-          ) : (
-            <RadioButtonUncheckedRoundedIcon sx={{ fontSize: 18, color: 'text.disabled' }} />
-          )}
-        </Box>
-
-        <Box
-          sx={{
-            width: 6,
-            height: 6,
-            borderRadius: '50%',
-            bgcolor: PRIORITY_COLOR[task.priority],
+            width: 8, height: 8, borderRadius: '50%', mt: 0.75, flexShrink: 0,
+            bgcolor: PRIORITY_COLOR[c.priority],
           }}
         />
 
-        <Typography variant="caption">{taskEmoji(task)}</Typography>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Stack direction="row" alignItems="center" gap={0.75}>
+            <Typography variant="body2" fontWeight={700} noWrap sx={{ flex: 1 }}>
+              {c.title}
+            </Typography>
+            <Chip
+              label={formatDuration(estimatedMinutes)}
+              size="small"
+              sx={{ height: 18, fontSize: '0.62rem', flexShrink: 0 }}
+            />
+            <Tooltip title={t('task.preview')}>
+              <IconButton size="small" sx={{ p: 0.25 }} onClick={onPreview}>
+                <VisibilityRoundedIcon sx={{ fontSize: 14 }} />
+              </IconButton>
+            </Tooltip>
+          </Stack>
 
-        {task.plannedTime && (
-          <Typography variant="caption" fontWeight={700} color="primary.main">
-            {task.plannedTime}
-          </Typography>
-        )}
+          {c.isSubTask && c.parentTitle && (
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.15 }}>
+              {t('coach.subtaskOf', { parent: c.parentTitle })}
+            </Typography>
+          )}
 
-        {task.durationMinutes && (
-          <Chip
-            label={`${task.durationMinutes}m`}
-            size="small"
-            sx={{ height: 18, fontSize: '0.6rem' }}
-          />
-        )}
-
-        <Typography
-          variant="caption"
-          fontWeight={index === 0 ? 700 : 500}
-          noWrap
-          sx={{
-            flex: 1,
-            color: task.isCompleted ? 'text.disabled' : 'text.primary',
-            textDecoration: task.isCompleted ? 'line-through' : 'none',
-          }}
-        >
-          {task.title}
-        </Typography>
-
-        {(task.subTasks ?? []).length > 0 && (
-          <Typography variant="caption" color="text.disabled">
-            {(task.subTasks ?? []).filter(sub => sub.isCompleted).length}/
-            {(task.subTasks ?? []).length}
-          </Typography>
-        )}
-
-        <Tooltip title={t('task.preview')}>
-          <IconButton size="small" onClick={() => setPreviewTask(task)}>
-            <VisibilityRoundedIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      </Box>
-
-      {(task.subTasks ?? []).map(sub => (
-        <Box
-          key={sub.id}
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 0.75,
-            pl: 4,
-            pr: 1.25,
-            py: 0.5,
-            bgcolor: 'rgba(255,255,255,0.35)',
-            borderBottom: '1px solid rgba(124,92,255,0.04)',
-          }}
-        >
-          <Box
-            component="span"
-            onClick={() => onToggleSubTask?.(task.id, sub.id)}
-            sx={{ display: 'flex', cursor: onToggleSubTask ? 'pointer' : 'default' }}
-          >
-            {sub.isCompleted ? (
-              <CheckCircleRoundedIcon sx={{ fontSize: 15, color: 'success.main' }} />
-            ) : (
-              <RadioButtonUncheckedRoundedIcon sx={{ fontSize: 15, color: 'text.disabled' }} />
-            )}
-          </Box>
-
-          <Typography
-            variant="caption"
-            noWrap
-            sx={{
-              flex: 1,
-              color: sub.isCompleted ? 'text.disabled' : 'text.secondary',
-              textDecoration: sub.isCompleted ? 'line-through' : 'none',
-            }}
-          >
-            {sub.title}
-          </Typography>
+          <ReasonChips reasons={reasons} max={4} />
         </Box>
-      ))}
+      </Stack>
+
+      {/* Action row */}
+      <Stack direction="row" gap={1} sx={{ mt: 1.25 }}>
+        <Button size="small" variant="contained" color="success" onClick={onDone} sx={{ flex: 1, py: 0.25 }}>
+          {t('coach.markDone', 'בוצע ✓')}
+        </Button>
+        <Button size="small" variant="text" color="inherit" onClick={onSkip} sx={{ py: 0.25 }}>
+          {t('coach.skip', 'דלג')}
+        </Button>
+      </Stack>
     </Box>
   )
+}
+
+// ── Compact recommendation row ─────────────────────────────────────────────────
+
+function CompactRecRow({
+  rec,
+  onToggle,
+  onPreview,
+}: {
+  rec:       ScoredRecommendation
+  onToggle:  () => void
+  onPreview: () => void
+}) {
+  const { t } = useTranslation()
+  const { candidate: c, reasons, estimatedMinutes } = rec
+
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 0.75,
+        px: 1,
+        py: 0.75,
+        borderRadius: 1.5,
+        borderBottom: '1px solid rgba(124,92,255,0.07)',
+        '&:last-child': { borderBottom: 'none' },
+      }}
+    >
+      <Box
+        component="span"
+        onClick={onToggle}
+        sx={{ display: 'flex', cursor: 'pointer', flexShrink: 0 }}
+      >
+        <RadioButtonUncheckedRoundedIcon sx={{ fontSize: 17, color: 'text.disabled' }} />
+      </Box>
+
+      <Box
+        sx={{
+          width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
+          bgcolor: PRIORITY_COLOR[c.priority],
+        }}
+      />
+
+      <Typography variant="caption" noWrap sx={{ flex: 1, fontWeight: 500 }}>
+        {c.title}
+        {c.isSubTask && c.parentTitle && (
+          <Typography component="span" variant="caption" color="text.disabled" sx={{ ml: 0.5 }}>
+            · {c.parentTitle}
+          </Typography>
+        )}
+      </Typography>
+
+      {reasons.slice(0, 2).map(r => {
+        const meta = REASON_META[r]
+        return (
+          <Typography key={r} component="span" sx={{ fontSize: '0.7rem', flexShrink: 0 }}>
+            {meta.emoji}
+          </Typography>
+        )
+      })}
+
+      <Chip
+        label={formatDuration(estimatedMinutes)}
+        size="small"
+        sx={{ height: 16, fontSize: '0.58rem', flexShrink: 0 }}
+      />
+
+      <Tooltip title={t('task.preview')}>
+        <IconButton size="small" sx={{ p: 0.25 }} onClick={onPreview}>
+          <VisibilityRoundedIcon sx={{ fontSize: 13 }} />
+        </IconButton>
+      </Tooltip>
+    </Box>
+  )
+}
+
+// ── Main component ─────────────────────────────────────────────────────────────
+
+export default function FocusCoachCard({ tasks, onRefresh, onToggle, onToggleSubTask }: Props) {
+  const { t } = useTranslation()
+
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [previewTask,  setPreviewTask]  = useState<TaskItem | null>(null)
+  const [skippedKeys,  setSkippedKeys]  = useState<Set<string>>(new Set())
+
+  const { settings, setSettings, plan, refresh, completedToday, totalToday, progress } = useFocusCoach(tasks)
+
+  const handleRefresh = () => {
+    setSkippedKeys(new Set())
+    refresh()
+    onRefresh()
+  }
+
+  function handleDone(rec: ScoredRecommendation) {
+    const { candidate: c } = rec
+    if (c.isSubTask && c.subTaskId) {
+      onToggleSubTask?.(c.id, c.subTaskId)
+    } else {
+      onToggle?.(c.id)
+    }
+  }
+
+  function handleSkip(key: string) {
+    setSkippedKeys(prev => new Set([...prev, key]))
+  }
+
+  const visible = plan.recommendations.filter(r => !skippedKeys.has(r.candidate.key))
+  const [mainRec, ...restRecs] = visible
+
+  const remaining = totalToday - completedToday
+  const timeLabel = formatRemaining(plan.availableMinutes, settings.targetTime)
 
   return (
     <Card
@@ -236,34 +303,33 @@ export default function FocusCoachCard({
         overflow: 'hidden',
       }}
     >
-      {totalCount > 0 && (
+      {totalToday > 0 && (
         <DailyInsightBanner
           progress={progress}
-          completedCount={completedCount}
+          completedCount={completedToday}
           remaining={remaining}
-          dailyTarget={settings.dailyTaskTarget}
+          dailyTarget={settings.maxTasks}
           tasks={tasks}
         />
       )}
 
-      {settings.includeCarriedOver && carriedOverCount > 0 && (
-        <Box sx={{ px: 2, py: 1, bgcolor: '#fff7ed', borderBottom: '1px solid #fed7aa' }}>
-          <Typography variant="caption" fontWeight={700} color="warning.main">
-            {t('coach.carriedOver', { count: carriedOverCount })}
-          </Typography>
-        </Box>
-      )}
-
       <Box sx={{ p: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+        {/* ── Header ── */}
+        <Stack direction="row" alignItems="center" gap={1} sx={{ mb: 1 }}>
           <BoltRoundedIcon color="primary" />
 
           <Typography variant="h6" fontWeight={800} sx={{ flex: 1 }}>
             {t('coach.title')}
           </Typography>
 
+          {timeLabel && (
+            <Typography variant="caption" color="text.secondary" fontWeight={600} noWrap>
+              {timeLabel}
+            </Typography>
+          )}
+
           <Tooltip title={t('common.refresh')}>
-            <IconButton size="small" onClick={onRefresh}>
+            <IconButton size="small" onClick={handleRefresh}>
               <RefreshRoundedIcon fontSize="small" />
             </IconButton>
           </Tooltip>
@@ -273,148 +339,113 @@ export default function FocusCoachCard({
               <SettingsRoundedIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-        </Box>
+        </Stack>
 
-        {totalCount > 0 && (
-          <Box sx={{ mb: 2 }}>
-            <LinearProgress
-              variant="determinate"
-              value={progress}
-              sx={{ height: 8, borderRadius: 999 }}
-            />
+        {/* ── Energy mode + progress ── */}
+        <Stack direction="row" alignItems="center" gap={1} sx={{ mb: 1.5 }}>
+          <Typography variant="caption" color="text.secondary">
+            {ENERGY_LABELS[plan.energyMode]} {t(`coach.energy.${plan.energyMode}`, plan.energyMode)}
+          </Typography>
+          {totalToday > 0 && (
+            <Typography variant="caption" color="text.secondary" sx={{ ml: 'auto' }}>
+              {completedToday}/{totalToday}
+            </Typography>
+          )}
+        </Stack>
 
-            <Typography variant="caption" color="text.secondary">
-              {completedCount}/{totalCount}
+        {totalToday > 0 && (
+          <LinearProgress
+            variant="determinate"
+            value={progress}
+            sx={{ height: 6, borderRadius: 999, mb: 1.5 }}
+          />
+        )}
+
+        {/* ── Today's Schedule ── */}
+        {plan.scheduledEvents.length > 0 && (
+          <Box
+            sx={{
+              mb: 1.5, px: 1.25, py: 1,
+              bgcolor: 'rgba(255,255,255,0.55)',
+              borderRadius: 2,
+              border: '1px solid rgba(124,92,255,0.1)',
+            }}
+          >
+            <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+              📅 {t('coach.todaySchedule', 'לוח זמנים')}
+            </Typography>
+            <Stack spacing={0.25}>
+              {plan.scheduledEvents.map(e => (
+                <Stack key={e.task.id} direction="row" gap={1} alignItems="center">
+                  <Typography variant="caption" fontWeight={700} color="primary.main" sx={{ minWidth: 42 }}>
+                    {e.time}
+                  </Typography>
+                  <Typography variant="caption" noWrap sx={{ flex: 1 }}>
+                    {e.task.title}
+                  </Typography>
+                </Stack>
+              ))}
+            </Stack>
+          </Box>
+        )}
+
+        {/* ── Next event hint ── */}
+        {plan.nextEvent && (
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.25 }}>
+            🔔 {t('coach.nextEvent', { time: plan.nextEvent.time, title: plan.nextEvent.task.title })}
+          </Typography>
+        )}
+
+        {/* ── Main recommendation ── */}
+        {mainRec && (
+          <MainRecCard
+            rec={mainRec}
+            onDone={() => handleDone(mainRec)}
+            onSkip={() => handleSkip(mainRec.candidate.key)}
+            onPreview={() => setPreviewTask(mainRec.candidate.sourceTask)}
+          />
+        )}
+
+        {/* ── Rest of recommendations ── */}
+        {restRecs.length > 0 && (
+          <Box
+            sx={{
+              borderRadius: 2,
+              overflow: 'hidden',
+              bgcolor: 'rgba(255,255,255,0.5)',
+              border: '1px solid rgba(124,92,255,0.1)',
+            }}
+          >
+            {restRecs.map(rec => (
+              <CompactRecRow
+                key={rec.candidate.key}
+                rec={rec}
+                onToggle={() => handleDone(rec)}
+                onPreview={() => setPreviewTask(rec.candidate.sourceTask)}
+              />
+            ))}
+          </Box>
+        )}
+
+        {/* ── Already done row (completed task indicator) ── */}
+        {completedToday > 0 && visible.length === 0 && (
+          <Box sx={{ mt: 1.5, textAlign: 'center' }}>
+            <CheckCircleRoundedIcon sx={{ color: 'success.main', fontSize: 28 }} />
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              {t('coach.empty.allDone')}
             </Typography>
           </Box>
         )}
 
-        {mainTask && (
-          <Box
-            sx={{
-              p: 1.5,
-              mb: 1.5,
-              borderRadius: 2,
-              bgcolor: 'rgba(255,255,255,0.75)',
-              border: '1px solid rgba(124,92,255,0.15)',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="body2" fontWeight={700} sx={{ flex: 1 }} noWrap>
-                {taskEmoji(mainTask)} {mainTask.title}
-              </Typography>
-
-              <Tooltip title={t('task.preview')}>
-                <IconButton size="small" onClick={() => setPreviewTask(mainTask)}>
-                  <VisibilityRoundedIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-
-              {focusTask ? (
-                <>
-                  <Button size="small" variant="contained" color="success" onClick={handleMarkDone}>
-                    {t('coach.markDone')}
-                  </Button>
-
-                  <Button size="small" variant="outlined" onClick={() => setFocusTask(null)}>
-                    {t('coach.snooze')}
-                  </Button>
-                </>
-              ) : (
-                <Button size="small" variant="contained" onClick={handleStartFocus}>
-                  {t('coach.start')}
-                </Button>
-              )}
-            </Box>
-
-            {focusTask && (
-              <Typography variant="caption" color="primary" fontWeight={700}>
-                {t('coach.timerPlaceholder')}
-              </Typography>
-            )}
-
-            {(mainTask.subTasks ?? []).length > 0 && (
-              <Box sx={{ mt: 1 }}>
-                {(mainTask.subTasks ?? []).map(sub => (
-                  <Box key={sub.id} sx={{ display: 'flex', alignItems: 'center', gap: 0.75, py: 0.35 }}>
-                    <Box
-                      component="span"
-                      onClick={() => onToggleSubTask?.(mainTask.id, sub.id)}
-                      sx={{ display: 'flex', cursor: 'pointer' }}
-                    >
-                      {sub.isCompleted ? (
-                        <CheckCircleRoundedIcon sx={{ fontSize: 16, color: 'success.main' }} />
-                      ) : (
-                        <RadioButtonUncheckedRoundedIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
-                      )}
-                    </Box>
-
-                    <Typography
-                      variant="caption"
-                      noWrap
-                      sx={{
-                        flex: 1,
-                        color: sub.isCompleted ? 'text.disabled' : 'text.secondary',
-                        textDecoration: sub.isCompleted ? 'line-through' : 'none',
-                      }}
-                    >
-                      {sub.title}
-                    </Typography>
-                  </Box>
-                ))}
-              </Box>
-            )}
-
-            {!focusTask && eligibleList.length > 0 && (
-              <Button size="small" variant="text" onClick={handlePickAnother} sx={{ mt: 1 }}>
-                {t('coach.pickAnother')}
-              </Button>
-            )}
-          </Box>
-        )}
-
-        {secondTask && !focusTask && (
-          <Typography variant="caption" color="text.secondary">
-            {t('coach.nextUp')}: {secondTask.title}
-          </Typography>
-        )}
-
-        {eligibleList.length > 0 && (
-          <Box sx={{ mt: 1.5 }}>
-            <Button
-              size="small"
-              endIcon={<KeyboardArrowDownRounded />}
-              onClick={() => setListOpen(prev => !prev)}
-            >
-              {t('coach.showMoreTasks')}
-            </Button>
-
-            <Collapse in={listOpen}>
-              <Box sx={{ mt: 1, borderRadius: 2, overflow: 'hidden' }}>
-                {eligibleList.map((task, index) => renderTaskRow(task, index))}
-              </Box>
-            </Collapse>
-          </Box>
-        )}
-
-        {totalCount === 0 && (
-          <Box sx={{ mt: 3, textAlign: 'center', color: 'text.secondary', fontWeight: 500 }}>
+        {/* ── Empty state ── */}
+        {visible.length === 0 && completedToday === 0 && (
+          <Box sx={{ mt: 2, textAlign: 'center', color: 'text.secondary', fontWeight: 500 }}>
             {t('coach.empty.noTasks')}
-          </Box>
-        )}
-
-        {totalCount > 0 && eligibleList.length === 0 && !mainTask && (
-          <Box sx={{ mt: 3, textAlign: 'center', color: 'text.secondary', fontWeight: 500 }}>
-            {t('coach.empty.allDone')}
           </Box>
         )}
       </Box>
 
-      <CoachSettingsPanel
-        open={settingsOpen}
-        settings={settings}
-        onChange={setSettings}
-      />
+      <CoachSettingsPanel open={settingsOpen} settings={settings} onChange={setSettings} />
 
       <TaskPreviewDrawer
         task={previewTask}
