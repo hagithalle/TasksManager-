@@ -21,6 +21,7 @@ public class TaskService : ITaskService
                      && t.DeletedAt == null
                      && t.Status == ItemStatus.Open
                      && !t.IsCompleted
+                     && t.RecurrenceType == RecurrenceType.None   // recurring tasks manage their own DueDate
                      && t.DueDate.HasValue
                      && t.DueDate.Value.Date < today)
             .ToListAsync();
@@ -147,11 +148,24 @@ public class TaskService : ITaskService
 
             if (dto.IsCompleted.Value && isRecurring)
             {
-                // Recurring task: record completion date and reset to active
+                // Recurring task: record completion date, reset to active, advance to next occurrence
                 task.LastCompletedDate = DateOnly.FromDateTime(DateTime.UtcNow);
                 task.CompletedAt       = DateTime.UtcNow;
-                task.IsCompleted       = false;   // stays active for next period
+                task.IsCompleted       = false;
                 task.Status            = ItemStatus.Open;
+
+                // Auto-advance DueDate so the task shows the next occurrence
+                if (task.DueDate.HasValue)
+                {
+                    var interval = task.RecurrenceInterval > 0 ? task.RecurrenceInterval : 1;
+                    task.DueDate = task.RecurrenceType switch
+                    {
+                        RecurrenceType.Daily   => task.DueDate.Value.AddDays(interval),
+                        RecurrenceType.Weekly  => task.DueDate.Value.AddDays(interval * 7),
+                        RecurrenceType.Monthly => task.DueDate.Value.AddMonths(interval),
+                        _                      => task.DueDate
+                    };
+                }
             }
             else
             {

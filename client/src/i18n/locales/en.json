@@ -625,7 +625,7 @@
     "daily": "Daily",
     "weekly": "Weekly",
     "monthly": "Monthly",
-    "interval": "Every {{n}}"
+    "interval": "Every"
   },
   "reminder": {
     "label": "Reminder",

@@ -625,7 +625,7 @@
     "daily": "יומי",
     "weekly": "שבועי",
     "monthly": "חודשי",
-    "interval": "כל {{n}}"
+    "interval": "כל"
   },
   "reminder": {
     "label": "תזכורת",

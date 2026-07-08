@@ -4,8 +4,9 @@ import {
   FormControl, IconButton, InputLabel, MenuItem, Select, TextField, Typography,
 } from '@mui/material'
 import NoteAltRoundedIcon from '@mui/icons-material/NoteAltRounded'
-import AddRoundedIcon    from '@mui/icons-material/AddRounded'
-import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded'
+import AddRoundedIcon     from '@mui/icons-material/AddRounded'
+import DeleteRoundedIcon  from '@mui/icons-material/DeleteRounded'
+import EditRoundedIcon    from '@mui/icons-material/EditRounded'
 import { useTranslation } from 'react-i18next'
 import { tasksApi, goalsApi } from '../../api'
 import { ExecutionType, GoalCategory, GoalType, Priority, RecurrenceType, TaskNature } from '../../types'
@@ -119,6 +120,10 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
   }>>([])
   const subInputRef = useRef<HTMLInputElement>(null)
 
+  // inline editing for saved subtasks
+  const [editingSubId,    setEditingSubId]    = useState<string | null>(null)
+  const [editingSubTitle, setEditingSubTitle] = useState('')
+
   // Debounced title → smart notes suggestion (new task mode only)
   useEffect(() => {
     const excludeTaskId = editTask?.id   // capture before guard narrowing
@@ -176,6 +181,8 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
       setSubTasks([])
       setExistingSubs([])
       setDeletedSubIds(new Set())
+      setEditingSubId(null)
+      setEditingSubTitle('')
       setNoteSuggestion(null)
       setDismissedSuggestionId(null)
     } else if (!open) {
@@ -236,7 +243,7 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
     setLoading(true)
     try {
       if (isEdit && editTask) {
-        // ג”€ג”€ Edit mode ג”€ג”€
+        // ג"€ג"€ Edit mode ג"€ג"€
         const updated = await tasksApi.update(editTask.id, {
           title:                title.trim(),
           notes:                notes.trim() || undefined,
@@ -275,7 +282,7 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
         }
         onEdit?.(finalTask)
       } else {
-        // ג”€ג”€ Create mode ג”€ג”€
+        // ג"€ג"€ Create mode ג"€ג"€
         const task = await tasksApi.create({
           userId: userId!,
           title:                title.trim(),
@@ -309,7 +316,7 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: 4 } }}>
-      <DialogTitle sx={{ fontWeight: 700 }}>{isEdit ? t('task.edit', '׳¢׳¨׳™׳›׳× ׳׳©׳™׳׳”') : t('task.new')}</DialogTitle>
+      <DialogTitle sx={{ fontWeight: 700 }}>{isEdit ? t('task.edit', '׳¢׳¨׳™׳›׳× ׳׳©׳™׳׳"') : t('task.new')}</DialogTitle>
 
       <DialogContent sx={{ pt: '12px !important' }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
@@ -620,15 +627,18 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
               ))}
             </Box>
             {recurrenceType !== RecurrenceType.None && (
-              <TextField
-                label={t('recurrence.interval', 'כל')}
-                type="number"
-                value={recurrenceInterval}
-                onChange={(e) => setRecurrenceInterval(Math.max(1, Number(e.target.value)))}
-                size="small"
-                sx={{ width: 100 }}
-                inputProps={{ min: 1, max: 365 }}
-              />
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                <Typography variant="body2" color="text.secondary">{t('recurrence.interval')}</Typography>
+                <TextField
+                  type="number"
+                  value={recurrenceInterval}
+                  onChange={(e) => setRecurrenceInterval(Math.max(1, Number(e.target.value)))}
+                  size="small"
+                  sx={{ width: 72 }}
+                  inputProps={{ min: 1, max: 365 }}
+                />
+                <Typography variant="body2" color="text.secondary">{t(`recurrence.${recurrenceType}`)}</Typography>
+              </Box>
             )}
           </Box>
 
@@ -642,7 +652,8 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
             {existingSubs.length > 0 && (
               <Box sx={{ mb: 1 }}>
                 {existingSubs.map((st) => {
-                  const deleted = deletedSubIds.has(st.id)
+                  const deleted  = deletedSubIds.has(st.id)
+                  const isEditing = editingSubId === st.id
                   return (
                     <Box key={st.id} sx={{ display: 'flex', alignItems: 'center', gap: 0.5, py: 0.25, opacity: deleted ? 0.4 : 1 }}>
                       <Checkbox
@@ -653,9 +664,48 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
                           setExistingSubs(prev => prev.map(s => s.id === st.id ? { ...s, isCompleted: !s.isCompleted } : s))
                         }}
                       />
-                      <Typography variant="body2" sx={{ flex: 1, textDecoration: st.isCompleted ? 'line-through' : 'none', color: 'text.secondary' }}>
-                        {st.title}
-                      </Typography>
+                      {isEditing ? (
+                        <TextField
+                          size="small"
+                          value={editingSubTitle}
+                          onChange={(e) => setEditingSubTitle(e.target.value)}
+                          onKeyDown={async (e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              const v = editingSubTitle.trim()
+                              if (v && v !== st.title) {
+                                await tasksApi.updateSubTask(st.id, { title: v })
+                                setExistingSubs(prev => prev.map(s => s.id === st.id ? { ...s, title: v } : s))
+                              }
+                              setEditingSubId(null)
+                            }
+                            if (e.key === 'Escape') setEditingSubId(null)
+                          }}
+                          onBlur={async () => {
+                            const v = editingSubTitle.trim()
+                            if (v && v !== st.title) {
+                              await tasksApi.updateSubTask(st.id, { title: v })
+                              setExistingSubs(prev => prev.map(s => s.id === st.id ? { ...s, title: v } : s))
+                            }
+                            setEditingSubId(null)
+                          }}
+                          autoFocus
+                          sx={{ flex: 1 }}
+                        />
+                      ) : (
+                        <Typography
+                          variant="body2"
+                          sx={{ flex: 1, textDecoration: st.isCompleted ? 'line-through' : 'none', color: 'text.secondary', cursor: 'text' }}
+                          onDoubleClick={() => { setEditingSubId(st.id); setEditingSubTitle(st.title) }}
+                        >
+                          {st.title}
+                        </Typography>
+                      )}
+                      {!isEditing && (
+                        <IconButton size="small" onClick={() => { setEditingSubId(st.id); setEditingSubTitle(st.title) }}>
+                          <EditRoundedIcon sx={{ fontSize: 14, color: 'text.disabled' }} />
+                        </IconButton>
+                      )}
                       <IconButton size="small" onClick={() => toggleDeleteExisting(st.id)}>
                         <DeleteRoundedIcon sx={{ fontSize: 16, color: deleted ? 'error.main' : 'text.disabled' }} />
                       </IconButton>
@@ -671,7 +721,7 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
                 inputRef={subInputRef}
                 size="small"
                 fullWidth
-                placeholder={t('task.addSubtask', '׳”׳•׳¡׳£ ׳×׳×-׳׳©׳™׳׳”...')}
+                placeholder={t('task.addSubtask', '׳"׳•׳¡׳£ ׳×׳×-׳׳©׳™׳׳"...')}
                 value={subTaskInput}
                 onChange={(e) => setSubTaskInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addSubTask() } }}
@@ -722,7 +772,7 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
               <TextField
                 size="small"
                 type="number"
-                placeholder={t('task.durationLabel', '׳“׳§׳•׳×')}
+                placeholder={t('task.durationLabel', '׳"׳§׳•׳×')}
                 value={subTaskDuration}
                 onChange={(e) => setSubTaskDuration(e.target.value)}
                 sx={{ width: 90 }}
@@ -734,7 +784,7 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
             {subTasks.map((st, idx) => (
               <Box key={idx} sx={{ display: 'flex', alignItems: 'center', gap: 0.5, py: 0.25, pl: 0.5 }}>
                 <Box sx={{ flex: 1 }}>
-                  <Typography variant="body2" color="text.secondary">ג€¢ {st.title}</Typography>
+                  <Typography variant="body2" color="text.secondary">{'· '}{st.title}</Typography>
                   <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 0.25 }}>
                     {st.executionType && (
                       <Chip size="small" label={t(`executionType.${st.executionType}`)}
@@ -745,10 +795,20 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
                         sx={{ height: 18, fontSize: '0.6rem', bgcolor: PRIORITY_STYLE[st.priority]?.color + '22', color: PRIORITY_STYLE[st.priority]?.color }} />
                     )}
                     {st.durationMinutes && (
-                      <Typography variant="caption" color="text.disabled">{st.durationMinutes}{t('task.minutesShort', '׳“׳³')}</Typography>
+                      <Typography variant="caption" color="text.disabled">{st.durationMinutes}{t('task.minutesShort')}</Typography>
                     )}
                   </Box>
                 </Box>
+                <IconButton size="small" title={t('common.edit')} onClick={() => {
+                  setSubTaskInput(st.title)
+                  setSubTaskExec(st.executionType ?? '')
+                  setSubTaskPriority(st.priority ?? '')
+                  setSubTaskDuration(st.durationMinutes?.toString() ?? '')
+                  removeSubTask(idx)
+                  subInputRef.current?.focus()
+                }}>
+                  <EditRoundedIcon sx={{ fontSize: 14, color: 'text.disabled' }} />
+                </IconButton>
                 <IconButton size="small" onClick={() => removeSubTask(idx)}>
                   <DeleteRoundedIcon sx={{ fontSize: 16 }} />
                 </IconButton>
