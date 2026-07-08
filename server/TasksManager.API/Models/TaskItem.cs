@@ -21,8 +21,12 @@ public class TaskItem
     public Guid? ListId { get; set; }
 
     public DateTime? ReminderAt { get; set; }
+    /// <summary>Minutes before DueDate/PlannedTime to fire the reminder (e.g. 60 = 1 hour before).</summary>
+    public int? ReminderOffsetMinutes { get; set; }
     public RecurrenceType RecurrenceType { get; set; } = RecurrenceType.None;
     public int RecurrenceInterval { get; set; } = 1;
+    /// <summary>For recurring tasks: the date this task was last marked complete. Used instead of IsCompleted.</summary>
+    public DateOnly? LastCompletedDate { get; set; }
 
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }

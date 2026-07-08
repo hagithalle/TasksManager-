@@ -85,6 +85,8 @@ public class TaskService : ITaskService
         var nature = Enum.TryParse<TaskNature>(dto.Nature, true, out var tn)
             ? tn : TaskNature.Action;
 
+        var resolvedReminder = ResolveReminderAt(dto.ReminderAt, dto.ReminderOffsetMinutes, dto.DueDate, dto.PlannedTime);
+
         var task = new TaskItem
         {
             Id = Guid.NewGuid(),
@@ -99,7 +101,8 @@ public class TaskService : ITaskService
             DurationMinutes = dto.DurationMinutes,
             GoalId = dto.GoalId,
             ListId = dto.ListId,
-            ReminderAt = dto.ReminderAt,
+            ReminderAt = resolvedReminder,
+            ReminderOffsetMinutes = dto.ReminderOffsetMinutes,
             RecurrenceType = recurrence,
             RecurrenceInterval = dto.RecurrenceInterval,
             Nature = nature,
@@ -140,14 +143,29 @@ public class TaskService : ITaskService
         if (dto.Notes is not null)          task.Notes         = dto.Notes;
         if (dto.IsCompleted.HasValue)
         {
-            task.IsCompleted = dto.IsCompleted.Value;
-            if (dto.IsCompleted.Value && task.CompletedAt is null)
-                task.CompletedAt = DateTime.UtcNow;
-            else if (!dto.IsCompleted.Value)
-                task.CompletedAt = null;
-            // Sync status with completion toggle (unless Status is also being set explicitly)
-            if (!dto.Status.HasValue)
-                task.Status = dto.IsCompleted.Value ? ItemStatus.Completed : ItemStatus.Open;
+            var isRecurring = task.RecurrenceType != RecurrenceType.None;
+
+            if (dto.IsCompleted.Value && isRecurring)
+            {
+                // Recurring task: record completion date and reset to active
+                task.LastCompletedDate = DateOnly.FromDateTime(DateTime.UtcNow);
+                task.CompletedAt       = DateTime.UtcNow;
+                task.IsCompleted       = false;   // stays active for next period
+                task.Status            = ItemStatus.Open;
+            }
+            else
+            {
+                task.IsCompleted = dto.IsCompleted.Value;
+                if (dto.IsCompleted.Value && task.CompletedAt is null)
+                    task.CompletedAt = DateTime.UtcNow;
+                else if (!dto.IsCompleted.Value)
+                {
+                    task.CompletedAt       = null;
+                    task.LastCompletedDate = null;
+                }
+                if (!dto.Status.HasValue)
+                    task.Status = dto.IsCompleted.Value ? ItemStatus.Completed : ItemStatus.Open;
+            }
         }
         if (dto.Priority.HasValue)         task.Priority      = dto.Priority.Value;
         if (dto.ExecutionType.HasValue)    task.ExecutionType = dto.ExecutionType.Value;
@@ -157,7 +175,20 @@ public class TaskService : ITaskService
         if (dto.DurationMinutes.HasValue)  task.DurationMinutes = dto.DurationMinutes;
         if (dto.GoalId.HasValue)           task.GoalId        = dto.GoalId;
         if (dto.ListId.HasValue)           task.ListId        = dto.ListId;
-        if (dto.ReminderAt.HasValue)       task.ReminderAt    = dto.ReminderAt;
+        if (dto.ReminderOffsetMinutes.HasValue)
+            task.ReminderOffsetMinutes = dto.ReminderOffsetMinutes;
+        // Recompute ReminderAt when offset or due date changes
+        if (dto.ReminderOffsetMinutes.HasValue || dto.DueDate.HasValue || dto.PlannedTime is not null)
+        {
+            var offsetToUse = dto.ReminderOffsetMinutes ?? task.ReminderOffsetMinutes;
+            var dueDateToUse = dto.DueDate ?? task.DueDate;
+            var timeToUse    = dto.PlannedTime ?? task.PlannedTime;
+            task.ReminderAt  = ResolveReminderAt(dto.ReminderAt, offsetToUse, dueDateToUse, timeToUse);
+        }
+        else if (dto.ReminderAt.HasValue)
+        {
+            task.ReminderAt = dto.ReminderAt;
+        }
         if (dto.RecurrenceType is not null &&
             Enum.TryParse<RecurrenceType>(dto.RecurrenceType, true, out var rt))
             task.RecurrenceType = rt;
@@ -168,7 +199,6 @@ public class TaskService : ITaskService
         if (dto.Status.HasValue)
         {
             task.Status = dto.Status.Value;
-            // Sync IsCompleted with explicit Status transitions
             if (dto.Status.Value == ItemStatus.Completed && !task.IsCompleted)
             {
                 task.IsCompleted = true;
@@ -176,51 +206,14 @@ public class TaskService : ITaskService
             }
             else if (dto.Status.Value == ItemStatus.Open && task.IsCompleted)
             {
-                task.IsCompleted = false;
-                task.CompletedAt = null;
+                task.IsCompleted       = false;
+                task.CompletedAt       = null;
+                task.LastCompletedDate = null;
             }
         }
         task.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
-
-        // Auto-create next occurrence when a recurring task is completed
-        if (dto.IsCompleted == true && task.RecurrenceType != RecurrenceType.None && task.DueDate.HasValue)
-        {
-            var interval = task.RecurrenceInterval < 1 ? 1 : task.RecurrenceInterval;
-            var nextDue = task.RecurrenceType switch
-            {
-                RecurrenceType.Daily   => task.DueDate.Value.AddDays(interval),
-                RecurrenceType.Weekly  => task.DueDate.Value.AddDays(7 * interval),
-                RecurrenceType.Monthly => task.DueDate.Value.AddMonths(interval),
-                _                      => (DateTime?)null
-            };
-
-            if (nextDue.HasValue)
-            {
-                var next = new TaskItem
-                {
-                    Id = Guid.NewGuid(),
-                    UserId = task.UserId,
-                    Title = task.Title,
-                    Notes = task.Notes,
-                    Priority = task.Priority,
-                    ExecutionType = task.ExecutionType,
-                    Difficulty = task.Difficulty,
-                    DueDate = nextDue,
-                    PlannedTime = task.PlannedTime,
-                    DurationMinutes = task.DurationMinutes,
-                    GoalId = task.GoalId,
-                    ListId = task.ListId,
-                    RecurrenceType = task.RecurrenceType,
-                    RecurrenceInterval = task.RecurrenceInterval,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                };
-                _db.Tasks.Add(next);
-                await _db.SaveChangesAsync();
-            }
-        }
 
         return ToDto(task);
     }
@@ -319,11 +312,31 @@ public class TaskService : ITaskService
         t.SubTasks.Select(ToSubDto),
         t.CreatedAt, t.UpdatedAt,
         t.ReminderAt,
+        t.ReminderOffsetMinutes,
         t.RecurrenceType.ToString().ToLower(),
         t.RecurrenceInterval,
+        t.LastCompletedDate.HasValue ? t.LastCompletedDate.Value.ToString("yyyy-MM-dd") : null,
         t.Nature.ToString().ToLower(),
         t.Status
     );
+
+    /// <summary>
+    /// Returns the actual reminder DateTime.
+    /// If ReminderOffsetMinutes is set and a due date exists, computes: dueDate[+plannedTime] - offset.
+    /// Otherwise falls back to the explicit ReminderAt value (if any).
+    /// </summary>
+    private static DateTime? ResolveReminderAt(
+        DateTime? explicitAt, int? offsetMinutes, DateTime? dueDate, string? plannedTime)
+    {
+        if (offsetMinutes.HasValue && dueDate.HasValue)
+        {
+            var baseDate = dueDate.Value.Date;
+            if (!string.IsNullOrEmpty(plannedTime) && TimeSpan.TryParse(plannedTime, out var ts))
+                baseDate = baseDate.Add(ts);
+            return baseDate.AddMinutes(-offsetMinutes.Value);
+        }
+        return explicitAt;
+    }
 
     private static SubTaskDto ToSubDto(SubTask s) =>
         new(s.Id, s.TaskItemId, s.Title, s.IsCompleted,

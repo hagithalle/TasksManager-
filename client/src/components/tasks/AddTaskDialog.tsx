@@ -92,9 +92,9 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
   const [dueDate,         setDueDate]         = useState('')
   const [plannedTime,     setPlannedTime]     = useState('')
   const [endTime,         setEndTime]         = useState('')
-  const [durationMinutes, setDurationMinutes] = useState('')
-  const [reminderAt,      setReminderAt]      = useState('')
-  const [recurrenceType,  setRecurrenceType]  = useState<RecurrenceType>(RecurrenceType.None)
+  const [durationMinutes,       setDurationMinutes]       = useState('')
+  const [reminderOffsetMinutes, setReminderOffsetMinutes] = useState<number | ''>('')
+  const [recurrenceType,        setRecurrenceType]        = useState<RecurrenceType>(RecurrenceType.None)
   const [recurrenceInterval, setRecurrenceInterval] = useState(1)
   const [taskNature,      setTaskNature]      = useState<TaskNature>(TaskNature.Action)
   const [titleError,      setTitleError]      = useState(false)
@@ -143,7 +143,7 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
       setPlannedTime(editTask.plannedTime ?? '')
       setDurationMinutes(editTask.durationMinutes?.toString() ?? '')
       setEndTime(computeEndTime(editTask.plannedTime ?? '', editTask.durationMinutes ?? null))
-      setReminderAt(editTask.reminderAt ? editTask.reminderAt.slice(0, 16) : '')
+      setReminderOffsetMinutes(editTask.reminderOffsetMinutes ?? '')
       setRecurrenceType(editTask.recurrenceType ?? RecurrenceType.None)
       setRecurrenceInterval(editTask.recurrenceInterval ?? 1)
       setTaskNature((editTask.taskNature as TaskNature) ?? TaskNature.Action)
@@ -164,7 +164,7 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
       setPlannedTime('')
       setEndTime('')
       setDurationMinutes('')
-      setReminderAt('')
+      setReminderOffsetMinutes('')
       setRecurrenceType(RecurrenceType.None)
       setRecurrenceInterval(1)
       setTaskNature(TaskNature.Action)
@@ -188,7 +188,7 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
       setPlannedTime('')
       setEndTime('')
       setDurationMinutes('')
-      setReminderAt('')
+      setReminderOffsetMinutes('')
       setRecurrenceType(RecurrenceType.None)
       setRecurrenceInterval(1)
       setTaskNature(TaskNature.Action)
@@ -238,18 +238,18 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
       if (isEdit && editTask) {
         // ג”€ג”€ Edit mode ג”€ג”€
         const updated = await tasksApi.update(editTask.id, {
-          title:              title.trim(),
-          notes:              notes.trim() || undefined,
-          goalId:             goalId || undefined,
+          title:                title.trim(),
+          notes:                notes.trim() || undefined,
+          goalId:               goalId || undefined,
           priority,
           executionType,
-          dueDate:            dueDate || undefined,
-          plannedTime:        plannedTime || undefined,
-          durationMinutes:    durationMinutes ? Number(durationMinutes) : undefined,
-          reminderAt:         reminderAt || undefined,
-          recurrenceType:     recurrenceType,
-          recurrenceInterval: recurrenceInterval,
-          nature:             taskNature,
+          dueDate:              dueDate || undefined,
+          plannedTime:          plannedTime || undefined,
+          durationMinutes:      durationMinutes ? Number(durationMinutes) : undefined,
+          reminderOffsetMinutes: reminderOffsetMinutes !== '' ? reminderOffsetMinutes : undefined,
+          recurrenceType:       recurrenceType,
+          recurrenceInterval:   recurrenceInterval,
+          nature:               taskNature,
         })
         // Delete removed sub-tasks
         for (const id of deletedSubIds) {
@@ -278,18 +278,18 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
         // ג”€ג”€ Create mode ג”€ג”€
         const task = await tasksApi.create({
           userId: userId!,
-          title:              title.trim(),
-          notes:              notes.trim() || undefined,
-          goalId:             goalId || undefined,
+          title:                title.trim(),
+          notes:                notes.trim() || undefined,
+          goalId:               goalId || undefined,
           priority,
           executionType,
-          dueDate:            dueDate || undefined,
-          plannedTime:        plannedTime || undefined,
-          durationMinutes:    durationMinutes ? Number(durationMinutes) : undefined,
-          reminderAt:         reminderAt || undefined,
-          recurrenceType:     recurrenceType,
-          recurrenceInterval: recurrenceInterval,
-          nature:             taskNature,
+          dueDate:              dueDate || undefined,
+          plannedTime:          plannedTime || undefined,
+          durationMinutes:      durationMinutes ? Number(durationMinutes) : undefined,
+          reminderOffsetMinutes: reminderOffsetMinutes !== '' ? reminderOffsetMinutes : undefined,
+          recurrenceType:       recurrenceType,
+          recurrenceInterval:   recurrenceInterval,
+          nature:               taskNature,
         })
         for (const st of subTasks) {
           const sub = await tasksApi.addSubTask(task.id, {
@@ -575,20 +575,28 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
             />
           </Box>
 
-          {/* Reminder */}
-          <Box>
-            <Typography variant="caption" color="text.secondary" sx={{ mb: 0.75, display: 'block' }}>
-              {t('reminder.label', 'תזכורת')}
-            </Typography>
-            <TextField
-              type="datetime-local"
-              value={reminderAt}
-              onChange={(e) => setReminderAt(e.target.value)}
-              size="small"
-              sx={{ width: '100%' }}
-              InputLabelProps={{ shrink: true }}
-            />
-          </Box>
+          {/* Reminder offset */}
+          <FormControl fullWidth size="small">
+            <InputLabel>{t('reminder.label', 'תזכורת')}</InputLabel>
+            <Select
+              value={reminderOffsetMinutes}
+              onChange={(e) => setReminderOffsetMinutes(e.target.value === '' ? '' : Number(e.target.value))}
+              label={t('reminder.label', 'תזכורת')}
+            >
+              <MenuItem value="">{t('reminder.none', 'ללא תזכורת')}</MenuItem>
+              {([
+                { key: '15min',  value: 15    },
+                { key: '30min',  value: 30    },
+                { key: '1hour',  value: 60    },
+                { key: '2hours', value: 120   },
+                { key: '1day',   value: 1440  },
+                { key: '2days',  value: 2880  },
+                { key: '1week',  value: 10080 },
+              ] as const).map(({ key, value }) => (
+                <MenuItem key={key} value={value}>{t(`reminder.${key}`)}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
           {/* Recurrence */}
           <Box>

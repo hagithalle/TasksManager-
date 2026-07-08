@@ -23,6 +23,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useAuth }                     from '../contexts/AuthContext'
 import { tasksApi, goalsApi }          from '../api'
 import { Priority, RecurrenceType } from '../types'
+import { isCompletedInCurrentPeriod } from '../hooks/focusEngine'
 import type { TaskItem, Goal }         from '../types'
 import { Filter, TODAY, applyFilter, isArchivedCompleted, PRIORITY_COLOR } from '../utils'
 import AddTaskDialog from '../components/tasks/AddTaskDialog'
@@ -79,11 +80,17 @@ export default function TasksPage() {
   const toggleTaskComplete = useCallback((taskId: string) => {
     const task = localTasks.find((t) => t.id === taskId)
     if (!task) return
-    const updated = { ...task, isCompleted: !task.isCompleted }
-    setLocalTasks((prev) => prev.map((t) => t.id === taskId ? updated : t))
-    tasksApi.update(taskId, { isCompleted: updated.isCompleted }).catch(() => {
-      setLocalTasks((prev) => prev.map((t) => t.id === taskId ? task : t))
-    })
+    const isRecurring = task.recurrenceType && task.recurrenceType !== RecurrenceType.None
+    const completingNow = isRecurring ? !isCompletedInCurrentPeriod(task) : !task.isCompleted
+    // Optimistic update
+    const optimistic: typeof task = isRecurring && completingNow
+      ? { ...task, lastCompletedDate: new Date().toISOString().slice(0, 10) }
+      : { ...task, isCompleted: completingNow }
+    setLocalTasks((prev) => prev.map((t) => t.id === taskId ? optimistic : t))
+    // Sync with server and apply its canonical response
+    tasksApi.update(taskId, { isCompleted: completingNow })
+      .then((updated) => setLocalTasks((prev) => prev.map((t) => t.id === taskId ? updated : t)))
+      .catch(() => setLocalTasks((prev) => prev.map((t) => t.id === taskId ? task : t)))
   }, [localTasks])
 
   const toggleSubComplete = useCallback((taskId: string, subId: string) => {
@@ -441,6 +448,7 @@ function TaskGroup({ tasks, expanded, onToggleExpand, onToggleTask, onToggleSub,
 
   const activeTasks = tasks.filter((tk) => !tk.isCompleted)
   const doneTasks   = tasks.filter((tk) => tk.isCompleted)
+  const doneInPeriod = (tk: typeof tasks[0]) => isCompletedInCurrentPeriod(tk)
 
   return (
     <>
@@ -457,11 +465,12 @@ function TaskGroup({ tasks, expanded, onToggleExpand, onToggleTask, onToggleSub,
     >
       <List disablePadding>
         {activeTasks.map((task, index) => {
-          const hasSubs = (task.subTasks?.length ?? 0) > 0
-          const isOpen  = expanded[task.id] ?? false
+          const hasSubs   = (task.subTasks?.length ?? 0) > 0
+          const isOpen    = expanded[task.id] ?? false
+          const donePeriod = doneInPeriod(task)
 
           return (
-            <Box key={task.id}>
+            <Box key={task.id} sx={{ opacity: donePeriod ? 0.6 : 1 }}>
               {index > 0 && <Divider />}
 
               <ListItem
@@ -471,11 +480,11 @@ function TaskGroup({ tasks, expanded, onToggleExpand, onToggleTask, onToggleSub,
                 <ListItemIcon sx={{ minWidth: 36, mt: 0.25 }}>
                   <Checkbox
                     edge="start"
-                    checked={task.isCompleted}
+                    checked={task.isCompleted || donePeriod}
                     onChange={() => onToggleTask(task.id)}
                     disableRipple
                     icon={<RadioButtonUncheckedRoundedIcon sx={{ color: 'text.disabled' }} />}
-                    checkedIcon={<CheckCircleRoundedIcon sx={{ color: 'primary.main' }} />}
+                    checkedIcon={<CheckCircleRoundedIcon sx={{ color: donePeriod ? 'success.main' : 'primary.main' }} />}
                     size="small"
                   />
                 </ListItemIcon>
@@ -493,8 +502,8 @@ function TaskGroup({ tasks, expanded, onToggleExpand, onToggleTask, onToggleSub,
                         variant="body2"
                         fontWeight={500}
                         sx={{
-                          textDecoration: task.isCompleted ? 'line-through' : 'none',
-                          color: task.isCompleted ? 'text.disabled' : 'text.primary',
+                          textDecoration: (task.isCompleted || donePeriod) ? 'line-through' : 'none',
+                          color: (task.isCompleted || donePeriod) ? 'text.disabled' : 'text.primary',
                           flex: 1,
                         }}
                       >
@@ -546,6 +555,11 @@ function TaskGroup({ tasks, expanded, onToggleExpand, onToggleTask, onToggleSub,
                       {task.recurrenceType && task.recurrenceType !== RecurrenceType.None && (
                         <Typography component="span" variant="caption" color="primary.main" sx={{ fontWeight: 600 }}>
                           🔁 {t(`recurrence.${task.recurrenceType}`, task.recurrenceType)}
+                        </Typography>
+                      )}
+                      {donePeriod && (
+                        <Typography component="span" variant="caption" color="success.main" sx={{ fontWeight: 600 }}>
+                          ✓ {t('task.doneToday', 'בוצע היום')}
                         </Typography>
                       )}
                       {task.reminderAt && (

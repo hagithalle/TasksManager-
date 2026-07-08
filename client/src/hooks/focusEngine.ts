@@ -1,5 +1,5 @@
 import type { TaskItem } from '../types/task'
-import { Priority, ExecutionType, TaskNature, TaskStatus } from '../types/enums'
+import { Priority, ExecutionType, TaskNature, TaskStatus, RecurrenceType } from '../types/enums'
 
 // ── Public types ───────────────────────────────────────────────────────────────
 
@@ -93,15 +93,45 @@ function daysBetween(from: string, to: string): number {
   return Math.round((b - a) / 86_400_000)
 }
 
+/** Returns true when a recurring task was already completed in its current period. */
+export function isCompletedInCurrentPeriod(task: TaskItem): boolean {
+  if (!task.recurrenceType || task.recurrenceType === RecurrenceType.None) return false
+  if (!task.lastCompletedDate) return false
+
+  const today = new Date()
+  const lcd   = new Date(task.lastCompletedDate + 'T00:00:00')
+
+  switch (task.recurrenceType) {
+    case RecurrenceType.Daily:
+      return lcd.toDateString() === today.toDateString()
+    case RecurrenceType.Weekly: {
+      const startOfWeek = (d: Date) => {
+        const day = d.getDay()            // 0 = Sunday
+        const diff = (day === 0 ? -6 : 1) - day   // offset to Monday
+        const mon = new Date(d)
+        mon.setDate(d.getDate() + diff)
+        mon.setHours(0, 0, 0, 0)
+        return mon
+      }
+      return startOfWeek(lcd) >= startOfWeek(today)
+    }
+    case RecurrenceType.Monthly:
+      return lcd.getFullYear() === today.getFullYear() && lcd.getMonth() === today.getMonth()
+    default:
+      return false
+  }
+}
+
 // ── Step 1: extract meetings / appointments → Today's Schedule ────────────────
 
 export function extractScheduledEvents(tasks: TaskItem[]): ScheduledEvent[] {
   return tasks
     .filter(t =>
       !t.isCompleted &&
+      !isCompletedInCurrentPeriod(t) &&
       t.taskStatus !== TaskStatus.Archived &&
       t.taskStatus !== TaskStatus.Missed &&
-      !!t.plannedTime   // any task with a fixed time goes here
+      !!t.plannedTime
     )
     .map(t => ({ task: t, time: t.plannedTime! }))
     .sort((a, b) => a.time.localeCompare(b.time))
@@ -115,6 +145,7 @@ function flattenCandidates(tasks: TaskItem[]): FlatCandidate[] {
 
   for (const task of tasks) {
     if (task.isCompleted) continue
+    if (isCompletedInCurrentPeriod(task)) continue
     if (task.taskStatus === TaskStatus.Archived || task.taskStatus === TaskStatus.Missed) continue
 
     const openSubs = task.subTasks?.filter(s => !s.isCompleted) ?? []
@@ -167,8 +198,8 @@ function flattenCandidates(tasks: TaskItem[]): FlatCandidate[] {
 
 function isEligible(c: FlatCandidate, scheduledIds: Set<string>): boolean {
   if (scheduledIds.has(c.sourceTask.id)) return false
-  // Timed tasks belong in Today's Schedule, never in recommendations
   if (!c.isSubTask && c.plannedTime) return false
+  if (isCompletedInCurrentPeriod(c.sourceTask)) return false
   return true
 }
 

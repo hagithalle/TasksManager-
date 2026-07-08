@@ -64,11 +64,19 @@ export interface TaskItem {
   /** UTC datetime string for a one-time reminder notification */
   reminderAt?: string
 
+  /** Minutes before due date to fire the reminder (e.g. 60 = 1 hour before).
+   *  When set, the backend computes reminderAt automatically. */
+  reminderOffsetMinutes?: number
+
   /** How often this task recurs after completion */
   recurrenceType?: RecurrenceType
 
   /** Recurrence interval (e.g. every 2 days/weeks/months) */
   recurrenceInterval?: number
+
+  /** ISO date string of the most recent completion for recurring tasks.
+   *  The task resets each period (daily/weekly/monthly) regardless of this value. */
+  lastCompletedDate?: string
 
   /** Whether this is a regular action, a meeting, or an appointment */
   taskNature?: TaskNature

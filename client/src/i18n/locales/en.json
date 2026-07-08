@@ -46,6 +46,7 @@
     "emptySubtitle": "Add your first task — every journey begins with one step!",
     "emptyFilter": "No tasks for this filter",
     "completedSection": "Completed ({{count}})",
+    "doneToday": "Done today",
     "minutesShort": "min",
     "durationLabel": "Duration (min)",
     "plannedTime": "Time",
@@ -628,7 +629,14 @@
   },
   "reminder": {
     "label": "Reminder",
-    "none": "No reminder"
+    "none": "No reminder",
+    "15min": "15 minutes before",
+    "30min": "30 minutes before",
+    "1hour": "1 hour before",
+    "2hours": "2 hours before",
+    "1day": "1 day before",
+    "2days": "2 days before",
+    "1week": "1 week before"
   },
   "settings": {
     "title": "Settings",
