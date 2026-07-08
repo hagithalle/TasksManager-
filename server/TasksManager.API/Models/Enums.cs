@@ -75,6 +75,7 @@ public enum ShoppingDepartment
     Disposable          = 7,
     Baby                = 8,
     Other               = 9,
+    Frequent            = 10,  // לעיתים קרובות
 }
 
 public enum ShoppingItemType

@@ -8,6 +8,7 @@ public interface IPersonalListService
     Task<PersonalListDto?> GetByIdAsync(Guid id);
     Task<PersonalListDto> CreateAsync(CreatePersonalListDto dto);
     Task<PersonalListDto?> UpdateAsync(Guid id, UpdatePersonalListDto dto, Guid callerId);
+    Task<PersonalListDto?> ArchiveAsync(Guid id, Guid callerId, bool archive);
     Task<bool> DeleteAsync(Guid id, Guid callerId);
 
     // Generic list item operations

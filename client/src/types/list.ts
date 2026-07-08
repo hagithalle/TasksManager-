@@ -96,6 +96,9 @@ export interface PersonalList {
   /** For cooking plan lists: Shabbat or regular weekday mode */
   cookingMode: CookingMode
 
+  /** True when the user has archived/completed this list */
+  isArchived: boolean
+
   /** Generic checklist items (non-shopping lists) */
   items: PersonalListItem[]
 

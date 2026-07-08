@@ -97,7 +97,13 @@
     "items": "{{count}} פריטים",
     "convertToTask": "המר למשימה",
     "customEmoji": "אייקון מותאם אישית",
-    "shareVia": "שתף דרך"
+    "shareVia": "שתף דרך",
+    "archive": "העבר לארכיון",
+    "unarchive": "הוצא מארכיון",
+    "archived": "הסתיים",
+    "archiveNow": "העבר לארכיון",
+    "allDoneArchive": "הכל הושלם! רוצה לשמור ברשימות שהסתיימו?",
+    "archivedNote": "רשימה זו בארכיון"
   },
   "priority": {
     "low": "נמוכה",
@@ -187,7 +193,8 @@
     "q7": "היום הטוב ביותר לעשות יש עצים… ויש עכשיו!"
   },
   "coach": {
-      "pickAnother": "בחר אחרת",
+    "pickAnother": "בחר אחרת",
+    "next": "הבא",
     "title": "מאמן היום שלי",
     "headline": "יש לך {{count}} משימות עד {{time}}",
     "subline": "סיימת {{done}} מתוך {{total}}",
@@ -271,9 +278,8 @@
     }
   },
   "ai": {
-    "title": "עוזר AI",
-    "dayTitle": "סקירת יום",
     "title": "מאמן היום שלי",
+    "dayTitle": "סקירת יום",
     "moveSuggestion": "שקלי להעביר למחר:",
     "moveTomorrow": "העבר למחר",
     "moved": "הועבר",
@@ -460,6 +466,8 @@
     "preview": "תצוגה מקדימה",
     "sendEmail": "שלח דוא״ל",
     "copyMailto": "העתק קישור דוא״ל",
+    "copyText": "העתק תוכן הרשימה",
+    "emailBodyCopied": "הרשימה ארוכה מדי לשליחה ישירה — התוכן הועתק ללוח הגזירים. הדבק אותו בגוף המייל לאחר פתיחת הלקוח.",
     "linkExpired": "הקישור לא נמצא או פג תוקפו",
     "joinError": "שגיאה בהצטרפות",
     "joinSuccess": "הצטרפת בהצלחה!",
@@ -485,12 +493,14 @@
     "cleaning": "ניקיון",
     "disposable": "חד פעמי",
     "baby": "תינוקות",
-    "other": "אחר"
+    "other": "אחר",
+    "frequent": "לעיתים קרובות"
   },
   "shoppingItemType": {
     "regular": "קבוע",
     "occasional": "מדי פעם",
-    "oneTime": "חד פעמי"
+    "oneTime": "חד פעמי",
+    "onetime": "חד פעמי"
   },
   "shopping": {
     "addItem": "הוסף פריט",
@@ -566,7 +576,9 @@
     "emptyState": "אין מנות מתוכננות עדיין. הוסיפי את המנה הראשונה!",
     "suggestions": "מבוסס על היסטוריית הבישול שלך",
     "pushToShopping": "הוסף לרשימת קניות",
-    "extractIngredients": "חלץ מרכיבים",
+    "extractIngredients": "חלץ מרכיבים מהטקסט",
+    "addDetails": "הוסף פרטים (מתכון, מרכיבים, הערות)",
+    "hideDetails": "הסתר פרטים",
     "chooseShoppingList": "בחרי רשימת קניות",
     "selectToAdd": "סמני מרכיבים להוספה",
     "alreadyOnList": "כבר ברשימה",

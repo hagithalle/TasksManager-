@@ -1,6 +1,7 @@
-import { Box, CircularProgress, Alert, Fab, Typography } from '@mui/material'
+import { Box, Collapse, CircularProgress, Alert, Fab, IconButton, Typography } from '@mui/material'
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded'
+import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded'
 import { useTranslation } from 'react-i18next'
 import { useNavigate }    from 'react-router-dom'
 import { useEffect, useState } from 'react'
@@ -17,11 +18,15 @@ export default function ListsPage() {
   const navigate   = useNavigate()
   const { user }   = useAuth()
 
-  const [lists,      setLists]      = useState<PersonalList[]>([])
-  const [loading,    setLoading]    = useState(true)
-  const [error,      setError]      = useState<string | null>(null)
-  const [addOpen,    setAddOpen]    = useState(false)
-  const [aiOpen,     setAiOpen]     = useState(false)
+  const [lists,         setLists]         = useState<PersonalList[]>([])
+  const [loading,       setLoading]       = useState(true)
+  const [error,         setError]         = useState<string | null>(null)
+  const [addOpen,       setAddOpen]       = useState(false)
+  const [aiOpen,        setAiOpen]        = useState(false)
+  const [archivedOpen,  setArchivedOpen]  = useState(false)
+
+  const activeLists   = lists.filter(l => !l.isArchived)
+  const archivedLists = lists.filter(l => l.isArchived)
 
   useEffect(() => {
     if (!user) return
@@ -37,6 +42,12 @@ export default function ListsPage() {
     listsApi.delete(id).catch(() => {
       listsApi.getByUser(user!.id).then(setLists).catch(() => {})
     })
+  }
+
+  const handleArchiveList = (id: string, archive: boolean) => {
+    listsApi.archive(id, archive).then(updated => {
+      setLists(prev => prev.map(l => l.id === id ? updated : l))
+    }).catch(() => {})
   }
 
   return (
@@ -89,8 +100,8 @@ export default function ListsPage() {
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-      {/* ── List grid ── */}
-      {!loading && !error && (lists.length === 0 ? (
+      {/* ── Active lists ── */}
+      {!loading && !error && (activeLists.length === 0 && archivedLists.length === 0 ? (
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 8, gap: 1.5 }}>
           <Typography sx={{ fontSize: 56, lineHeight: 1 }}>📋</Typography>
           <Typography variant="body1" fontWeight={700} color="text.primary">
@@ -101,16 +112,62 @@ export default function ListsPage() {
           </Typography>
         </Box>
       ) : (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-          {lists.map((list) => (
-            <PersonalListCard
-              key={list.id}
-              list={list}
-              onClick={() => navigate(`/lists/${list.id}`)}
-              onDelete={handleDeleteList}
-            />
-          ))}
-        </Box>
+        <>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+            {activeLists.map((list) => (
+              <PersonalListCard
+                key={list.id}
+                list={list}
+                onClick={() => navigate(`/lists/${list.id}`)}
+                onDelete={handleDeleteList}
+                onArchive={(id) => handleArchiveList(id, true)}
+              />
+            ))}
+          </Box>
+
+          {/* ── Archived lists section ── */}
+          {archivedLists.length > 0 && (
+            <Box sx={{ mt: 3 }}>
+              <Box
+                onClick={() => setArchivedOpen(v => !v)}
+                sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer', mb: 1 }}
+              >
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  fontWeight={700}
+                  sx={{ letterSpacing: 0.5, textTransform: 'uppercase', flex: 1 }}
+                >
+                  {t('list.archived', 'רשימות שהסתיימו')} ({archivedLists.length})
+                </Typography>
+                <IconButton size="small" sx={{ p: 0.25 }}>
+                  <ExpandMoreRoundedIcon
+                    sx={{
+                      fontSize: 18,
+                      color: 'text.secondary',
+                      transform: archivedOpen ? 'rotate(180deg)' : 'none',
+                      transition: '0.2s',
+                    }}
+                  />
+                </IconButton>
+              </Box>
+              <Collapse in={archivedOpen}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                  {archivedLists.map((list) => (
+                    <PersonalListCard
+                      key={list.id}
+                      list={list}
+                      onClick={() => navigate(`/lists/${list.id}`)}
+                      onDelete={handleDeleteList}
+                      onArchive={(id) => handleArchiveList(id, false)}
+                      archived
+                    />
+                  ))}
+                </Box>
+              </Collapse>
+            </Box>
+          )}
+        </>
       ))}
 
       {/* ── FAB ── */}

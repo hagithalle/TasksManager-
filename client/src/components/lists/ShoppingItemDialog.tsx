@@ -58,6 +58,7 @@ const DEPT_KEYWORDS: Record<ShoppingDepartment, string[]> = {
     'diapers','diaper','baby food','formula','wipes',
   ],
   [ShoppingDepartment.Other]: [],
+  [ShoppingDepartment.Frequent]: [],
 }
 
 export function detectDepartment(title: string): ShoppingDepartment | null {

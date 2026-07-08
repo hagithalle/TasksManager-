@@ -1,6 +1,8 @@
-import { Box, Card, CardActionArea, IconButton, LinearProgress, Typography } from '@mui/material'
+import { Box, Card, CardActionArea, Chip, IconButton, LinearProgress, Tooltip, Typography } from '@mui/material'
+import ArchiveRoundedIcon from '@mui/icons-material/ArchiveRounded'
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded'
 import ShareRoundedIcon from '@mui/icons-material/ShareRounded'
+import UnarchiveRoundedIcon from '@mui/icons-material/UnarchiveRounded'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { PersonalList } from '../../types'
@@ -20,9 +22,11 @@ interface Props {
   list: PersonalList
   onClick?: () => void
   onDelete?: (id: string) => void
+  onArchive?: (id: string) => void
+  archived?: boolean
 }
 
-export default function PersonalListCard({ list, onClick, onDelete }: Props) {
+export default function PersonalListCard({ list, onClick, onDelete, onArchive, archived = false }: Props) {
   const { t } = useTranslation()
   const [shareOpen, setShareOpen] = useState(false)
 
@@ -41,8 +45,9 @@ export default function PersonalListCard({ list, onClick, onDelete }: Props) {
       sx={{
         borderRadius: 3,
         border: '1px solid',
-        borderColor: allDone ? 'rgba(76,175,80,0.25)' : 'rgba(124,92,255,0.10)',
+        borderColor: archived ? 'rgba(0,0,0,0.08)' : allDone ? 'rgba(76,175,80,0.25)' : 'rgba(124,92,255,0.10)',
         boxShadow: '0 2px 10px rgba(124,92,255,0.07)',
+        opacity: archived ? 0.75 : 1,
         transition: 'box-shadow 0.2s',
         '&:hover': { boxShadow: '0 4px 16px rgba(124,92,255,0.13)' },
       }}
@@ -77,6 +82,23 @@ export default function PersonalListCard({ list, onClick, onDelete }: Props) {
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, flexShrink: 0, ml: 1 }}>
+                {archived && (
+                  <Chip
+                    label={t('list.archived', 'הסתיים')}
+                    size="small"
+                    sx={{ height: 18, fontSize: '0.65rem', mr: 0.5, bgcolor: 'rgba(76,175,80,0.12)', color: 'success.main' }}
+                  />
+                )}
+                {onArchive && (
+                  <Tooltip title={archived ? t('list.unarchive', 'הוצא מארכיון') : t('list.archive', 'העבר לארכיון')}>
+                    <IconButton size="small" onClick={(e) => { e.stopPropagation(); onArchive(list.id) }} sx={{ p: 0.25 }}>
+                      {archived
+                        ? <UnarchiveRoundedIcon sx={{ fontSize: 15, color: 'success.main' }} />
+                        : <ArchiveRoundedIcon sx={{ fontSize: 15, color: 'text.disabled' }} />
+                      }
+                    </IconButton>
+                  </Tooltip>
+                )}
                 {onDelete && (
                   <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDelete(list.id) }} sx={{ p: 0.25 }}>
                     <DeleteRoundedIcon sx={{ fontSize: 15, color: 'text.disabled' }} />

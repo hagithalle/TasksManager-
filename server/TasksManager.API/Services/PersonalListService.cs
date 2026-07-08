@@ -325,6 +325,22 @@ public class PersonalListService : IPersonalListService
 
     // ── Mapping ───────────────────────────────────────────────────────────────
 
+    public async Task<PersonalListDto?> ArchiveAsync(Guid id, Guid callerId, bool archive)
+    {
+        var list = await _db.PersonalLists
+            .Include(l => l.Items)
+            .Include(l => l.ShoppingItems)
+            .Include(l => l.ShoppingSettings)
+            .Include(l => l.CookingItems)
+            .FirstOrDefaultAsync(l => l.Id == id);
+        if (list is null || list.UserId != callerId) return null;
+
+        list.IsArchived = archive;
+        list.UpdatedAt  = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+        return ToDto(list);
+    }
+
     private static PersonalListDto ToDto(PersonalList l) => new(
         l.Id,
         l.UserId,
@@ -332,6 +348,7 @@ public class PersonalListService : IPersonalListService
         l.Emoji,
         l.ListType.ToString().ToLower(),
         l.CookingMode.ToString().ToLower(),
+        l.IsArchived,
         l.Items.Select(ToItemDto).OrderBy(i => i.SortOrder),
         l.ShoppingItems.Select(ToShoppingItemDto).OrderBy(i => i.SortOrder),
         l.ShoppingSettings is null ? null : ToSettingsDto(l.ShoppingSettings),        l.CookingItems.Select(ToCookingItemDto).OrderBy(i => i.SortOrder),        l.CreatedAt,

@@ -14,6 +14,7 @@ export function getDepartmentTranslationKey(dept: ShoppingDepartment): string {
     [ShoppingDepartment.Disposable]: 'shoppingDepartment.disposable',
     [ShoppingDepartment.Baby]: 'shoppingDepartment.baby',
     [ShoppingDepartment.Other]: 'shoppingDepartment.other',
+    [ShoppingDepartment.Frequent]: 'shoppingDepartment.frequent',
   }
   return keyMap[dept] || 'shoppingDepartment.other'
 }
@@ -29,6 +30,7 @@ const DEPARTMENT_EMOJIS: Record<ShoppingDepartment, string> = {
   [ShoppingDepartment.Disposable]: '📦',
   [ShoppingDepartment.Baby]: '👶',
   [ShoppingDepartment.Other]: '📦',
+  [ShoppingDepartment.Frequent]: '⭐',
 }
 
 /**

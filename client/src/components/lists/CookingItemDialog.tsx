@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button,
-  TextField, Stack, Chip, Typography, IconButton, Box,
-  Divider, MenuItem, Select, FormControl, InputLabel,
+  TextField, Stack, Chip, Typography, IconButton, Box, Divider,
+  FormControl, InputLabel, Select, MenuItem, Collapse,
 } from '@mui/material'
 import Autocomplete from '@mui/material/Autocomplete'
 import AddIcon from '@mui/icons-material/Add'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
+import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded'
 import { useTranslation } from 'react-i18next'
 import type { CookingItem, CookingIngredient } from '../../types'
 import type { CreateCookingItemPayload, UpdateCookingItemPayload, CookingSuggestion } from '../../api/listsApi'
@@ -43,46 +44,45 @@ export default function CookingItemDialog({ open, initial, cookingMode, suggesti
   const [ingredients, setIngredients] = useState<CookingIngredient[]>([])
   const [mealSlot, setMealSlot]       = useState<MealSlot>(MealSlot.None)
   const [saving, setSaving]           = useState(false)
-  const [inputMode, setInputMode]     = useState<'manual' | 'url'>('manual')
+  const [showDetails, setShowDetails] = useState(false)
 
   const slots = cookingMode === CookingMode.Shabbat ? SHABBAT_SLOTS : WEEKDAY_SLOTS
-
-  function extractIngredientsFromText(text: string) {
-    return text.split('\n')
-      .map(line => line.trim())
-      .filter(line => line.match(/^(•|\d|\d+\/\d|חצי|רבע|שליש|כף|כוס|קילו|גרם|ליטר|קמצוץ|מעט|כמה|\d+\s?)/))
-      .map(line => ({ title: line, quantity: undefined, unit: '' }))
-  }
-
-  function handleExtractIngredients() {
-    setIngredients(extractIngredientsFromText(notes))
-  }
+  const hasSlots = slots.filter(s => s !== MealSlot.None).length > 0
 
   useEffect(() => {
-    if (initial) {
-      setTitle(initial.title)
-      setRecipeUrl(initial.recipeUrl ?? '')
-      setNotes(initial.notes ?? '')
-      setPlannedDate(initial.plannedDate ?? '')
-      setTags(initial.tags)
-      setIngredients(initial.ingredients.map(i => ({ ...i })))
-      setMealSlot(initial.mealSlot ?? MealSlot.None)
-    } else {
-      setTitle('')
-      setRecipeUrl('')
-      setNotes('')
-      setPlannedDate('')
-      setTags([])
-      setCustomTag('')
-      setIngredients([])
-      setMealSlot(MealSlot.None)
+    if (open) {
+      if (initial) {
+        setTitle(initial.title)
+        setRecipeUrl(initial.recipeUrl ?? '')
+        setNotes(initial.notes ?? '')
+        setPlannedDate(initial.plannedDate ?? '')
+        setTags(initial.tags)
+        setIngredients(initial.ingredients.map(i => ({ ...i })))
+        setMealSlot(initial.mealSlot ?? MealSlot.None)
+        setShowDetails(
+          !!(initial.ingredients.length || initial.recipeUrl || initial.notes || initial.plannedDate)
+        )
+      } else {
+        setTitle('')
+        setRecipeUrl('')
+        setNotes('')
+        setPlannedDate('')
+        setTags([])
+        setCustomTag('')
+        setIngredients([])
+        setMealSlot(MealSlot.None)
+        setShowDetails(false)
+      }
     }
   }, [initial, open])
 
   function handleSelectSuggestion(suggestion: CookingSuggestion | null) {
     if (!suggestion) return
     setTitle(suggestion.title)
-    if (suggestion.ingredients.length > 0) setIngredients(suggestion.ingredients.map(i => ({ ...i })))
+    if (suggestion.ingredients.length > 0) {
+      setIngredients(suggestion.ingredients.map(i => ({ ...i })))
+      setShowDetails(true)
+    }
     if (suggestion.tags.length > 0) setTags(suggestion.tags)
   }
 
@@ -106,6 +106,14 @@ export default function CookingItemDialog({ open, initial, cookingMode, suggesti
 
   function updateIngredient(index: number, field: keyof CookingIngredient, value: string | number | undefined) {
     setIngredients(prev => prev.map((ing, i) => i === index ? { ...ing, [field]: value } : ing))
+  }
+
+  function extractIngredientsFromNotes() {
+    const extracted = notes.split('\n')
+      .map(line => line.trim())
+      .filter(line => line.match(/^(•|\d|\d+\/\d|חצי|רבע|שליש|כף|כוס|קילו|גרם|ליטר|קמצוץ|מעט|כמה|\d+\s?)/))
+      .map(line => ({ title: line, quantity: undefined, unit: '' }))
+    if (extracted.length > 0) setIngredients(extracted)
   }
 
   async function handleSave() {
@@ -133,30 +141,15 @@ export default function CookingItemDialog({ open, initial, cookingMode, suggesti
   }
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: 3 } }}>
+      <DialogTitle sx={{ pb: 1 }}>
         {initial ? t('cooking.editDish') : t('cooking.addDish')}
       </DialogTitle>
 
       <DialogContent>
-        <Stack direction="row" spacing={1} mb={2}>
-          <Chip label="הזנה ידנית" color={inputMode === 'manual' ? 'primary' : 'default'} onClick={() => setInputMode('manual')} />
-          <Chip label="קישור מתכון" color={inputMode === 'url' ? 'primary' : 'default'} onClick={() => setInputMode('url')} />
-        </Stack>
+        <Stack spacing={2} sx={{ mt: 0.5 }}>
 
-        {inputMode === 'url' && (
-          <Stack spacing={1} mb={2}>
-            <TextField
-              label="הדבק כתובת מתכון"
-              value={recipeUrl}
-              onChange={e => setRecipeUrl(e.target.value)}
-              fullWidth
-            />
-          </Stack>
-        )}
-
-        <Stack spacing={2} sx={{ mt: 1 }}>
-          {/* Autocomplete title from personal dish history */}
+          {/* Dish name */}
           {suggestions.length > 0 ? (
             <Autocomplete
               freeSolo
@@ -197,8 +190,8 @@ export default function CookingItemDialog({ open, initial, cookingMode, suggesti
             />
           )}
 
-          {/* Meal slot selector */}
-          {slots.filter(s => s !== MealSlot.None).length > 0 && (
+          {/* Meal slot */}
+          {hasSlots && (
             <FormControl fullWidth size="small">
               <InputLabel>{t('cooking.mealSlot', 'קטגוריה / ארוחה')}</InputLabel>
               <Select
@@ -215,19 +208,9 @@ export default function CookingItemDialog({ open, initial, cookingMode, suggesti
             </FormControl>
           )}
 
-          {/* Planned date */}
-          <TextField
-            label={t('cooking.plannedDate')}
-            type="date"
-            value={plannedDate}
-            onChange={e => setPlannedDate(e.target.value)}
-            InputLabelProps={{ shrink: true }}
-            fullWidth
-          />
-
           {/* Tags */}
           <Box>
-            <Typography variant="caption" color="text.secondary" gutterBottom>
+            <Typography variant="caption" color="text.secondary" gutterBottom display="block">
               {t('cooking.tags')}
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
@@ -241,7 +224,7 @@ export default function CookingItemDialog({ open, initial, cookingMode, suggesti
                   variant={tags.includes(tag) ? 'filled' : 'outlined'}
                 />
               ))}
-              {tags.filter(t => !PRESET_TAGS.includes(t)).map(tag => (
+              {tags.filter(tag => !PRESET_TAGS.includes(tag)).map(tag => (
                 <Chip
                   key={tag}
                   label={tag}
@@ -261,94 +244,138 @@ export default function CookingItemDialog({ open, initial, cookingMode, suggesti
                 sx={{ flex: 1 }}
               />
               <Button size="small" onClick={addCustomTag} disabled={!customTag.trim()}>
-                {t('common.add', 'Add')}
+                {t('common.add', 'הוסף')}
               </Button>
             </Stack>
           </Box>
 
-          <Divider />
-
-          {/* Ingredients */}
+          {/* Expandable details: recipe, ingredients, notes, date */}
           <Box>
-            <Stack direction="row" alignItems="center" justifyContent="space-between">
-              <Typography variant="caption" color="text.secondary">
-                {t('cooking.ingredients')}
-              </Typography>
-              <IconButton size="small" onClick={addIngredient}>
-                <AddIcon fontSize="small" />
-              </IconButton>
-            </Stack>
-
-            {ingredients.map((ing, idx) => (
-              <Stack key={idx} direction="row" spacing={1} sx={{ mt: 1 }} alignItems="center">
-                <TextField
-                  size="small"
-                  placeholder={t('cooking.ingredientName')}
-                  value={ing.title}
-                  onChange={e => updateIngredient(idx, 'title', e.target.value)}
-                  sx={{ flex: 2 }}
+            <Button
+              size="small"
+              variant="text"
+              color="inherit"
+              endIcon={
+                <ExpandMoreRoundedIcon
+                  sx={{ transform: showDetails ? 'rotate(180deg)' : 'none', transition: '0.2s' }}
                 />
-                <TextField
-                  size="small"
-                  placeholder={t('cooking.qty')}
-                  type="number"
-                  value={ing.quantity ?? ''}
-                  onChange={e => updateIngredient(idx, 'quantity', e.target.value ? Number(e.target.value) : undefined)}
-                  sx={{ flex: 1 }}
-                  inputProps={{ min: 0, step: 0.25 }}
-                />
-                <TextField
-                  size="small"
-                  placeholder={t('cooking.unit')}
-                  value={ing.unit ?? ''}
-                  onChange={e => updateIngredient(idx, 'unit', e.target.value)}
-                  sx={{ flex: 1 }}
-                />
-                <IconButton size="small" onClick={() => removeIngredient(idx)}>
-                  <DeleteOutlineIcon fontSize="small" />
-                </IconButton>
-              </Stack>
-            ))}
-
-            {ingredients.length === 0 && (
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                {t('cooking.noIngredients')}
-              </Typography>
-            )}
-          </Box>
-
-          <Divider />
-
-          {/* Recipe URL */}
-          <TextField
-            label={t('cooking.recipeUrl')}
-            value={recipeUrl}
-            onChange={e => setRecipeUrl(e.target.value)}
-            fullWidth
-            placeholder="https://..."
-          />
-
-          {/* Notes + auto-extract */}
-          <Stack direction="row" spacing={1} alignItems="flex-start">
-            <TextField
-              label={t('cooking.notes')}
-              value={notes}
-              onChange={e => setNotes(e.target.value)}
-              fullWidth
-              multiline
-              rows={2}
-            />
-            <Button variant="outlined" onClick={handleExtractIngredients} sx={{ height: '40px', mt: 1 }}>
-              חילוץ מרכיבים אוטומטי
+              }
+              onClick={() => setShowDetails(v => !v)}
+              sx={{ color: 'text.secondary', textTransform: 'none', px: 0 }}
+            >
+              {showDetails
+                ? t('cooking.hideDetails', 'הסתר פרטים')
+                : t('cooking.addDetails', 'הוסף פרטים (מתכון, מרכיבים, הערות)')}
             </Button>
-          </Stack>
+
+            <Collapse in={showDetails}>
+              <Stack spacing={2} sx={{ mt: 1.5 }}>
+
+                {/* Recipe URL */}
+                <TextField
+                  label={t('cooking.recipeUrl')}
+                  value={recipeUrl}
+                  onChange={e => setRecipeUrl(e.target.value)}
+                  fullWidth
+                  placeholder="https://..."
+                  size="small"
+                />
+
+                <Divider />
+
+                {/* Ingredients */}
+                <Box>
+                  <Stack direction="row" alignItems="center" justifyContent="space-between" mb={0.5}>
+                    <Typography variant="caption" color="text.secondary">
+                      {t('cooking.ingredients')}
+                    </Typography>
+                    <IconButton size="small" onClick={addIngredient}>
+                      <AddIcon fontSize="small" />
+                    </IconButton>
+                  </Stack>
+
+                  {ingredients.map((ing, idx) => (
+                    <Stack key={idx} direction="row" spacing={1} sx={{ mt: 0.75 }} alignItems="center">
+                      <TextField
+                        size="small"
+                        placeholder={t('cooking.ingredientName')}
+                        value={ing.title}
+                        onChange={e => updateIngredient(idx, 'title', e.target.value)}
+                        sx={{ flex: 2 }}
+                      />
+                      <TextField
+                        size="small"
+                        placeholder={t('cooking.qty')}
+                        type="number"
+                        value={ing.quantity ?? ''}
+                        onChange={e => updateIngredient(idx, 'quantity', e.target.value ? Number(e.target.value) : undefined)}
+                        sx={{ flex: 1 }}
+                        inputProps={{ min: 0, step: 0.25 }}
+                      />
+                      <TextField
+                        size="small"
+                        placeholder={t('cooking.unit')}
+                        value={ing.unit ?? ''}
+                        onChange={e => updateIngredient(idx, 'unit', e.target.value)}
+                        sx={{ flex: 1 }}
+                      />
+                      <IconButton size="small" onClick={() => removeIngredient(idx)}>
+                        <DeleteOutlineIcon fontSize="small" />
+                      </IconButton>
+                    </Stack>
+                  ))}
+
+                  {ingredients.length === 0 && (
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                      {t('cooking.noIngredients')}
+                    </Typography>
+                  )}
+                </Box>
+
+                {/* Notes */}
+                <TextField
+                  label={t('cooking.notes')}
+                  value={notes}
+                  onChange={e => setNotes(e.target.value)}
+                  fullWidth
+                  multiline
+                  rows={2}
+                  size="small"
+                />
+
+                {notes.trim() && ingredients.length === 0 && (
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    color="secondary"
+                    onClick={extractIngredientsFromNotes}
+                    sx={{ alignSelf: 'flex-start' }}
+                  >
+                    {t('cooking.extractIngredients', 'חלץ מרכיבים מהטקסט')}
+                  </Button>
+                )}
+
+                {/* Planned date */}
+                <TextField
+                  label={t('cooking.plannedDate')}
+                  type="date"
+                  value={plannedDate}
+                  onChange={e => setPlannedDate(e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                  fullWidth
+                  size="small"
+                />
+
+              </Stack>
+            </Collapse>
+          </Box>
         </Stack>
       </DialogContent>
 
-      <DialogActions>
-        <Button onClick={onClose} disabled={saving}>{t('common.cancel', 'Cancel')}</Button>
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button onClick={onClose} disabled={saving}>{t('common.cancel', 'ביטול')}</Button>
         <Button variant="contained" onClick={handleSave} disabled={saving || !title.trim()}>
-          {t('common.save', 'Save')}
+          {t('common.save', 'שמור')}
         </Button>
       </DialogActions>
     </Dialog>

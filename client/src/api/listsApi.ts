@@ -179,6 +179,7 @@ function mapList(raw: any): PersonalList {
     emoji:           raw.emoji ?? undefined,
     listType:        (raw.listType as ListType) ?? ListType.Checklist,
     cookingMode:     (raw.cookingMode as CookingMode) ?? CookingMode.Regular,
+    isArchived:      raw.isArchived ?? false,
     items:           (raw.items ?? []).map(mapItem),
     shoppingItems:   (raw.shoppingItems ?? []).map(mapShoppingItem),
     shoppingSettings: raw.shoppingSettings ? mapSettings(raw.shoppingSettings) : undefined,
@@ -206,6 +207,11 @@ export const listsApi = {
 
   update: async (id: string, payload: UpdateListPayload): Promise<PersonalList> => {
     const { data } = await apiClient.patch<any>(`/personallists/${id}`, payload)
+    return mapList(data)
+  },
+
+  archive: async (id: string, archive: boolean): Promise<PersonalList> => {
+    const { data } = await apiClient.patch<any>(`/personallists/${id}/archive`, { archive })
     return mapList(data)
   },
 

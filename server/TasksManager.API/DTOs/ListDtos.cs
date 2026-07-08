@@ -95,6 +95,7 @@ public record PersonalListDto(
     string? Emoji,
     string ListType,
     string CookingMode,
+    bool IsArchived,
     IEnumerable<PersonalListItemDto> Items,
     IEnumerable<ShoppingItemDto> ShoppingItems,
     ShoppingListSettingsDto? ShoppingSettings,
@@ -116,4 +117,6 @@ public record UpdatePersonalListDto(
     string? Emoji,
     string? ListType = null
 );
+
+public record ArchivePersonalListDto(bool Archive);
 

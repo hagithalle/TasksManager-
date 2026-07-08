@@ -13,6 +13,8 @@ public class PersonalList
     /// <summary>For CookingPlan lists: whether this is a Shabbat or regular weekday plan.</summary>
     public CookingMode CookingMode { get; set; } = CookingMode.Regular;
 
+    public bool IsArchived { get; set; } = false;
+
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 

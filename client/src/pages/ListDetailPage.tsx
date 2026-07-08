@@ -1,10 +1,12 @@
 import {
-  Box, CircularProgress, Divider, IconButton, InputBase,
+  Alert, Box, Button, CircularProgress, Divider, IconButton, InputBase,
   LinearProgress, List, Menu, MenuItem, TextField, Tooltip, Typography,
 } from '@mui/material'
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
+import ArchiveRoundedIcon from '@mui/icons-material/ArchiveRounded'
 import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded'
 import EmailRoundedIcon from '@mui/icons-material/EmailRounded'
+import UnarchiveRoundedIcon from '@mui/icons-material/UnarchiveRounded'
 import WhatsAppIcon from '@mui/icons-material/WhatsApp'
 import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
@@ -49,6 +51,7 @@ export default function ListDetailPage() {
   const [list,       setList]       = useState<PersonalList | null>(null)
   const [loading,    setLoading]    = useState(true)
   const [adding,     setAdding]     = useState(false)
+  const [archiving,  setArchiving]  = useState(false)
   const [newTitle,   setNewTitle]   = useState('')
   const [convertItem, setConvertItem] = useState<PersonalListItem | null>(null)
   const [goals,      setGoals]      = useState<Goal[]>([])
@@ -175,6 +178,17 @@ export default function ListDetailPage() {
     setList(updated)
   }
 
+  async function handleArchive(archive: boolean) {
+    if (!id) return
+    setArchiving(true)
+    try {
+      const updated = await listsApi.archive(id, archive)
+      setList(updated)
+    } finally {
+      setArchiving(false)
+    }
+  }
+
   async function saveCustomEmoji() {
     const e = customEmoji.trim()
     setCustomEmoji('')
@@ -283,6 +297,24 @@ export default function ListDetailPage() {
               <WhatsAppIcon sx={{ fontSize: 18, color: '#25D366' }} />
             </IconButton>
           </Tooltip>
+
+          {/* Archive / Unarchive button */}
+          <Tooltip title={list.isArchived ? t('list.unarchive', 'הוצא מארכיון') : t('list.archive', 'העבר לארכיון')}>
+            <IconButton
+              size="small"
+              onClick={() => handleArchive(!list.isArchived)}
+              disabled={archiving}
+              sx={{
+                bgcolor: list.isArchived ? 'rgba(76,175,80,0.12)' : 'rgba(0,0,0,0.05)',
+                '&:hover': { bgcolor: list.isArchived ? 'rgba(76,175,80,0.2)' : 'rgba(0,0,0,0.1)' },
+              }}
+            >
+              {list.isArchived
+                ? <UnarchiveRoundedIcon sx={{ fontSize: 18, color: 'success.main' }} />
+                : <ArchiveRoundedIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
+              }
+            </IconButton>
+          </Tooltip>
         </Box>
 
         {/* Progress bar + label */}
@@ -313,6 +345,44 @@ export default function ListDetailPage() {
           }}
         />
       </Box>
+
+      {/* ── All-done archive banner ── */}
+      {allDone && !list.isArchived && (
+        <Alert
+          severity="success"
+          sx={{ mx: 2, mt: 1.5, borderRadius: 2 }}
+          action={
+            <Button
+              size="small"
+              color="success"
+              variant="contained"
+              startIcon={<ArchiveRoundedIcon />}
+              onClick={() => handleArchive(true)}
+              disabled={archiving}
+              sx={{ borderRadius: 1.5, whiteSpace: 'nowrap' }}
+            >
+              {t('list.archiveNow', 'העבר לארכיון')}
+            </Button>
+          }
+        >
+          {t('list.allDoneArchive', 'הכל הושלם! רוצה לשמור ברשימות שהסתיימו?')}
+        </Alert>
+      )}
+
+      {/* ── Archived badge ── */}
+      {list.isArchived && (
+        <Alert
+          severity="info"
+          sx={{ mx: 2, mt: 1.5, borderRadius: 2 }}
+          action={
+            <Button size="small" color="info" onClick={() => handleArchive(false)} disabled={archiving}>
+              {t('list.unarchive', 'הוצא מארכיון')}
+            </Button>
+          }
+        >
+          {t('list.archivedNote', 'רשימה זו בארכיון')}
+        </Alert>
+      )}
 
       {/* ── List type picker menu ── */}
       <Menu

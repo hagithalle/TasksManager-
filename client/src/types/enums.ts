@@ -125,6 +125,7 @@ export enum ShoppingDepartment {
   Disposable          = 'disposable',
   Baby                = 'baby',
   Other               = 'other',
+  Frequent            = 'frequent',
 }
 
 /**
@@ -144,12 +145,12 @@ export enum ShoppingItemType {
 export enum MealSlot {
   None            = 'none',
   // Shabbat meals
-  FridayDinner    = 'fridaydinner',
-  SaturdayMorning = 'saturdaymorning',
+  FridayDinner    = 'fridayDinner',
+  SaturdayMorning = 'saturdayMorning',
   Additions       = 'additions',
-  ThirdMeal       = 'thirdmeal',
+  ThirdMeal       = 'thirdMeal',
   // Weekday categories
-  MainDish        = 'maindish',
+  MainDish        = 'mainDish',
   Side            = 'side',
   Salad           = 'salad',
   Dessert         = 'dessert',

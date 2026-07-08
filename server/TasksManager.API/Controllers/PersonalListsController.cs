@@ -55,6 +55,15 @@ public class PersonalListsController : ControllerBase
         return updated is null ? NotFound() : Ok(updated);
     }
 
+    [HttpPatch("{id:guid}/archive")]
+    public async Task<IActionResult> Archive(Guid id, [FromBody] ArchivePersonalListDto dto)
+    {
+        var callerId = GetCallerId();
+        if (callerId is null) return Unauthorized();
+        var updated = await _service.ArchiveAsync(id, callerId.Value, dto.Archive);
+        return updated is null ? NotFound() : Ok(updated);
+    }
+
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {

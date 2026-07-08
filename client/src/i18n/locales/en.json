@@ -96,7 +96,13 @@
     "progress": "{{done}}/{{total}} done",
     "items": "{{count}} items",
     "convertToTask": "Convert to task",
-    "customEmoji": "Custom icon (emoji)"
+    "customEmoji": "Custom icon (emoji)",
+    "archive": "Archive list",
+    "unarchive": "Unarchive",
+    "archived": "Completed",
+    "archiveNow": "Archive",
+    "allDoneArchive": "All done! Want to archive this list?",
+    "archivedNote": "This list is archived"
   },
   "priority": {
     "low": "Low",
@@ -186,7 +192,8 @@
     "q7": "The best time to do it was long ago\u2026 the second best is right now!"
   },
   "coach": {
-      "pickAnother": "Pick another",
+    "pickAnother": "Pick another",
+    "next": "Next",
     "title": "My Focus Coach",
     "headline": "You have {{count}} tasks before {{time}}",
     "subline": "{{done}} of {{total}} completed",
@@ -459,6 +466,8 @@
     "preview": "Preview",
     "sendEmail": "Send Email",
     "copyMailto": "Copy mailto link",
+    "copyText": "Copy list content",
+    "emailBodyCopied": "The list is too long to send directly — content copied to clipboard. Paste it into the email body after opening your mail client.",
     "linkExpired": "Link not found or has expired",
     "joinError": "Error joining",
     "joinSuccess": "Joined successfully!",
@@ -484,12 +493,14 @@
     "cleaning": "Cleaning",
     "disposable": "Disposable",
     "baby": "Baby",
-    "other": "Other"
+    "other": "Other",
+    "frequent": "Frequently used"
   },
   "shoppingItemType": {
     "regular": "Regular",
     "occasional": "Occasional",
-    "oneTime": "One-time"
+    "oneTime": "One-time",
+    "onetime": "One-time"
   },
   "shopping": {
     "addItem": "Add Item",
@@ -565,7 +576,9 @@
     "emptyState": "No dishes planned yet. Add your first dish!",
     "suggestions": "Based on your cooking history",
     "pushToShopping": "Add to Shopping List",
-    "extractIngredients": "Extract Ingredients",
+    "extractIngredients": "Extract ingredients from text",
+    "addDetails": "Add details (recipe, ingredients, notes)",
+    "hideDetails": "Hide details",
     "chooseShoppingList": "Choose Shopping List",
     "selectToAdd": "Select ingredients to add",
     "alreadyOnList": "Already on list",
