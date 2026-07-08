@@ -615,7 +615,7 @@ function TaskGroup({ tasks, expanded, onToggleExpand, onToggleTask, onToggleSub,
     )}
 
     {/* Preview Drawer - מופיע פעם אחת בלבד */}
-    <TaskPreviewDrawer task={previewTask} onClose={() => setPreviewTask(null)} onEdit={() => {}} />
+    <TaskPreviewDrawer task={previewTask} onClose={() => setPreviewTask(null)} onEdit={(t) => { onEdit(t); setPreviewTask(null) }} />
 
     {/* ── Completed section ── */}
     {doneTasks.length > 0 && (
