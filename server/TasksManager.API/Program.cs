@@ -84,7 +84,7 @@ builder.Services.AddCors(options =>
             origins.Add("http://localhost:3000");
         }
         policy.WithOrigins(origins.Distinct().ToArray())
-              .WithHeaders("Content-Type", "Authorization")
+              .AllowAnyHeader()
               .WithMethods("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS");
     });
 });
@@ -127,8 +127,8 @@ app.Use(async (ctx, next) =>
     await next();
 });
 
-app.UseHttpsRedirection();
 app.UseCors("ClientPolicy");
+app.UseHttpsRedirection();
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
