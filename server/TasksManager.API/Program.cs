@@ -1,6 +1,7 @@
 using System.Text;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -126,6 +127,16 @@ app.Use(async (ctx, next) =>
     ctx.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
     await next();
 });
+
+// Trust Railway / reverse-proxy forwarding headers so UseHttpsRedirection
+// knows the original request was already HTTPS and won't redirect.
+var forwardedOptions = new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost,
+};
+forwardedOptions.KnownNetworks.Clear();
+forwardedOptions.KnownProxies.Clear();
+app.UseForwardedHeaders(forwardedOptions);
 
 app.UseCors("ClientPolicy");
 app.UseHttpsRedirection();
