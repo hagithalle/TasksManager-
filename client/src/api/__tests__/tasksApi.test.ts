@@ -170,3 +170,78 @@ describe('mapRawTask — subTask mapping', () => {
     expect(task.subTasks).toEqual([])
   })
 })
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 7. normalizeDailyRole — safety net for old API responses using .ToLower()
+//    Old backend: DailyRole.MorningRoutine.ToString().ToLower() → "morningroutine"
+//    Fixed backend: SerializeDailyRole → "morningRoutine"
+//    The mapper normalizes both so that stale responses don't break the coach.
+// ══════════════════════════════════════════════════════════════════════════════
+
+describe('mapRawTask — normalizeDailyRole (old-API lowercase compat)', () => {
+  it('normalizes "morningroutine" → "morningRoutine"', () => {
+    const task = mapRawTask(rawTask({ dailyRole: 'morningroutine' }))
+    expect(task.dailyRole).toBe('morningRoutine')
+  })
+
+  it('normalizes "ongoinghabit" → "ongoingHabit"', () => {
+    const task = mapRawTask(rawTask({ dailyRole: 'ongoinghabit' }))
+    expect(task.dailyRole).toBe('ongoingHabit')
+  })
+
+  it('passes through already-correct "morningRoutine" unchanged', () => {
+    const task = mapRawTask(rawTask({ dailyRole: 'morningRoutine' }))
+    expect(task.dailyRole).toBe('morningRoutine')
+  })
+
+  it('passes through already-correct "ongoingHabit" unchanged', () => {
+    const task = mapRawTask(rawTask({ dailyRole: 'ongoingHabit' }))
+    expect(task.dailyRole).toBe('ongoingHabit')
+  })
+
+  it('passes through "focus" unchanged', () => {
+    const task = mapRawTask(rawTask({ dailyRole: 'focus' }))
+    expect(task.dailyRole).toBe('focus')
+  })
+})
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 8. updateSubTask endpoint returns full parent TaskItem
+//    The backend was changed from returning SubTaskDto → TaskItemDto so the
+//    client can reconcile all fields in one round-trip. mapRawTask is now used
+//    instead of mapSubTask when handling updateSubTask responses.
+// ══════════════════════════════════════════════════════════════════════════════
+
+describe('mapRawTask — subtask update response shape (full parent TaskItem)', () => {
+  it('maps the full parent task returned by the updateSubTask endpoint', () => {
+    const raw = rawTask({
+      dailyRole:   'ongoingHabit',
+      isCompleted: true,
+      completedAt: '2026-07-19T10:00:00Z',
+      subTasks: [
+        { id: 'sub-1', taskItemId: 'task-uuid-1', title: 'Step 1', isCompleted: true },
+        { id: 'sub-2', taskItemId: 'task-uuid-1', title: 'Step 2', isCompleted: true },
+      ],
+    })
+    const task = mapRawTask(raw)
+    expect(task.isCompleted).toBe(true)
+    expect(task.completedAt).toBe('2026-07-19T10:00:00Z')
+    expect(task.dailyRole).toBe('ongoingHabit')
+    expect(task.subTasks).toHaveLength(2)
+    expect(task.subTasks!.every(s => s.isCompleted)).toBe(true)
+  })
+
+  it('preserves uncompleted siblings when only one subtask was toggled', () => {
+    const raw = rawTask({
+      isCompleted: false,
+      subTasks: [
+        { id: 'sub-1', taskItemId: 'task-uuid-1', title: 'Done',    isCompleted: true  },
+        { id: 'sub-2', taskItemId: 'task-uuid-1', title: 'Pending', isCompleted: false },
+      ],
+    })
+    const task = mapRawTask(raw)
+    expect(task.isCompleted).toBe(false)
+    expect(task.subTasks!.find(s => s.id === 'sub-1')!.isCompleted).toBe(true)
+    expect(task.subTasks!.find(s => s.id === 'sub-2')!.isCompleted).toBe(false)
+  })
+})

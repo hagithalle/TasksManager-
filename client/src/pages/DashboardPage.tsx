@@ -65,6 +65,9 @@ export default function DashboardPage() {
     goalsApi.getByUser(user.id).then(setGoals).catch(() => {})
   }, [user])
 
+  const applyServerTask = (taskId: string) => (updated: TaskItem) =>
+    setTasks((prev) => prev.map((t) => t.id === taskId ? updated : t))
+
   const toggleTask = (taskId: string) => {
     const task = tasks.find((t) => t.id === taskId)
     if (!task) return
@@ -79,7 +82,7 @@ export default function DashboardPage() {
     }
     setTasks((prev) => prev.map((t) => t.id === taskId ? optimistic : t))
     tasksApi.update(taskId, { isCompleted: newCompleted })
-      .then((updated) => setTasks((prev) => prev.map((t) => t.id === taskId ? updated : t)))
+      .then(applyServerTask(taskId))
       .catch(() => setTasks((prev) => prev.map((t) => t.id === taskId ? task : t)))
   }
 
@@ -101,9 +104,10 @@ export default function DashboardPage() {
       completedAt: allDone && !task.completedAt ? new Date().toISOString() : task.completedAt,
     }
     setTasks((prev) => prev.map((t) => t.id === taskId ? optimistic : t))
-    tasksApi.updateSubTask(subId, { isCompleted: newCompleted }).catch(() => {
-      setTasks((prev) => prev.map((t) => t.id === taskId ? task : t))
-    })
+    // Apply server response so recurrence fields, completedAt, and sibling subtask state are reconciled.
+    tasksApi.updateSubTask(subId, { isCompleted: newCompleted })
+      .then(applyServerTask(taskId))
+      .catch(() => setTasks((prev) => prev.map((t) => t.id === taskId ? task : t)))
   }
 
   const moveCarriedTask = (taskId: string, when: 'today' | 'tomorrow') => {

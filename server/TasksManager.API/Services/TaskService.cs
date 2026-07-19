@@ -276,17 +276,17 @@ public class TaskService : ITaskService
         return ToSubDto(sub);
     }
 
-    public async Task<SubTaskDto?> UpdateSubTaskAsync(Guid subTaskId, UpdateSubTaskDto dto, Guid callerId)
+    public async Task<TaskItemDto?> UpdateSubTaskAsync(Guid subTaskId, UpdateSubTaskDto dto, Guid callerId)
     {
         var sub = await _db.SubTasks.FirstOrDefaultAsync(s => s.Id == subTaskId);
         if (sub is null || !await HasTaskAccessAsync(sub.TaskItemId, callerId)) return null;
 
         if (dto.Title is not null)           sub.Title           = dto.Title;
-        if (dto.IsCompleted.HasValue)          sub.IsCompleted     = dto.IsCompleted.Value;
-        if (dto.ExecutionType.HasValue)        sub.ExecutionType   = dto.ExecutionType;
-        if (dto.Priority.HasValue)             sub.Priority        = dto.Priority;
-        if (dto.DurationMinutes.HasValue)      sub.DurationMinutes = dto.DurationMinutes;
-        if (dto.LinkedListId.HasValue)         sub.LinkedListId    = dto.LinkedListId;
+        if (dto.IsCompleted.HasValue)        sub.IsCompleted     = dto.IsCompleted.Value;
+        if (dto.ExecutionType.HasValue)      sub.ExecutionType   = dto.ExecutionType;
+        if (dto.Priority.HasValue)           sub.Priority        = dto.Priority;
+        if (dto.DurationMinutes.HasValue)    sub.DurationMinutes = dto.DurationMinutes;
+        if (dto.LinkedListId.HasValue)       sub.LinkedListId    = dto.LinkedListId;
 
         await _db.SaveChangesAsync();
 
@@ -310,7 +310,13 @@ public class TaskService : ITaskService
             }
         }
 
-        return ToSubDto(sub);
+        // Return the full parent task so the client can reconcile completedAt,
+        // lastCompletedDate, dailyRole, and all sibling subtask states in one round-trip.
+        var updatedParent = await _db.Tasks
+            .AsNoTracking()
+            .Include(t => t.SubTasks)
+            .FirstOrDefaultAsync(t => t.Id == sub.TaskItemId);
+        return updatedParent is null ? null : ToDto(updatedParent);
     }
 
     public async Task<bool> DeleteSubTaskAsync(Guid subTaskId, Guid callerId)
@@ -339,8 +345,17 @@ public class TaskService : ITaskService
         t.LastCompletedDate.HasValue ? t.LastCompletedDate.Value.ToString("yyyy-MM-dd") : null,
         t.Nature.ToString().ToLower(),
         t.Status,
-        t.DailyRole.ToString().ToLower()
+        SerializeDailyRole(t.DailyRole)
     );
+
+    // Explicit camelCase mapping avoids the .ToLower() bug where "MorningRoutine" → "morningroutine"
+    // instead of the expected "morningRoutine" that the TypeScript enum compares against.
+    private static string SerializeDailyRole(DailyRole role) => role switch
+    {
+        DailyRole.MorningRoutine => "morningRoutine",
+        DailyRole.OngoingHabit   => "ongoingHabit",
+        _                        => "focus",
+    };
 
     /// <summary>
     /// Returns the actual reminder DateTime.

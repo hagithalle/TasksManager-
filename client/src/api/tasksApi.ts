@@ -76,6 +76,14 @@ export function mapRawTask(raw: any): TaskItem {
   return mapTask(raw)
 }
 
+// Safety net: old API responses used .ToLower() which produced 'morningroutine'/'ongoinghabit'.
+// The backend is now fixed, but this guard prevents silent breakage if old responses slip through.
+function normalizeDailyRole(raw: string | undefined | null): string {
+  if (raw === 'morningroutine') return 'morningRoutine'
+  if (raw === 'ongoinghabit')   return 'ongoingHabit'
+  return raw ?? 'focus'
+}
+
 function mapTask(raw: any): TaskItem {
   return {
     id:              raw.id,
@@ -98,7 +106,7 @@ function mapTask(raw: any): TaskItem {
     recurrenceInterval:   raw.recurrenceInterval ?? undefined,
     lastCompletedDate:    raw.lastCompletedDate ?? undefined,
     taskNature:           raw.nature ?? 'action',
-    dailyRole:            raw.dailyRole ?? 'focus',
+    dailyRole:            normalizeDailyRole(raw.dailyRole),
     taskStatus:           raw.status ?? 'open',
     createdAt:            raw.createdAt,
     updatedAt:            raw.updatedAt,
@@ -140,9 +148,9 @@ export const tasksApi = {
     return mapSubTask(data)
   },
 
-  updateSubTask: async (subTaskId: string, payload: UpdateSubTaskPayload): Promise<SubTask> => {
+  updateSubTask: async (subTaskId: string, payload: UpdateSubTaskPayload): Promise<TaskItem> => {
     const { data } = await apiClient.patch<any>(`/tasks/subtasks/${subTaskId}`, payload)
-    return mapSubTask(data)
+    return mapTask(data)
   },
 
   deleteSubTask: async (subTaskId: string): Promise<void> => {

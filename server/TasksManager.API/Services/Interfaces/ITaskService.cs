@@ -13,6 +13,6 @@ public interface ITaskService
 
     // SubTask operations
     Task<SubTaskDto?> AddSubTaskAsync(Guid taskId, CreateSubTaskDto dto, Guid callerId);
-    Task<SubTaskDto?> UpdateSubTaskAsync(Guid subTaskId, UpdateSubTaskDto dto, Guid callerId);
+    Task<TaskItemDto?> UpdateSubTaskAsync(Guid subTaskId, UpdateSubTaskDto dto, Guid callerId);
     Task<bool> DeleteSubTaskAsync(Guid subTaskId, Guid callerId);
 }
