@@ -9,7 +9,7 @@ import DeleteRoundedIcon  from '@mui/icons-material/DeleteRounded'
 import EditRoundedIcon    from '@mui/icons-material/EditRounded'
 import { useTranslation } from 'react-i18next'
 import { tasksApi, goalsApi } from '../../api'
-import { ExecutionType, GoalCategory, GoalType, Priority, RecurrenceType, TaskNature } from '../../types'
+import { DailyRole, ExecutionType, GoalCategory, GoalType, Priority, RecurrenceType, TaskNature } from '../../types'
 import type { Goal, TaskItem, SubTask } from '../../types'
 import { PRIORITY_STYLE, EXECUTION_STYLE } from '../../utils'
 
@@ -98,6 +98,7 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
   const [recurrenceType,        setRecurrenceType]        = useState<RecurrenceType>(RecurrenceType.None)
   const [recurrenceInterval, setRecurrenceInterval] = useState(1)
   const [taskNature,      setTaskNature]      = useState<TaskNature>(TaskNature.Action)
+  const [dailyRole,       setDailyRole]       = useState<DailyRole>(DailyRole.Focus)
   const [titleError,      setTitleError]      = useState(false)
   const [loading,         setLoading]         = useState(false)
 
@@ -152,6 +153,7 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
       setRecurrenceType(editTask.recurrenceType ?? RecurrenceType.None)
       setRecurrenceInterval(editTask.recurrenceInterval ?? 1)
       setTaskNature((editTask.taskNature as TaskNature) ?? TaskNature.Action)
+      setDailyRole((editTask.dailyRole as DailyRole) ?? DailyRole.Focus)
       setExistingSubs(editTask.subTasks ?? [])
       setDeletedSubIds(new Set())
       setSubTasks([])
@@ -173,6 +175,7 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
       setRecurrenceType(RecurrenceType.None)
       setRecurrenceInterval(1)
       setTaskNature(TaskNature.Action)
+      setDailyRole(DailyRole.Focus)
       setTitleError(false)
       setSubTaskInput('')
       setSubTaskExec('')
@@ -199,6 +202,7 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
       setRecurrenceType(RecurrenceType.None)
       setRecurrenceInterval(1)
       setTaskNature(TaskNature.Action)
+      setDailyRole(DailyRole.Focus)
       setTitleError(false)
       setSubTaskInput('')
       setSubTaskExec('')
@@ -257,6 +261,7 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
           recurrenceType:       recurrenceType,
           recurrenceInterval:   recurrenceInterval,
           nature:               taskNature,
+          dailyRole:            dailyRole,
         })
         // Delete removed sub-tasks
         for (const id of deletedSubIds) {
@@ -297,6 +302,7 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
           recurrenceType:       recurrenceType,
           recurrenceInterval:   recurrenceInterval,
           nature:               taskNature,
+          dailyRole:            dailyRole,
         })
         for (const st of subTasks) {
           const sub = await tasksApi.addSubTask(task.id, {
@@ -475,6 +481,36 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
                       color:      active ? 'white'   : '#0369a1',
                       border:     '1.5px solid #0369a1',
                       '&:hover':  { bgcolor: active ? '#0369a1' : '#e0f2fe' },
+                    }}
+                  />
+                )
+              })}
+            </Box>
+          </Box>
+
+          {/* Daily Role */}
+          <Box>
+            <Typography variant="caption" color="text.secondary" sx={{ mb: 0.75, display: 'block' }}>
+              {t('dailyRole.label')}
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
+              {([
+                { value: DailyRole.Focus,          icon: '🎯' },
+                { value: DailyRole.MorningRoutine, icon: '🌅' },
+                { value: DailyRole.OngoingHabit,   icon: '🔄' },
+              ] as const).map(({ value, icon }) => {
+                const active = dailyRole === value
+                return (
+                  <Chip
+                    key={value}
+                    label={`${icon} ${t(`dailyRole.${value}`)}`}
+                    onClick={() => setDailyRole(value)}
+                    sx={{
+                      fontWeight: 700,
+                      bgcolor:    active ? '#7c3aed' : 'transparent',
+                      color:      active ? 'white'   : '#7c3aed',
+                      border:     '1.5px solid #7c3aed',
+                      '&:hover':  { bgcolor: active ? '#7c3aed' : '#ede9fe' },
                     }}
                   />
                 )

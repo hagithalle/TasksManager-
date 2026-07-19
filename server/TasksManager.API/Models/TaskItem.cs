@@ -33,6 +33,7 @@ public class TaskItem
     public DateTime? CompletedAt { get; set; }
     public DateTime? DeletedAt { get; set; }
     public TaskNature Nature { get; set; } = TaskNature.Action;
+    public DailyRole DailyRole { get; set; } = DailyRole.Focus;
     public ItemStatus Status { get; set; } = ItemStatus.Open;
 
     // Navigation

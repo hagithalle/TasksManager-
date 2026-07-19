@@ -84,6 +84,19 @@ export enum TaskNature {
 }
 
 /**
+ * The role a task plays in the daily dashboard layout.
+ * Maps to translation key `dailyRole.<value>`.
+ */
+export enum DailyRole {
+  /** Default — main actionable task for the day */
+  Focus          = 'focus',
+  /** Short recurring task done in the morning (e.g. making the bed) */
+  MorningRoutine = 'morningRoutine',
+  /** Habit tracked throughout the day (e.g. drink 3 liters of water) */
+  OngoingHabit   = 'ongoingHabit',
+}
+
+/**
  * Lifecycle status of a task.
  * Maps to translation key `taskStatus.<value>`.
  */

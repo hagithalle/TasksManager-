@@ -44,6 +44,14 @@ public enum TaskNature
     Appointment = 2,  // fixed external appointment (doctor, dentist, etc.)
 }
 
+/// <summary>The role a task plays in the daily dashboard layout.</summary>
+public enum DailyRole
+{
+    Focus          = 0,  // default – main actionable task for the day
+    MorningRoutine = 1,  // short recurring task done in the morning
+    OngoingHabit   = 2,  // habit tracked throughout the day (e.g. water intake)
+}
+
 public enum ItemStatus
 {
     Open        = 0,  // default – not yet completed

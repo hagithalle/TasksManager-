@@ -85,6 +85,8 @@ public class TaskService : ITaskService
             ? rt : RecurrenceType.None;
         var nature = Enum.TryParse<TaskNature>(dto.Nature, true, out var tn)
             ? tn : TaskNature.Action;
+        var dailyRole = Enum.TryParse<DailyRole>(dto.DailyRole, true, out var dr)
+            ? dr : DailyRole.Focus;
 
         var resolvedReminder = ResolveReminderAt(dto.ReminderAt, dto.ReminderOffsetMinutes, dto.DueDate, dto.PlannedTime);
 
@@ -107,6 +109,7 @@ public class TaskService : ITaskService
             RecurrenceType = recurrence,
             RecurrenceInterval = dto.RecurrenceInterval,
             Nature = nature,
+            DailyRole = dailyRole,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
             Status = ItemStatus.Open,
@@ -210,6 +213,9 @@ public class TaskService : ITaskService
         if (dto.Nature is not null &&
             Enum.TryParse<TaskNature>(dto.Nature, true, out var tn))
             task.Nature = tn;
+        if (dto.DailyRole is not null &&
+            Enum.TryParse<DailyRole>(dto.DailyRole, true, out var dr))
+            task.DailyRole = dr;
         if (dto.Status.HasValue)
         {
             task.Status = dto.Status.Value;
@@ -331,7 +337,8 @@ public class TaskService : ITaskService
         t.RecurrenceInterval,
         t.LastCompletedDate.HasValue ? t.LastCompletedDate.Value.ToString("yyyy-MM-dd") : null,
         t.Nature.ToString().ToLower(),
-        t.Status
+        t.Status,
+        t.DailyRole.ToString().ToLower()
     );
 
     /// <summary>

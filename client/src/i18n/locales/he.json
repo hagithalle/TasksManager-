@@ -129,6 +129,12 @@
     "meeting":     "פגישה",
     "appointment": "תור"
   },
+  "dailyRole": {
+    "label":          "תפקיד ביום",
+    "focus":          "משימת מיקוד",
+    "morningRoutine": "שגרת בוקר",
+    "ongoingHabit":   "הרגל שוטף"
+  },
   "taskStatus": {
     "open":        "פתוח",
     "completed":   "הושלם",

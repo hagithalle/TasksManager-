@@ -55,7 +55,8 @@ public record TaskItemDto(
     int RecurrenceInterval,
     string? LastCompletedDate,
     string Nature,
-    ItemStatus Status
+    ItemStatus Status,
+    string DailyRole
 );
 
 public record CreateTaskItemDto(
@@ -74,7 +75,8 @@ public record CreateTaskItemDto(
     int? ReminderOffsetMinutes = null,
     string RecurrenceType = "none",
     int RecurrenceInterval = 1,
-    string Nature = "action"
+    string Nature = "action",
+    string DailyRole = "focus"
 );
 
 public record UpdateTaskItemDto(
@@ -94,5 +96,6 @@ public record UpdateTaskItemDto(
     string? RecurrenceType = null,
     int? RecurrenceInterval = null,
     string? Nature = null,
-    ItemStatus? Status = null
+    ItemStatus? Status = null,
+    string? DailyRole = null
 );

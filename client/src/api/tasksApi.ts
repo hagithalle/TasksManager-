@@ -18,6 +18,7 @@ export interface CreateTaskPayload {
   recurrenceType?: string
   recurrenceInterval?: number
   nature?: string
+  dailyRole?: string
   status?: string
 }
 
@@ -38,6 +39,7 @@ export interface UpdateTaskPayload {
   recurrenceType?: string
   recurrenceInterval?: number
   nature?: string
+  dailyRole?: string
   status?: string
 }
 
@@ -92,6 +94,7 @@ function mapTask(raw: any): TaskItem {
     recurrenceInterval:   raw.recurrenceInterval ?? undefined,
     lastCompletedDate:    raw.lastCompletedDate ?? undefined,
     taskNature:           raw.nature ?? 'action',
+    dailyRole:            raw.dailyRole ?? 'focus',
     taskStatus:           raw.status ?? 'open',
     createdAt:            raw.createdAt,
     updatedAt:            raw.updatedAt,
