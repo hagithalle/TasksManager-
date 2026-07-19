@@ -296,11 +296,11 @@ export default function FocusCoachCard({ tasks, onRefresh, onToggle, onToggleSub
   }
 
   function handleNext() {
-    const len = plan.recommendations.length
+    const len = plan.focusTasks.length
     if (len > 1) setMainIndex(prev => (prev + 1) % len)
   }
 
-  const recs    = plan.recommendations
+  const recs    = plan.focusTasks
   const mainIdx = recs.length > 0 ? mainIndex % recs.length : 0
   const mainRec = recs[mainIdx]
   const restRecs = recs.filter((_, i) => i !== mainIdx)

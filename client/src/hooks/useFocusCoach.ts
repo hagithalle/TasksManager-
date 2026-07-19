@@ -52,8 +52,8 @@ export function useFocusCoach(tasks: TaskItem[]) {
     [tasks, today]
   )
   const totalToday = useMemo(
-    () => completedToday + plan.recommendations.length,
-    [completedToday, plan.recommendations.length]
+    () => completedToday + plan.focusTasks.length,
+    [completedToday, plan.focusTasks.length]
   )
   const progress = totalToday > 0 ? Math.min(100, Math.round((completedToday / totalToday) * 100)) : 0
 

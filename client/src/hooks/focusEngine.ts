@@ -1,5 +1,5 @@
 import type { TaskItem } from '../types/task'
-import { Priority, ExecutionType, TaskNature, TaskStatus, RecurrenceType } from '../types/enums'
+import { Priority, ExecutionType, TaskNature, TaskStatus, RecurrenceType, DailyRole } from '../types/enums'
 
 // ── Public types ───────────────────────────────────────────────────────────────
 
@@ -60,7 +60,12 @@ export const DEFAULT_COACH_SETTINGS: CoachSettings = {
 }
 
 export interface FocusPlan {
-  recommendations:  ScoredRecommendation[]
+  /** Scored & selected focus tasks (respects maxTasks). Was `recommendations` in Phase 1. */
+  focusTasks:       ScoredRecommendation[]
+  /** Incomplete morning-routine tasks for the current period. Not scored, preserves server order. */
+  morningRoutines:  TaskItem[]
+  /** Incomplete ongoing-habit tasks for the current period. Not scored, preserves server order. */
+  ongoingHabits:    TaskItem[]
   scheduledEvents:  ScheduledEvent[]
   availableMinutes: number
   usedMinutes:      number
@@ -122,7 +127,26 @@ export function isCompletedInCurrentPeriod(task: TaskItem): boolean {
   }
 }
 
+// ── Daily-role partition ───────────────────────────────────────────────────────
+// This split happens before every other engine step so that non-Focus tasks
+// (and their subtasks) can never enter the focus scoring or scheduled-event flow.
+
+function isFocusTask(task: TaskItem): boolean {
+  return !task.dailyRole || task.dailyRole === DailyRole.Focus
+}
+
+/** Common visibility predicate for non-Focus groups (routines / habits). */
+function isVisibleNonFocus(task: TaskItem): boolean {
+  return (
+    !task.isCompleted &&
+    !isCompletedInCurrentPeriod(task) &&
+    task.taskStatus !== TaskStatus.Archived &&
+    task.taskStatus !== TaskStatus.Missed
+  )
+}
+
 // ── Step 1: extract meetings / appointments → Today's Schedule ────────────────
+// Only called with the Focus task sub-list.
 
 export function extractScheduledEvents(tasks: TaskItem[]): ScheduledEvent[] {
   return tasks
@@ -139,6 +163,7 @@ export function extractScheduledEvents(tasks: TaskItem[]): ScheduledEvent[] {
 
 // ── Step 2: flatten tasks into FlatCandidate[] ────────────────────────────────
 // Parent tasks with open subtasks are replaced by those subtasks.
+// Only called with the Focus task sub-list.
 
 function flattenCandidates(tasks: TaskItem[]): FlatCandidate[] {
   const result: FlatCandidate[] = []
@@ -300,12 +325,21 @@ export function buildFocusPlan(
     ? Math.floor(availableMinutes * 0.825)
     : Infinity
 
-  // Scheduled events (meetings / appointments today)
-  const scheduledEvents = extractScheduledEvents(tasks)
+  // ── Partition by dailyRole (must happen before all other steps) ────────────
+  const focusPool   = tasks.filter(isFocusTask)
+  const routinePool = tasks.filter(t => t.dailyRole === DailyRole.MorningRoutine)
+  const habitPool   = tasks.filter(t => t.dailyRole === DailyRole.OngoingHabit)
+
+  // Non-Focus groups: simple visibility filter, server order preserved
+  const morningRoutines = routinePool.filter(isVisibleNonFocus)
+  const ongoingHabits   = habitPool.filter(isVisibleNonFocus)
+
+  // Scheduled events (Focus tasks only — routines/habits never enter the schedule strip)
+  const scheduledEvents = extractScheduledEvents(focusPool)
   const scheduledIds    = new Set(scheduledEvents.map(e => e.task.id))
 
-  // Flatten and filter candidates
-  const flat     = flattenCandidates(tasks)
+  // Flatten and filter Focus candidates
+  const flat     = flattenCandidates(focusPool)
   const eligible = flat.filter(c => isEligible(c, scheduledIds))
 
   // Frog: highest-priority candidate due today
@@ -368,5 +402,14 @@ export function buildFocusPlan(
     return eventAt > now
   })
 
-  return { recommendations: selected, scheduledEvents, availableMinutes, usedMinutes, energyMode, nextEvent }
+  return {
+    focusTasks: selected,
+    morningRoutines,
+    ongoingHabits,
+    scheduledEvents,
+    availableMinutes,
+    usedMinutes,
+    energyMode,
+    nextEvent,
+  }
 }
