@@ -267,6 +267,23 @@
     "todaySchedule":  "לוח זמנים היום",
     "nextEvent":      "הבא: {{time}} {{title}}",
     "subtaskOf":      "שלב ב: {{parent}}",
+    "morningRoutine": {
+      "title":   "שגרת בוקר",
+      "progress": "{{done}}/{{total}} הושלמו",
+      "allDone": "שגרת בוקר הושלמה"
+    },
+    "focusSection": {
+      "title":   "משימות המיקוד",
+      "empty":   "אין משימות מיקוד כרגע",
+      "progress": "{{done}}/{{total}} הושלמו"
+    },
+    "habits": {
+      "title":        "הרגלים שוטפים",
+      "completeNext": "השלם צעד הבא",
+      "plusOne":      "+1",
+      "completed":    "הושלם",
+      "progress":     "{{done}}/{{total}}"
+    },
     "reason": {
       "overdue":          "באיחור",
       "dueToday":         "להיום",

@@ -12,12 +12,14 @@ import VisibilityRoundedIcon      from '@mui/icons-material/VisibilityRounded'
 import NavigateNextRoundedIcon    from '@mui/icons-material/NavigateNextRounded'
 import { useTranslation }         from 'react-i18next'
 
-import TaskPreviewDrawer   from '../tasks/TaskPreviewDrawer'
-import { useFocusCoach }   from '../../hooks/useFocusCoach'
-import CoachSettingsPanel  from './CoachSettingsPanel'
-import DailyInsightBanner  from './DailyInsightBanner'
-import type { TaskItem }   from '../../types'
-import { Priority }        from '../../types'
+import TaskPreviewDrawer       from '../tasks/TaskPreviewDrawer'
+import { useFocusCoach }       from '../../hooks/useFocusCoach'
+import CoachSettingsPanel      from './CoachSettingsPanel'
+import DailyInsightBanner      from './DailyInsightBanner'
+import MorningRoutineSection   from './MorningRoutineSection'
+import OngoingHabitsSection    from './OngoingHabitsSection'
+import type { TaskItem }       from '../../types'
+import { Priority }            from '../../types'
 import type { ScoredRecommendation, ReasonKey } from '../../hooks/focusEngine'
 
 interface Props {
@@ -278,7 +280,7 @@ export default function FocusCoachCard({ tasks, onRefresh, onToggle, onToggleSub
   const [previewTask,  setPreviewTask]  = useState<TaskItem | null>(null)
   const [mainIndex,    setMainIndex]    = useState(0)
 
-  const { settings, setSettings, plan, refresh, completedToday, totalToday, progress } = useFocusCoach(tasks)
+  const { settings, setSettings, plan, refresh, completedToday, totalToday, progress, displayRoutines, displayHabits, today } = useFocusCoach(tasks)
 
   const handleRefresh = () => {
     setMainIndex(0)
@@ -430,54 +432,75 @@ export default function FocusCoachCard({ tasks, onRefresh, onToggle, onToggleSub
           </Typography>
         )}
 
-        {/* ── Main recommendation ── */}
-        {mainRec && (
-          <MainRecCard
-            rec={mainRec}
-            onDone={() => handleDone(mainRec)}
-            onNext={handleNext}
-            onPreview={() => setPreviewTask(mainRec.candidate.sourceTask)}
-            position={{ current: mainIdx + 1, total: recs.length }}
-          />
-        )}
+        {/* ── Morning Routine ── */}
+        <MorningRoutineSection
+          routines={displayRoutines}
+          today={today}
+          onToggle={id => onToggle?.(id)}
+        />
 
-        {/* ── Rest of recommendations ── */}
-        {restRecs.length > 0 && (
-          <Box
-            sx={{
-              borderRadius: 2,
-              overflow: 'hidden',
-              bgcolor: 'rgba(255,255,255,0.5)',
-              border: '1px solid rgba(124,92,255,0.1)',
-            }}
-          >
-            {restRecs.map(rec => (
-              <CompactRecRow
-                key={rec.candidate.key}
-                rec={rec}
-                onToggle={() => handleDone(rec)}
-                onPreview={() => setPreviewTask(rec.candidate.sourceTask)}
-              />
-            ))}
-          </Box>
-        )}
-
-        {/* ── Already done row (completed task indicator) ── */}
-        {completedToday > 0 && recs.length === 0 && (
-          <Box sx={{ mt: 1.5, textAlign: 'center' }}>
-            <CheckCircleRoundedIcon sx={{ color: 'success.main', fontSize: 28 }} />
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              {t('coach.empty.allDone')}
+        {/* ── Today's Focus ── */}
+        <Box sx={{ mb: recs.length > 0 ? 0.5 : 0 }}>
+          <Stack direction="row" alignItems="center" gap={0.5} sx={{ mb: 0.75 }}>
+            <Typography variant="caption" fontWeight={700} color="text.secondary">
+              🎯 {t('coach.focusSection.title')}
             </Typography>
-          </Box>
-        )}
+          </Stack>
 
-        {/* ── Empty state ── */}
-        {recs.length === 0 && completedToday === 0 && (
-          <Box sx={{ mt: 2, textAlign: 'center', color: 'text.secondary', fontWeight: 500 }}>
-            {t('coach.empty.noTasks')}
-          </Box>
-        )}
+          {mainRec ? (
+            <>
+              <MainRecCard
+                rec={mainRec}
+                onDone={() => handleDone(mainRec)}
+                onNext={handleNext}
+                onPreview={() => setPreviewTask(mainRec.candidate.sourceTask)}
+                position={{ current: mainIdx + 1, total: recs.length }}
+              />
+              {restRecs.length > 0 && (
+                <Box
+                  sx={{
+                    borderRadius: 2,
+                    overflow: 'hidden',
+                    bgcolor: 'rgba(255,255,255,0.5)',
+                    border: '1px solid rgba(124,92,255,0.1)',
+                  }}
+                >
+                  {restRecs.map(rec => (
+                    <CompactRecRow
+                      key={rec.candidate.key}
+                      rec={rec}
+                      onToggle={() => handleDone(rec)}
+                      onPreview={() => setPreviewTask(rec.candidate.sourceTask)}
+                    />
+                  ))}
+                </Box>
+              )}
+            </>
+          ) : (
+            <Box sx={{ py: 0.75, textAlign: 'center' }}>
+              {completedToday > 0 ? (
+                <Stack direction="row" alignItems="center" justifyContent="center" gap={0.75}>
+                  <CheckCircleRoundedIcon sx={{ color: 'success.main', fontSize: 18 }} />
+                  <Typography variant="caption" color="text.secondary">
+                    {t('coach.empty.allDone')}
+                  </Typography>
+                </Stack>
+              ) : (
+                <Typography variant="caption" color="text.disabled">
+                  {t('coach.focusSection.empty')}
+                </Typography>
+              )}
+            </Box>
+          )}
+        </Box>
+
+        {/* ── Ongoing Habits ── */}
+        <OngoingHabitsSection
+          habits={displayHabits}
+          today={today}
+          onToggle={id => onToggle?.(id)}
+          onToggleSubTask={(taskId, subId) => onToggleSubTask?.(taskId, subId)}
+        />
       </Box>
 
       <CoachSettingsPanel open={settingsOpen} settings={settings} onChange={setSettings} />

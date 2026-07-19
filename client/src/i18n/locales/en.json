@@ -266,6 +266,23 @@
     "todaySchedule":  "Today's Schedule",
     "nextEvent":      "Next: {{time}} {{title}}",
     "subtaskOf":      "Step in: {{parent}}",
+    "morningRoutine": {
+      "title":   "Morning Routine",
+      "progress": "{{done}}/{{total}} completed",
+      "allDone": "Morning routine completed"
+    },
+    "focusSection": {
+      "title":   "Today's Focus",
+      "empty":   "No focus tasks for now",
+      "progress": "{{done}}/{{total}} completed"
+    },
+    "habits": {
+      "title":        "Ongoing Habits",
+      "completeNext": "Complete next step",
+      "plusOne":      "+1",
+      "completed":    "Completed",
+      "progress":     "{{done}}/{{total}}"
+    },
     "reason": {
       "overdue":          "Overdue",
       "dueToday":         "Due today",
