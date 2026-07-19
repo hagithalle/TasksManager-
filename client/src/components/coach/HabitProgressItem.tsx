@@ -78,9 +78,13 @@ export default function HabitProgressItem({ task, isDone, onToggle, onToggleSubT
             tabIndex={isDone ? -1 : 0}
             onKeyDown={e => !isDone && (e.key === 'Enter' || e.key === ' ') && onToggle(task.id)}
             sx={{
-              display: 'flex',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               cursor:  isDone ? 'default' : 'pointer',
               flexShrink: 0,
+              minWidth:  44,
+              minHeight: 44,
               '&:focus-visible': { outline: '2px solid #10b981', outlineOffset: 2, borderRadius: '50%' },
             }}
           >
@@ -123,7 +127,7 @@ export default function HabitProgressItem({ task, isDone, onToggle, onToggleSubT
               onClick={() => setExpanded(v => !v)}
               aria-expanded={expandedSubs}
               aria-label={expandedSubs ? t('coach.habits.hideSteps') : t('coach.habits.showSteps')}
-              sx={{ p: 0.2, color: '#059669', flexShrink: 0 }}
+              sx={{ p: 1.5, color: '#059669', flexShrink: 0 }}
             >
               {expandedSubs
                 ? <ExpandLessRoundedIcon sx={{ fontSize: 14 }} />
@@ -143,12 +147,11 @@ export default function HabitProgressItem({ task, isDone, onToggle, onToggleSubT
             aria-label={`${hasSubTasks ? t('coach.habits.plusOne') : t('coach.habits.completeNext')}: ${task.title}`}
             aria-busy={pending}
             sx={{
-              minWidth: 0,
+              minWidth:  44,
+              minHeight: 44,
               px: 0.75,
-              py: 0.1,
               fontSize:  '0.65rem',
               fontWeight: 700,
-              height:    22,
               flexShrink: 0,
               borderColor: '#10b981',
               color:       '#10b981',
@@ -218,7 +221,7 @@ export default function HabitProgressItem({ task, isDone, onToggle, onToggleSubT
                 tabIndex={0}
                 aria-label={`${sub.title}${sub.isCompleted ? ' — הושלם' : ''}`}
                 sx={{
-                  py: 0.35,
+                  py: 1,
                   cursor: 'pointer',
                   '&:focus-visible': { outline: '2px solid #10b981', outlineOffset: 1, borderRadius: 1 },
                   '&:hover': { bgcolor: 'rgba(16,185,129,0.06)', borderRadius: 1 },

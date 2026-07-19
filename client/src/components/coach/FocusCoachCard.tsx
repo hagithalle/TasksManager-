@@ -282,13 +282,13 @@ export default function FocusCoachCard({ tasks, onRefresh, onToggle, onToggleSub
   const [previewTask,  setPreviewTask]  = useState<TaskItem | null>(null)
   const [mainIndex,    setMainIndex]    = useState(0)
 
-  const { settings, setSettings, plan, refresh, completedToday, totalToday, progress, displayRoutines, displayHabits, today } = useFocusCoach(tasks)
+  const { settings, setSettings, plan, refresh, completedToday, totalToday, progress, displayRoutines, displayHabits, today, snapshot } = useFocusCoach(tasks)
 
   const coachProgress = computeCoachProgress(
     displayRoutines,
     displayHabits,
-    completedToday,
-    plan.focusTasks.length,
+    tasks,
+    snapshot,
     today,
   )
 

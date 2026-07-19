@@ -16,11 +16,12 @@
 import { describe, it, expect } from 'vitest'
 import {
   computeCoachProgress,
+  computeFocusProgressFromSnapshot,
   getEncouragementKey,
   type CoachProgress,
   type SectionProgress,
 } from '../coachProgress'
-import { isDoneForToday } from '../useFocusCoach'
+import { isDoneForToday, type FocusPlanSnapshot } from '../useFocusCoach'
 import type { TaskItem } from '../../types'
 
 // ── Shared factories ────────────────────────────────────────────────────────────
@@ -53,10 +54,6 @@ function habit(overrides: Partial<TaskItem> = {}): TaskItem {
   return task({ dailyRole: 'ongoingHabit' as any, ...overrides })
 }
 
-function doneToday(overrides: Partial<TaskItem> = {}): TaskItem {
-  return task({ isCompleted: true, completedAt: `${TODAY}T08:00:00Z`, ...overrides })
-}
-
 // ══════════════════════════════════════════════════════════════════════════════
 // computeCoachProgress
 // ══════════════════════════════════════════════════════════════════════════════
@@ -65,25 +62,25 @@ describe('computeCoachProgress — morning section', () => {
   it('counts done routines via isDoneForToday', () => {
     const r1 = routine({ id: 'r1', isCompleted: true, completedAt: `${TODAY}T07:00:00Z` })
     const r2 = routine({ id: 'r2' })
-    const p = computeCoachProgress([r1, r2], [], 1, 0, TODAY)
+    const p = computeCoachProgress([r1, r2], [], [], null, TODAY)
     expect(p.morning).toEqual<SectionProgress>({ done: 1, total: 2 })
   })
 
   it('is 0/0 when there are no routines', () => {
-    const p = computeCoachProgress([], [], 0, 0, TODAY)
+    const p = computeCoachProgress([], [], [], null, TODAY)
     expect(p.morning).toEqual<SectionProgress>({ done: 0, total: 0 })
   })
 
   it('is total/total when all routines done today', () => {
     const r1 = routine({ id: 'r1', isCompleted: true, completedAt: `${TODAY}T06:00:00Z` })
     const r2 = routine({ id: 'r2', isCompleted: true, completedAt: `${TODAY}T06:30:00Z` })
-    const p = computeCoachProgress([r1, r2], [], 2, 0, TODAY)
+    const p = computeCoachProgress([r1, r2], [], [], null, TODAY)
     expect(p.morning).toEqual<SectionProgress>({ done: 2, total: 2 })
   })
 
   it('does not count a routine completed on a previous day', () => {
     const r = routine({ isCompleted: true, completedAt: '2026-07-18T20:00:00Z' })
-    const p = computeCoachProgress([r], [], 0, 0, TODAY)
+    const p = computeCoachProgress([r], [], [], null, TODAY)
     // completedAt is yesterday → isDoneForToday returns false
     expect(p.morning.done).toBe(0)
   })
@@ -93,51 +90,53 @@ describe('computeCoachProgress — habits section', () => {
   it('counts done habits via isDoneForToday', () => {
     const h1 = habit({ id: 'h1', isCompleted: true, completedAt: `${TODAY}T09:00:00Z` })
     const h2 = habit({ id: 'h2' })
-    const p = computeCoachProgress([], [h1, h2], 1, 0, TODAY)
+    const p = computeCoachProgress([], [h1, h2], [], null, TODAY)
     expect(p.habits).toEqual<SectionProgress>({ done: 1, total: 2 })
   })
 
   it('is 0/0 when there are no habits', () => {
-    const p = computeCoachProgress([], [], 0, 0, TODAY)
+    const p = computeCoachProgress([], [], [], null, TODAY)
     expect(p.habits).toEqual<SectionProgress>({ done: 0, total: 0 })
   })
 })
 
-describe('computeCoachProgress — focus section', () => {
-  it('focusDone = completedToday minus routine and habit completions', () => {
-    const r = routine({ isCompleted: true, completedAt: `${TODAY}T07:00:00Z` })
-    const h = habit({ isCompleted: true, completedAt: `${TODAY}T09:00:00Z` })
-    // completedToday = 3 (1 routine + 1 habit + 1 focus)
-    const p = computeCoachProgress([r], [h], 3, 2, TODAY)
-    expect(p.focus.done).toBe(1)   // 3 - 1 - 1
-    expect(p.focus.total).toBe(3)  // 2 pending + 1 done
+describe('computeCoachProgress — focus section (snapshot-based)', () => {
+  it('focus progress is 0/0 with null snapshot', () => {
+    const p = computeCoachProgress([], [], [], null, TODAY)
+    expect(p.focus).toEqual<SectionProgress>({ done: 0, total: 0 })
   })
 
-  it('focusDone is clamped to 0 when subtraction goes negative', () => {
-    // Defensive: completedToday is 0 but there are routines done
-    const r = routine({ isCompleted: true, completedAt: `${TODAY}T07:00:00Z` })
-    const p = computeCoachProgress([r], [], 0, 1, TODAY)
-    expect(p.focus.done).toBe(0)   // max(0, 0-1) = 0
-    expect(p.focus.total).toBe(1)  // 1 pending + 0 done
-  })
-
-  it('focusTotal includes pending focus tasks', () => {
-    const p = computeCoachProgress([], [], 0, 5, TODAY)
-    expect(p.focus.total).toBe(5)
+  it('focus total equals snapshot entry count', () => {
+    const f1 = task({ id: 'f1' })
+    const f2 = task({ id: 'f2' })
+    const snap: FocusPlanSnapshot = { date: TODAY, version: 1, entries: [{ taskId: 'f1' }, { taskId: 'f2' }] }
+    const p = computeCoachProgress([], [], [f1, f2], snap, TODAY)
+    expect(p.focus.total).toBe(2)
     expect(p.focus.done).toBe(0)
   })
 
-  it('when all focus tasks are complete, focusDone === focusTotal', () => {
-    // completedToday = 2, no routines/habits, no pending focus tasks
-    const p = computeCoachProgress([], [], 2, 0, TODAY)
+  it('focus done counts only tasks completed today per snapshot', () => {
+    const f1 = task({ id: 'f1', isCompleted: true, completedAt: `${TODAY}T10:00:00Z` })
+    const f2 = task({ id: 'f2' })
+    const snap: FocusPlanSnapshot = { date: TODAY, version: 1, entries: [{ taskId: 'f1' }, { taskId: 'f2' }] }
+    const p = computeCoachProgress([], [], [f1, f2], snap, TODAY)
+    expect(p.focus.done).toBe(1)
+    expect(p.focus.total).toBe(2)
+  })
+
+  it('when all snapshot entries are completed, done === total', () => {
+    const f1 = task({ id: 'f1', isCompleted: true, completedAt: `${TODAY}T09:00:00Z` })
+    const f2 = task({ id: 'f2', isCompleted: true, completedAt: `${TODAY}T11:00:00Z` })
+    const snap: FocusPlanSnapshot = { date: TODAY, version: 1, entries: [{ taskId: 'f1' }, { taskId: 'f2' }] }
+    const p = computeCoachProgress([], [], [f1, f2], snap, TODAY)
     expect(p.focus.done).toBe(2)
     expect(p.focus.total).toBe(2)
   })
 })
 
 describe('computeCoachProgress — all zeros', () => {
-  it('returns all zeros with empty inputs', () => {
-    const p = computeCoachProgress([], [], 0, 0, TODAY)
+  it('returns all zeros with empty inputs and no snapshot', () => {
+    const p = computeCoachProgress([], [], [], null, TODAY)
     expect(p.morning).toEqual({ done: 0, total: 0 })
     expect(p.focus).toEqual({ done: 0, total: 0 })
     expect(p.habits).toEqual({ done: 0, total: 0 })
@@ -456,5 +455,163 @@ describe('focus task order — preserved after completion', () => {
     const remaining = recs.filter(r => r.key !== 'a')
     expect(remaining[0].key).toBe('b')
     expect(remaining[1].key).toBe('c')
+  })
+})
+
+// ══════════════════════════════════════════════════════════════════════════════
+// computeFocusProgressFromSnapshot — exact snapshot-based focus counting
+// ══════════════════════════════════════════════════════════════════════════════
+
+describe('computeFocusProgressFromSnapshot — core behaviour', () => {
+  it('returns 0/0 when snapshot is null', () => {
+    const result = computeFocusProgressFromSnapshot(null, [], TODAY)
+    expect(result).toEqual({ done: 0, total: 0 })
+  })
+
+  it('returns 0/0 when snapshot date does not match today', () => {
+    const snap: FocusPlanSnapshot = {
+      date: '2026-07-18',  // yesterday
+      version: 1,
+      entries: [{ taskId: 'f1' }],
+    }
+    const f1 = task({ id: 'f1' })
+    const result = computeFocusProgressFromSnapshot(snap, [f1], TODAY)
+    expect(result).toEqual({ done: 0, total: 0 })
+  })
+
+  it('returns 0/0 when snapshot has no entries', () => {
+    const snap: FocusPlanSnapshot = { date: TODAY, version: 1, entries: [] }
+    const result = computeFocusProgressFromSnapshot(snap, [], TODAY)
+    expect(result).toEqual({ done: 0, total: 0 })
+  })
+
+  it('counts all snapshot entries as total when none are completed', () => {
+    const f1 = task({ id: 'f1' })
+    const f2 = task({ id: 'f2' })
+    const f3 = task({ id: 'f3' })
+    const snap: FocusPlanSnapshot = {
+      date: TODAY, version: 1,
+      entries: [{ taskId: 'f1' }, { taskId: 'f2' }, { taskId: 'f3' }],
+    }
+    const result = computeFocusProgressFromSnapshot(snap, [f1, f2, f3], TODAY)
+    expect(result).toEqual({ done: 0, total: 3 })
+  })
+
+  it('completed task remains in count even when engine would exclude it', () => {
+    // Simulates the engine having rebuilt without the completed task:
+    // tasks array still has the task (server still returns it) but isCompleted=true
+    const f1 = task({ id: 'f1', isCompleted: true, completedAt: `${TODAY}T10:00:00Z` })
+    const f2 = task({ id: 'f2' })
+    const snap: FocusPlanSnapshot = {
+      date: TODAY, version: 1,
+      entries: [{ taskId: 'f1' }, { taskId: 'f2' }],
+    }
+    const result = computeFocusProgressFromSnapshot(snap, [f1, f2], TODAY)
+    expect(result.done).toBe(1)
+    expect(result.total).toBe(2)
+  })
+
+  it('unrelated completed task (e.g. a goal task) does not inflate focus done', () => {
+    const unrelated = task({ id: 'u1', isCompleted: true, completedAt: `${TODAY}T08:00:00Z` })
+    const f1 = task({ id: 'f1' })
+    const snap: FocusPlanSnapshot = {
+      date: TODAY, version: 1,
+      entries: [{ taskId: 'f1' }],  // u1 is NOT in the snapshot
+    }
+    // Both tasks are in the tasks array, but only f1 is in the snapshot
+    const result = computeFocusProgressFromSnapshot(snap, [unrelated, f1], TODAY)
+    expect(result.done).toBe(0)   // u1 is not a focus entry
+    expect(result.total).toBe(1)
+  })
+
+  it('deleted task (not found in tasks array) is skipped — total shrinks', () => {
+    const f2 = task({ id: 'f2' })
+    const snap: FocusPlanSnapshot = {
+      date: TODAY, version: 1,
+      entries: [{ taskId: 'f1' }, { taskId: 'f2' }],  // f1 was deleted
+    }
+    // f1 is absent from the tasks array
+    const result = computeFocusProgressFromSnapshot(snap, [f2], TODAY)
+    expect(result.total).toBe(1)
+    expect(result.done).toBe(0)
+  })
+
+  it('archived task is skipped even if present in tasks array', () => {
+    const f1 = task({ id: 'f1', taskStatus: 'archived' as any })
+    const f2 = task({ id: 'f2' })
+    const snap: FocusPlanSnapshot = {
+      date: TODAY, version: 1,
+      entries: [{ taskId: 'f1' }, { taskId: 'f2' }],
+    }
+    const result = computeFocusProgressFromSnapshot(snap, [f1, f2], TODAY)
+    expect(result.total).toBe(1)   // f1 archived → skipped
+    expect(result.done).toBe(0)
+  })
+
+  it('subtask entry: counts as done when the specific subtask is completed', () => {
+    const f1 = task({
+      id: 'f1',
+      subTasks: [
+        { id: 'sub-1', title: 'Step 1', isCompleted: true  },
+        { id: 'sub-2', title: 'Step 2', isCompleted: false },
+      ],
+    })
+    const snap: FocusPlanSnapshot = {
+      date: TODAY, version: 1,
+      entries: [{ taskId: 'f1', subTaskId: 'sub-1' }],
+    }
+    const result = computeFocusProgressFromSnapshot(snap, [f1], TODAY)
+    expect(result.done).toBe(1)
+    expect(result.total).toBe(1)
+  })
+
+  it('subtask entry: not done when a different subtask was completed instead', () => {
+    const f1 = task({
+      id: 'f1',
+      subTasks: [
+        { id: 'sub-1', title: 'Step 1', isCompleted: false },
+        { id: 'sub-2', title: 'Step 2', isCompleted: true  },
+      ],
+    })
+    const snap: FocusPlanSnapshot = {
+      date: TODAY, version: 1,
+      entries: [{ taskId: 'f1', subTaskId: 'sub-1' }],  // sub-1 is the entry
+    }
+    const result = computeFocusProgressFromSnapshot(snap, [f1], TODAY)
+    expect(result.done).toBe(0)   // sub-2 done, but sub-1 is the entry
+  })
+
+  it('all 5 snapshot entries completed → done === total === 5', () => {
+    const focusTasks = [1, 2, 3, 4, 5].map(i =>
+      task({ id: `f${i}`, isCompleted: true, completedAt: `${TODAY}T0${i + 4}:00:00Z` })
+    )
+    const snap: FocusPlanSnapshot = {
+      date: TODAY, version: 1,
+      entries: focusTasks.map(t => ({ taskId: t.id })),
+    }
+    const result = computeFocusProgressFromSnapshot(snap, focusTasks, TODAY)
+    expect(result.done).toBe(5)
+    expect(result.total).toBe(5)
+  })
+
+  it('task completed yesterday does not count as done for today', () => {
+    const f1 = task({ id: 'f1', isCompleted: true, completedAt: '2026-07-18T22:00:00Z' })
+    const snap: FocusPlanSnapshot = { date: TODAY, version: 1, entries: [{ taskId: 'f1' }] }
+    const result = computeFocusProgressFromSnapshot(snap, [f1], TODAY)
+    expect(result.done).toBe(0)
+    expect(result.total).toBe(1)
+  })
+
+  it('snapshot plan stability: adding more tasks later does not change total', () => {
+    // Snapshot was built with 3 tasks. Later, settings.maxTasks increased to 5.
+    // The snapshot is frozen — total stays 3.
+    const originalTasks = [1, 2, 3].map(i => task({ id: `f${i}` }))
+    const newTasks = [1, 2, 3, 4, 5].map(i => task({ id: `f${i}` }))
+    const snap: FocusPlanSnapshot = {
+      date: TODAY, version: 1,
+      entries: originalTasks.map(t => ({ taskId: t.id })),
+    }
+    const result = computeFocusProgressFromSnapshot(snap, newTasks, TODAY)
+    expect(result.total).toBe(3)   // only the 3 snapshot entries count
   })
 })

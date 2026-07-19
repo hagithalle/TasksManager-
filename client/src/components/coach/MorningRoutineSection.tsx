@@ -68,7 +68,7 @@ export default function MorningRoutineSection({ routines, today, onToggle }: Pro
               onClick={() => setExpanded(v => !v)}
               aria-expanded={expanded}
               aria-label={expanded ? t('coach.morningRoutine.hideList') : t('coach.morningRoutine.showList')}
-              sx={{ p: 0.25, ml: 0.25, color: '#b45309' }}
+              sx={{ p: 1.5, ml: -1.25, color: '#b45309' }}
             >
               {expanded
                 ? <ExpandLessRoundedIcon sx={{ fontSize: 15 }} />
@@ -111,7 +111,7 @@ export default function MorningRoutineSection({ routines, today, onToggle }: Pro
                 onClick={() => canClick && onToggle(r.id)}
                 sx={{
                   px: 1.25,
-                  py: 0.6,
+                  py: 1.25,
                   cursor:  canClick ? 'pointer' : 'default',
                   opacity: done ? 0.6 : 1,
                   '&:hover': canClick ? { bgcolor: 'rgba(251,191,36,0.12)' } : {},
