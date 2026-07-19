@@ -106,7 +106,7 @@ function mapTask(raw: any): TaskItem {
     recurrenceInterval:   raw.recurrenceInterval ?? undefined,
     lastCompletedDate:    raw.lastCompletedDate ?? undefined,
     taskNature:           raw.nature ?? 'action',
-    dailyRole:            normalizeDailyRole(raw.dailyRole),
+    dailyRole:            normalizeDailyRole(raw.dailyRole) as import('../types').DailyRole,
     taskStatus:           raw.status ?? 'open',
     createdAt:            raw.createdAt,
     updatedAt:            raw.updatedAt,

@@ -267,21 +267,36 @@
     "nextEvent":      "Next: {{time}} {{title}}",
     "subtaskOf":      "Step in: {{parent}}",
     "morningRoutine": {
-      "title":   "Morning Routine",
+      "title":    "Morning Routine",
       "progress": "{{done}}/{{total}} completed",
-      "allDone": "Morning routine completed"
+      "allDone":  "Morning routine completed",
+      "showList": "Show list",
+      "hideList": "Hide list"
     },
     "focusSection": {
-      "title":   "Today's Focus",
-      "empty":   "No focus tasks for now",
-      "progress": "{{done}}/{{total}} completed"
+      "title":      "My Focus Today",
+      "empty":      "No focus tasks for now",
+      "emptyRelax": "No focus tasks right now — you can pick a new task or enjoy the breathing room.",
+      "progress":   "{{done}}/{{total}} completed"
     },
     "habits": {
       "title":        "Ongoing Habits",
       "completeNext": "Complete next step",
       "plusOne":      "+1",
       "completed":    "Completed",
-      "progress":     "{{done}}/{{total}}"
+      "progress":     "{{done}}/{{total}}",
+      "showSteps":    "Show steps",
+      "hideSteps":    "Hide steps"
+    },
+    "summary": {
+      "morning":        "Morning",
+      "focus":          "Focus",
+      "habits":         "Habits",
+      "begin":          "Let's start with one small step.",
+      "morningStarted": "You've started the day — a bit more to wrap up the morning.",
+      "morningDone":    "Morning done. Now you can focus on what matters most.",
+      "focusProgress":  "Good progress on the important tasks.",
+      "allDone":        "You've finished everything you planned for today."
     },
     "reason": {
       "overdue":          "Overdue",

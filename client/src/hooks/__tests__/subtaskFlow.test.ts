@@ -35,8 +35,8 @@ function makeTask(overrides: Partial<TaskItem> = {}): TaskItem {
     priority:      'medium' as any,
     executionType: 'short'  as any,
     subTasks:      [],
-    taskNature:    'action',
-    dailyRole:     'ongoingHabit',
+    taskNature:    'action'      as any,
+    dailyRole:     'ongoingHabit' as any,
     taskStatus:    'open'   as any,
     createdAt:     '2026-01-01T00:00:00Z',
     updatedAt:     '2026-01-01T00:00:00Z',
@@ -174,7 +174,7 @@ describe('toggleSubTask — server response applied', () => {
     const sub = makeSubTask({ id: 'sub-1', isCompleted: false })
     const task = makeTask({
       subTasks:        [sub],
-      recurrenceType:  'daily',
+      recurrenceType:  'daily' as any,
       recurrenceInterval: 1,
       dueDate:         '2026-07-19',
       lastCompletedDate: undefined,

@@ -268,21 +268,36 @@
     "nextEvent":      "הבא: {{time}} {{title}}",
     "subtaskOf":      "שלב ב: {{parent}}",
     "morningRoutine": {
-      "title":   "שגרת בוקר",
+      "title":    "שגרת בוקר",
       "progress": "{{done}}/{{total}} הושלמו",
-      "allDone": "שגרת בוקר הושלמה"
+      "allDone":  "שגרת בוקר הושלמה",
+      "showList": "הצג רשימה",
+      "hideList": "הסתר רשימה"
     },
     "focusSection": {
-      "title":   "משימות המיקוד",
-      "empty":   "אין משימות מיקוד כרגע",
-      "progress": "{{done}}/{{total}} הושלמו"
+      "title":      "המיקוד שלי להיום",
+      "empty":      "אין משימות מיקוד כרגע",
+      "emptyRelax": "אין כרגע משימות מיקוד — אפשר לבחור משימה חדשה או ליהנות מהמרווח שנוצר.",
+      "progress":   "{{done}}/{{total}} הושלמו"
     },
     "habits": {
       "title":        "הרגלים שוטפים",
       "completeNext": "השלם צעד הבא",
       "plusOne":      "+1",
       "completed":    "הושלם",
-      "progress":     "{{done}}/{{total}}"
+      "progress":     "{{done}}/{{total}}",
+      "showSteps":    "הצג שלבים",
+      "hideSteps":    "הסתר שלבים"
+    },
+    "summary": {
+      "morning":        "בוקר",
+      "focus":          "מיקוד",
+      "habits":         "הרגלים",
+      "begin":          "מתחילים בצעד קטן אחד.",
+      "morningStarted": "כבר התחלת את היום — נשאר עוד קצת לסגור את הבוקר.",
+      "morningDone":    "פתיחת היום הושלמה. עכשיו אפשר להתמקד בעיקר.",
+      "focusProgress":  "יש התקדמות טובה במשימות החשובות.",
+      "allDone":        "סיימת את מה שתכננת להיום."
     },
     "reason": {
       "overdue":          "באיחור",

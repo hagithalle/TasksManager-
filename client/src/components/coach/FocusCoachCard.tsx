@@ -12,14 +12,16 @@ import VisibilityRoundedIcon      from '@mui/icons-material/VisibilityRounded'
 import NavigateNextRoundedIcon    from '@mui/icons-material/NavigateNextRounded'
 import { useTranslation }         from 'react-i18next'
 
-import TaskPreviewDrawer       from '../tasks/TaskPreviewDrawer'
-import { useFocusCoach }       from '../../hooks/useFocusCoach'
-import CoachSettingsPanel      from './CoachSettingsPanel'
-import DailyInsightBanner      from './DailyInsightBanner'
-import MorningRoutineSection   from './MorningRoutineSection'
-import OngoingHabitsSection    from './OngoingHabitsSection'
-import type { TaskItem }       from '../../types'
-import { Priority }            from '../../types'
+import TaskPreviewDrawer          from '../tasks/TaskPreviewDrawer'
+import { useFocusCoach }          from '../../hooks/useFocusCoach'
+import { computeCoachProgress }   from '../../hooks/coachProgress'
+import CoachSettingsPanel         from './CoachSettingsPanel'
+import DailyInsightBanner         from './DailyInsightBanner'
+import MorningRoutineSection      from './MorningRoutineSection'
+import OngoingHabitsSection       from './OngoingHabitsSection'
+import SmartCoachProgressSummary  from './SmartCoachProgressSummary'
+import type { TaskItem }          from '../../types'
+import { Priority }               from '../../types'
 import type { ScoredRecommendation, ReasonKey } from '../../hooks/focusEngine'
 
 interface Props {
@@ -282,6 +284,14 @@ export default function FocusCoachCard({ tasks, onRefresh, onToggle, onToggleSub
 
   const { settings, setSettings, plan, refresh, completedToday, totalToday, progress, displayRoutines, displayHabits, today } = useFocusCoach(tasks)
 
+  const coachProgress = computeCoachProgress(
+    displayRoutines,
+    displayHabits,
+    completedToday,
+    plan.focusTasks.length,
+    today,
+  )
+
   const handleRefresh = () => {
     setMainIndex(0)
     refresh()
@@ -375,9 +385,16 @@ export default function FocusCoachCard({ tasks, onRefresh, onToggle, onToggleSub
           <LinearProgress
             variant="determinate"
             value={progress}
+            aria-valuenow={progress}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={t('coach.subline', { done: completedToday, total: totalToday })}
             sx={{ height: 6, borderRadius: 999, mb: 1.5 }}
           />
         )}
+
+        {/* ── Per-section progress summary ── */}
+        <SmartCoachProgressSummary progress={coachProgress} />
 
         {/* ── Today's Schedule ── */}
         {plan.scheduledEvents.length > 0 && (
@@ -442,9 +459,14 @@ export default function FocusCoachCard({ tasks, onRefresh, onToggle, onToggleSub
         {/* ── Today's Focus ── */}
         <Box sx={{ mb: recs.length > 0 ? 0.5 : 0 }}>
           <Stack direction="row" alignItems="center" gap={0.5} sx={{ mb: 0.75 }}>
-            <Typography variant="caption" fontWeight={700} color="text.secondary">
+            <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ flex: 1 }}>
               🎯 {t('coach.focusSection.title')}
             </Typography>
+            {coachProgress.focus.total > 0 && (
+              <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                {coachProgress.focus.done}/{coachProgress.focus.total}
+              </Typography>
+            )}
           </Stack>
 
           {mainRec ? (
@@ -478,16 +500,16 @@ export default function FocusCoachCard({ tasks, onRefresh, onToggle, onToggleSub
             </>
           ) : (
             <Box sx={{ py: 0.75, textAlign: 'center' }}>
-              {completedToday > 0 ? (
+              {coachProgress.focus.done > 0 ? (
                 <Stack direction="row" alignItems="center" justifyContent="center" gap={0.75}>
-                  <CheckCircleRoundedIcon sx={{ color: 'success.main', fontSize: 18 }} />
+                  <CheckCircleRoundedIcon sx={{ color: 'success.main', fontSize: 18 }} aria-hidden="true" />
                   <Typography variant="caption" color="text.secondary">
                     {t('coach.empty.allDone')}
                   </Typography>
                 </Stack>
               ) : (
-                <Typography variant="caption" color="text.disabled">
-                  {t('coach.focusSection.empty')}
+                <Typography variant="caption" color="text.disabled" sx={{ px: 0.5 }}>
+                  {t('coach.focusSection.emptyRelax')}
                 </Typography>
               )}
             </Box>

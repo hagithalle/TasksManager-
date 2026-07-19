@@ -17,6 +17,8 @@ export default function OngoingHabitsSection({ habits, today, onToggle, onToggle
 
   if (habits.length === 0) return null
 
+  const doneCount = habits.filter(h => isDoneForToday(h, today)).length
+
   return (
     <Box
       sx={{
@@ -25,7 +27,8 @@ export default function OngoingHabitsSection({ habits, today, onToggle, onToggle
         border: '1px solid rgba(16,185,129,0.25)',
         bgcolor: 'rgba(236,253,245,0.7)',
         overflow: 'hidden',
-        '@media (prefers-color-scheme: dark)': { bgcolor: 'rgba(6,78,59,0.15)' },
+        '[data-theme="dark"] &': { bgcolor: 'rgba(6,78,59,0.18)' },
+        '@media (prefers-color-scheme: dark)': { bgcolor: 'rgba(6,78,59,0.18)' },
       }}
     >
       {/* Section header */}
@@ -34,23 +37,35 @@ export default function OngoingHabitsSection({ habits, today, onToggle, onToggle
         alignItems="center"
         gap={0.75}
         sx={{ px: 1.25, py: 0.75, borderBottom: '1px solid rgba(16,185,129,0.15)' }}
+        role="region"
+        aria-label={t('coach.habits.title')}
       >
-        <AutorenewRoundedIcon sx={{ fontSize: 15, color: '#059669', flexShrink: 0 }} />
+        <AutorenewRoundedIcon sx={{ fontSize: 15, color: '#059669', flexShrink: 0 }} aria-hidden="true" />
+
         <Typography variant="caption" fontWeight={700} sx={{ color: '#065f46', flex: 1 }}>
           {t('coach.habits.title')}
+        </Typography>
+
+        <Typography
+          variant="caption"
+          sx={{ color: '#059669', fontWeight: 600, flexShrink: 0 }}
+          aria-label={t('coach.habits.progress', { done: doneCount, total: habits.length })}
+        >
+          {t('coach.habits.progress', { done: doneCount, total: habits.length })}
         </Typography>
       </Stack>
 
       {/* Habit items */}
-      <Stack spacing={0}>
+      <Stack spacing={0} role="list">
         {habits.map(habit => (
-          <HabitProgressItem
-            key={habit.id}
-            task={habit}
-            isDone={isDoneForToday(habit, today)}
-            onToggle={onToggle}
-            onToggleSubTask={onToggleSubTask}
-          />
+          <Box key={habit.id} role="listitem">
+            <HabitProgressItem
+              task={habit}
+              isDone={isDoneForToday(habit, today)}
+              onToggle={onToggle}
+              onToggleSubTask={onToggleSubTask}
+            />
+          </Box>
         ))}
       </Stack>
     </Box>
