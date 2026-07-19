@@ -72,6 +72,10 @@ function mapSubTask(raw: any): SubTask {
   }
 }
 
+export function mapRawTask(raw: any): TaskItem {
+  return mapTask(raw)
+}
+
 function mapTask(raw: any): TaskItem {
   return {
     id:              raw.id,

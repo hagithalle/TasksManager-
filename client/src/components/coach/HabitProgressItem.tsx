@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { Box, Button, LinearProgress, Stack, Typography } from '@mui/material'
 import CheckCircleRoundedIcon     from '@mui/icons-material/CheckCircleRounded'
 import RadioButtonUncheckedRoundedIcon from '@mui/icons-material/RadioButtonUncheckedRounded'
@@ -21,13 +22,31 @@ export default function HabitProgressItem({ task, isDone, onToggle, onToggleSubT
   const total      = subs.length
   const progress   = total > 0 ? Math.round((doneCount / total) * 100) : (isDone ? 100 : 0)
 
+  // Prevent double-click: disable the +1 button while a request is in flight.
+  // The pending flag resets when the parent updates the task prop (either from
+  // the optimistic update or the server response).
+  const [pending, setPending]   = useState(false)
+  const prevTaskRef             = useRef(task)
+  useEffect(() => {
+    if (prevTaskRef.current !== task) {
+      prevTaskRef.current = task
+      setPending(false)
+    }
+  }, [task])
+
   function handleCompleteNext() {
+    if (pending || isDone) return
+    setPending(true)
     if (!hasSubTasks) {
       onToggle(task.id)
       return
     }
     const next = getNextIncompleteSubTask(task)
-    if (next) onToggleSubTask(task.id, next.id)
+    if (next) {
+      onToggleSubTask(task.id, next.id)
+    } else {
+      setPending(false)
+    }
   }
 
   return (
@@ -82,6 +101,8 @@ export default function HabitProgressItem({ task, isDone, onToggle, onToggleSubT
             size="small"
             variant="outlined"
             onClick={handleCompleteNext}
+            disabled={pending}
+            aria-label={`${hasSubTasks ? t('coach.habits.plusOne') : t('coach.habits.completeNext')}: ${task.title}`}
             sx={{
               minWidth: 0,
               px: 0.75,
@@ -93,6 +114,7 @@ export default function HabitProgressItem({ task, isDone, onToggle, onToggleSubT
               borderColor: '#10b981',
               color: '#10b981',
               '&:hover': { bgcolor: '#d1fae5', borderColor: '#059669' },
+              '&.Mui-disabled': { opacity: 0.45 },
             }}
           >
             {hasSubTasks ? t('coach.habits.plusOne') : t('coach.habits.completeNext')}

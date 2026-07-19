@@ -67,15 +67,21 @@ export default function MorningRoutineSection({ routines, today, onToggle }: Pro
             return (
               <Stack
                 key={r.id}
+                role="checkbox"
+                aria-checked={done}
+                aria-label={r.title}
+                tabIndex={done ? -1 : 0}
                 direction="row"
                 alignItems="center"
                 gap={0.75}
+                onKeyDown={e => !done && (e.key === 'Enter' || e.key === ' ') && onToggle(r.id)}
                 sx={{
                   px: 1.25,
                   py: 0.6,
                   cursor: done ? 'default' : 'pointer',
                   opacity: done ? 0.6 : 1,
                   '&:hover': done ? {} : { bgcolor: 'rgba(251,191,36,0.12)' },
+                  '&:focus-visible': { outline: '2px solid #d97706', outlineOffset: -2 },
                   borderTop: '1px solid rgba(251,191,36,0.1)',
                   '&:first-of-type': { borderTop: 'none' },
                 }}

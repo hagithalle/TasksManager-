@@ -68,11 +68,19 @@ export default function DashboardPage() {
   const toggleTask = (taskId: string) => {
     const task = tasks.find((t) => t.id === taskId)
     if (!task) return
-    const updated = { ...task, isCompleted: !task.isCompleted }
-    setTasks((prev) => prev.map((t) => t.id === taskId ? updated : t))
-    tasksApi.update(taskId, { isCompleted: updated.isCompleted }).catch(() => {
-      setTasks((prev) => prev.map((t) => t.id === taskId ? task : t))
-    })
+    const newCompleted = !task.isCompleted
+    // Optimistic update: set completedAt so isDoneForToday works immediately.
+    // For recurring tasks the server resets isCompleted→false and sets lastCompletedDate;
+    // applying the server response corrects the local state without an extra fetch.
+    const optimistic: TaskItem = {
+      ...task,
+      isCompleted: newCompleted,
+      completedAt: newCompleted ? new Date().toISOString() : undefined,
+    }
+    setTasks((prev) => prev.map((t) => t.id === taskId ? optimistic : t))
+    tasksApi.update(taskId, { isCompleted: newCompleted })
+      .then((updated) => setTasks((prev) => prev.map((t) => t.id === taskId ? updated : t)))
+      .catch(() => setTasks((prev) => prev.map((t) => t.id === taskId ? task : t)))
   }
 
   const toggleSubTask = (taskId: string, subId: string) => {
@@ -80,13 +88,20 @@ export default function DashboardPage() {
     if (!task) return
     const currentSub = (task.subTasks ?? []).find((s) => s.id === subId)
     if (!currentSub) return
+    const newCompleted = !currentSub.isCompleted
     const newSubs = (task.subTasks ?? []).map((s) =>
-      s.id === subId ? { ...s, isCompleted: !s.isCompleted } : s,
+      s.id === subId ? { ...s, isCompleted: newCompleted } : s,
     )
     const allDone = newSubs.length > 0 && newSubs.every((s) => s.isCompleted)
-    const updated = { ...task, subTasks: newSubs, isCompleted: allDone ? true : task.isCompleted }
-    setTasks((prev) => prev.map((t) => t.id === taskId ? updated : t))
-    tasksApi.updateSubTask(subId, { isCompleted: !currentSub.isCompleted }).catch(() => {
+    // When all subtasks complete, mirror the backend auto-complete: set completedAt on the parent.
+    const optimistic: TaskItem = {
+      ...task,
+      subTasks: newSubs,
+      isCompleted: allDone ? true : task.isCompleted,
+      completedAt: allDone && !task.completedAt ? new Date().toISOString() : task.completedAt,
+    }
+    setTasks((prev) => prev.map((t) => t.id === taskId ? optimistic : t))
+    tasksApi.updateSubTask(subId, { isCompleted: newCompleted }).catch(() => {
       setTasks((prev) => prev.map((t) => t.id === taskId ? task : t))
     })
   }

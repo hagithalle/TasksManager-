@@ -303,6 +303,7 @@ public class TaskService : ITaskService
                 if (parent is not null && !parent.IsCompleted)
                 {
                     parent.IsCompleted = true;
+                    parent.CompletedAt = DateTime.UtcNow;
                     parent.UpdatedAt   = DateTime.UtcNow;
                     await _db.SaveChangesAsync();
                 }

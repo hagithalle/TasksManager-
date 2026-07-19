@@ -4,6 +4,7 @@ import { buildFocusPlan, DEFAULT_COACH_SETTINGS } from '../focusEngine'
 import type { CoachSettings } from '../focusEngine'
 import type { TaskItem } from '../../types/task'
 import { Priority, ExecutionType, TaskStatus, DailyRole, RecurrenceType } from '../../types/enums'
+import heJson from '../../i18n/locales/he.json'
 
 // ── Minimal task factory ───────────────────────────────────────────────────────
 
@@ -229,10 +230,7 @@ describe('Empty sections produce empty plan arrays', () => {
 // ══════════════════════════════════════════════════════════════════════════════
 
 describe('RTL — Hebrew translation keys are present', () => {
-  // Import the translation file statically so the test is independent of i18n runtime.
-  // If a key is renamed or removed this test will catch it before a deployment.
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const he = require('../../i18n/locales/he.json') as Record<string, unknown>
+  const he = heJson as unknown as Record<string, unknown>
 
   function get(obj: unknown, path: string): unknown {
     return path.split('.').reduce((cur, k) => (cur as Record<string, unknown>)?.[k], obj)
@@ -262,4 +260,217 @@ describe('RTL — Hebrew translation keys are present', () => {
       expect((value as string).length).toBeGreaterThan(0)
     })
   }
+})
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Phase 4 — Completed-state persistence & edge cases
+// ══════════════════════════════════════════════════════════════════════════════
+
+// Helper: apply the same displayRoutines/displayHabits filter logic that
+// useFocusCoach uses, so we can test it purely without React hooks.
+function filterForDisplay(tasks: TaskItem[], dailyRole: DailyRole, today: string): TaskItem[] {
+  return tasks.filter(t =>
+    t.dailyRole === dailyRole &&
+    t.taskStatus !== TaskStatus.Archived &&
+    t.taskStatus !== TaskStatus.Missed &&
+    (!t.isCompleted || isDoneForToday(t, today))
+  )
+}
+
+describe('Completed-state persistence (Bug #1 fix — completedAt in optimistic update)', () => {
+  const TODAY = '2026-07-19'
+
+  it('completed routine remains in display list when completedAt is set (the fixed state)', () => {
+    const routine = makeTask({
+      dailyRole:   DailyRole.MorningRoutine,
+      isCompleted: true,
+      completedAt: `${TODAY}T07:30:00Z`,
+    })
+    const result = filterForDisplay([routine], DailyRole.MorningRoutine, TODAY)
+    expect(result).toHaveLength(1)
+    expect(result[0].id).toBe(routine.id)
+  })
+
+  it('completed routine disappears from display when completedAt is absent (reproduces original bug)', () => {
+    const routine = makeTask({
+      dailyRole:   DailyRole.MorningRoutine,
+      isCompleted: true,
+      // completedAt intentionally absent — old optimistic-update behaviour
+    })
+    const result = filterForDisplay([routine], DailyRole.MorningRoutine, TODAY)
+    // With the old code this was 0 (task disappeared). After the fix, toggleTask
+    // sets completedAt in the optimistic update so this scenario only occurs on error.
+    expect(result).toHaveLength(0)
+  })
+
+  it('routine completed yesterday is NOT shown (previous-day completedAt)', () => {
+    const routine = makeTask({
+      dailyRole:   DailyRole.MorningRoutine,
+      isCompleted: true,
+      completedAt: '2026-07-18T07:30:00Z',
+    })
+    const result = filterForDisplay([routine], DailyRole.MorningRoutine, TODAY)
+    expect(result).toHaveLength(0)
+  })
+
+  it('recurring routine with lastCompletedDate = today stays visible with done state', () => {
+    const routine = makeTask({
+      dailyRole:        DailyRole.MorningRoutine,
+      recurrenceType:   RecurrenceType.Daily,
+      lastCompletedDate: TODAY,
+      isCompleted:      false,  // backend resets isCompleted for recurring tasks
+    })
+    const result = filterForDisplay([routine], DailyRole.MorningRoutine, TODAY)
+    expect(result).toHaveLength(1)
+    expect(isDoneForToday(routine, TODAY)).toBe(true)
+  })
+
+  it('recurring routine from a previous period is treated as incomplete', () => {
+    const routine = makeTask({
+      dailyRole:        DailyRole.MorningRoutine,
+      recurrenceType:   RecurrenceType.Daily,
+      lastCompletedDate: '2026-07-18',  // yesterday
+      isCompleted:      false,
+    })
+    const result = filterForDisplay([routine], DailyRole.MorningRoutine, TODAY)
+    expect(result).toHaveLength(1)
+    expect(isDoneForToday(routine, TODAY)).toBe(false)
+  })
+
+  it('task completed today remains done after plan rebuilds (completedAt persists across useMemo)', () => {
+    // Simulates: user completes a routine → plan rebuilds → routine still shows done
+    const routine = makeTask({
+      dailyRole:   DailyRole.MorningRoutine,
+      isCompleted: true,
+      completedAt: `${TODAY}T07:30:00Z`,
+    })
+    // Rebuilding the plan does not affect displayRoutines — it's derived independently
+    const plan1 = buildFocusPlan([routine], SETTINGS, new Date(`${TODAY}T09:00:00Z`))
+    const plan2 = buildFocusPlan([routine], SETTINGS, new Date(`${TODAY}T09:05:00Z`))
+    expect(plan1.morningRoutines).toHaveLength(0)  // engine shows only incomplete
+    expect(plan2.morningRoutines).toHaveLength(0)  // still filtered out by engine
+    // The display list (separate from engine) includes it with done state
+    const display = filterForDisplay([routine], DailyRole.MorningRoutine, TODAY)
+    expect(display).toHaveLength(1)
+    expect(isDoneForToday(routine, TODAY)).toBe(true)
+  })
+
+  it('mixed completed and incomplete routines calculate progress correctly', () => {
+    const routines = [
+      makeTask({ dailyRole: DailyRole.MorningRoutine, isCompleted: true,  completedAt: `${TODAY}T07:00:00Z` }),
+      makeTask({ dailyRole: DailyRole.MorningRoutine, isCompleted: true,  completedAt: `${TODAY}T07:05:00Z` }),
+      makeTask({ dailyRole: DailyRole.MorningRoutine, isCompleted: false }),
+    ]
+    const display   = filterForDisplay(routines, DailyRole.MorningRoutine, TODAY)
+    const doneCount = display.filter(r => isDoneForToday(r, TODAY)).length
+    expect(display).toHaveLength(3)
+    expect(doneCount).toBe(2)
+    expect(doneCount === display.length).toBe(false)
+  })
+})
+
+describe('Habit edge cases (Bug #3 — backend auto-complete now sets CompletedAt)', () => {
+  const TODAY = '2026-07-19'
+
+  it('habit with completedAt shows done state (fixed backend flow)', () => {
+    const habit = makeTask({
+      dailyRole:   DailyRole.OngoingHabit,
+      isCompleted: true,
+      completedAt: `${TODAY}T12:00:00Z`,
+    })
+    expect(isDoneForToday(habit, TODAY)).toBe(true)
+    const display = filterForDisplay([habit], DailyRole.OngoingHabit, TODAY)
+    expect(display).toHaveLength(1)
+  })
+
+  it('habit without completedAt does NOT show done state (original backend bug scenario)', () => {
+    const habit = makeTask({
+      dailyRole:   DailyRole.OngoingHabit,
+      isCompleted: true,
+      // No completedAt — this was the bug before the CompletedAt fix in TaskService.cs
+    })
+    expect(isDoneForToday(habit, TODAY)).toBe(false)
+  })
+
+  it('habit with all subtasks completed: getNextIncompleteSubTask returns undefined', () => {
+    const habit = makeTask({
+      dailyRole: DailyRole.OngoingHabit,
+      subTasks: [
+        { id: 's1', title: 'A', isCompleted: true },
+        { id: 's2', title: 'B', isCompleted: true },
+        { id: 's3', title: 'C', isCompleted: true },
+      ],
+    })
+    expect(getNextIncompleteSubTask(habit)).toBeUndefined()
+  })
+
+  it('habit with one subtask: +1 returns that subtask, then undefined', () => {
+    const habit = makeTask({
+      dailyRole: DailyRole.OngoingHabit,
+      subTasks:  [{ id: 's1', title: 'Only step', isCompleted: false }],
+    })
+    expect(getNextIncompleteSubTask(habit)?.id).toBe('s1')
+
+    // After completion (simulated as a new task object)
+    const afterComplete = { ...habit, subTasks: [{ id: 's1', title: 'Only step', isCompleted: true }] }
+    expect(getNextIncompleteSubTask(afterComplete)).toBeUndefined()
+  })
+
+  it('habit with no subtasks: getNextIncompleteSubTask returns undefined (triggers parent toggle)', () => {
+    const habit = makeTask({ dailyRole: DailyRole.OngoingHabit })
+    expect(getNextIncompleteSubTask(habit)).toBeUndefined()
+  })
+
+  it('habit with completed parent but incomplete subtasks — isDoneForToday uses completedAt', () => {
+    const habit = makeTask({
+      dailyRole:   DailyRole.OngoingHabit,
+      isCompleted: true,
+      completedAt: `${TODAY}T12:00:00Z`,
+      subTasks: [
+        { id: 's1', title: 'A', isCompleted: true  },
+        { id: 's2', title: 'B', isCompleted: false },  // incomplete subtask
+      ],
+    })
+    // isDoneForToday is based on parent completedAt, not subtask state
+    expect(isDoneForToday(habit, TODAY)).toBe(true)
+  })
+
+  it('habit with all subtasks completed but parent isCompleted=false — not done for today', () => {
+    // This can happen if the backend auto-complete hasn't fired yet (race condition)
+    const habit = makeTask({
+      dailyRole:   DailyRole.OngoingHabit,
+      isCompleted: false,
+      subTasks: [
+        { id: 's1', title: 'A', isCompleted: true },
+        { id: 's2', title: 'B', isCompleted: true },
+      ],
+    })
+    expect(isDoneForToday(habit, TODAY)).toBe(false)
+    // The display filter still shows it (isCompleted=false → !false=true)
+    const display = filterForDisplay([habit], DailyRole.OngoingHabit, TODAY)
+    expect(display).toHaveLength(1)
+  })
+
+  it('completed habit remains in display section', () => {
+    const habit = makeTask({
+      dailyRole:   DailyRole.OngoingHabit,
+      isCompleted: true,
+      completedAt: `${TODAY}T12:00:00Z`,
+    })
+    const display = filterForDisplay([habit], DailyRole.OngoingHabit, TODAY)
+    expect(display).toHaveLength(1)
+    expect(isDoneForToday(display[0], TODAY)).toBe(true)
+  })
+
+  it('long title does not affect logic — all edge-case functions handle it', () => {
+    const longTitle = 'א'.repeat(200)
+    const habit = makeTask({
+      dailyRole:   DailyRole.OngoingHabit,
+      title:       longTitle,
+      isCompleted: true,
+      completedAt: `${TODAY}T12:00:00Z`,
+    })
+    expect(isDoneForToday(habit, TODAY)).toBe(true)
+    expect(getNextIncompleteSubTask(habit)).toBeUndefined()
+  })
 })
