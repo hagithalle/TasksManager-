@@ -1,6 +1,7 @@
-import { Box, Typography, Fab, CircularProgress, Alert } from '@mui/material'
+import { Box, Typography, Fab, CircularProgress, Alert, Button } from '@mui/material'
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded'
+import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
@@ -19,9 +20,10 @@ export default function GoalsPage() {
   const [goals, setGoals]   = useState<Goal[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError]   = useState<string | null>(null)
-  const [addOpen,      setAddOpen]      = useState(false)
-  const [editGoal,     setEditGoal]     = useState<Goal | null>(null)
-  const [agentOpen,    setAgentOpen]    = useState(false)
+  const [addOpen,       setAddOpen]       = useState(false)
+  const [editGoal,      setEditGoal]      = useState<Goal | null>(null)
+  const [agentOpen,     setAgentOpen]     = useState(false)
+  const [showArchived,  setShowArchived]  = useState(false)
 
   useEffect(() => {
     if (!user) return
@@ -46,8 +48,16 @@ export default function GoalsPage() {
     })
   }
 
-  const active    = goals.filter((g) => !g.isCompleted)
-  const completed = goals.filter((g) => g.isCompleted)
+  const handleUnarchiveGoal = (id: string) => {
+    setGoals((prev) => prev.map((g) => g.id === id ? { ...g, isArchived: false, archivedAt: undefined } : g))
+    goalsApi.update(id, { isArchived: false }).catch(() => {
+      goalsApi.getByUser(user!.id).then(setGoals).catch(() => {})
+    })
+  }
+
+  const archived  = goals.filter((g) => g.isArchived)
+  const active    = goals.filter((g) => !g.isCompleted && !g.isArchived)
+  const completed = goals.filter((g) => g.isCompleted && !g.isArchived)
   const pinned    = active.filter((g) => g.isPinned)
   const rest      = active.filter((g) => !g.isPinned)
 
@@ -184,6 +194,44 @@ export default function GoalsPage() {
               />
             ))}
           </Box>
+        </Box>
+      )}
+
+      {/* ── Archived goals section ── */}
+      {archived.length > 0 && (
+        <Box sx={{ mt: 3 }}>
+          <Button
+            size="small"
+            variant="text"
+            onClick={() => setShowArchived(p => !p)}
+            startIcon={<ExpandMoreRoundedIcon sx={{ transform: showArchived ? 'rotate(180deg)' : 'none', transition: '0.2s' }} />}
+            sx={{ color: 'text.secondary', fontSize: '0.75rem', mb: showArchived ? 1 : 0 }}
+          >
+            📦 {t('goal.archived', 'ארכיון')} ({archived.length})
+          </Button>
+          {showArchived && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              {archived.map((goal) => (
+                <Box key={goal.id} sx={{ position: 'relative', opacity: 0.7 }}>
+                  <GoalCard
+                    goal={goal}
+                    onClick={() => navigate(`/goals/${goal.id}`)}
+                    onEdit={setEditGoal}
+                    onDelete={handleDeleteGoal}
+                    onComplete={handleCompleteGoal}
+                  />
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => handleUnarchiveGoal(goal.id)}
+                    sx={{ position: 'absolute', top: 8, left: 8, fontSize: '0.65rem', py: 0.2 }}
+                  >
+                    {t('goal.unarchive', 'הוצא מארכיון')}
+                  </Button>
+                </Box>
+              ))}
+            </Box>
+          )}
         </Box>
       )}
         </>

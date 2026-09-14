@@ -81,7 +81,10 @@
     "emptySubtitle": "מטרות יעזרו לך לארגן ולהתמקד. הוסף את המטרה הראשונה שלך!",
     "createNew": "מטרה חדשה",
     "createTask": "צור גם משימה מהמטרה",
-    "customCategory": "אחר…"
+    "customCategory": "אחר…",
+    "completed": "הושלמו",
+    "archived": "ארכיון",
+    "unarchive": "הוצא מארכיון"
   },
   "list": {
     "new": "רשימה חדשה",
@@ -714,5 +717,55 @@
   },
   "error": {
     "loadFailed": "שגיאה בטעינה"
+  },
+  "freshStart": {
+    "trigger": "התחל דף חדש",
+    "title": "התחל דף חדש",
+    "subtitle": "סקור את המצב הנוכחי ועדכן את התכנית לתקופה החדשה",
+    "next": "הבא",
+    "apply": "החל שינויים",
+    "applying": "מחיל שינויים...",
+    "applyError": "שגיאה בהחלת השינויים. נסה שוב.",
+    "step": {
+      "goals": "יעדים",
+      "tasks": "משימות",
+      "habits": "הרגלים",
+      "plan": "תכנון"
+    },
+    "action": {
+      "keep": "המשך",
+      "archive": "ארכיב 📦",
+      "complete": "הושלם ✅",
+      "stop": "עצור"
+    },
+    "goals": {
+      "empty": "אין יעדים פעילים לסקירה",
+      "tasks": "{{count}} משימות"
+    },
+    "tasks": {
+      "empty": "אין משימות פתוחות לסקירה",
+      "goalArchived": "מטרה מועברת לארכיון",
+      "moveToGoal": "העבר למטרה..."
+    },
+    "habits": {
+      "empty": "אין הרגלים פעילים לסקירה",
+      "routine": "שגרת בוקר",
+      "habit": "הרגל"
+    },
+    "plan": {
+      "maxTasks": "כמה משימות ביום?",
+      "maxTasksHint": "מקסימום משימות ממוקדות",
+      "targetTime": "שעת יעד לסיום",
+      "energyMode": "מצב אנרגיה",
+      "summary": "סיכום שינויים"
+    },
+    "summary": {
+      "archived": "{{count}} מועברים לארכיון",
+      "completed": "{{count}} מסומנים כהושלמו",
+      "goals": "יעדים",
+      "tasks": "משימות",
+      "moved": "{{count}} משימות מועברות למטרה חדשה",
+      "stopped": "{{count}} הרגלים נעצרים"
+    }
   }
 }

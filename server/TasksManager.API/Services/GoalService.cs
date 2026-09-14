@@ -82,6 +82,19 @@ public class GoalService : IGoalService
             else if (!dto.IsCompleted.Value)
                 goal.CompletedAt = null;
         }
+        if (dto.IsArchived.HasValue)
+        {
+            goal.IsArchived = dto.IsArchived.Value;
+            if (dto.IsArchived.Value)
+            {
+                goal.ArchivedAt ??= DateTime.UtcNow;
+                goal.IsPinned = false;
+            }
+            else
+            {
+                goal.ArchivedAt = null;
+            }
+        }
         goal.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
@@ -108,6 +121,7 @@ public class GoalService : IGoalService
         g.DueDate, g.IsPinned, g.IsCompleted, g.CompletedAt,
         g.Tasks.Count,
         g.Tasks.Count(t => t.IsCompleted),
-        g.CreatedAt, g.UpdatedAt
+        g.CreatedAt, g.UpdatedAt,
+        g.IsArchived, g.ArchivedAt
     );
 }

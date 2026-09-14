@@ -14,6 +14,9 @@ public class Goal
     public bool IsCompleted { get; set; }
     public DateTime? CompletedAt { get; set; }
 
+    public bool IsArchived { get; set; }
+    public DateTime? ArchivedAt { get; set; }
+
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 

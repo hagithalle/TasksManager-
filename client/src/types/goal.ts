@@ -30,6 +30,9 @@ export interface Goal {
   isCompleted?: boolean
   completedAt?: string
 
+  isArchived?: boolean
+  archivedAt?: string
+
   createdAt: string
   updatedAt: string
 }

@@ -16,7 +16,9 @@ public record GoalDto(
     int TotalTasks,
     int CompletedTasks,
     DateTime CreatedAt,
-    DateTime UpdatedAt
+    DateTime UpdatedAt,
+    bool IsArchived,
+    DateTime? ArchivedAt
 );
 
 public record CreateGoalDto(
@@ -34,5 +36,6 @@ public record UpdateGoalDto(
     GoalType? GoalType,
     DateTime? DueDate,
     bool? IsPinned,
-    bool? IsCompleted
+    bool? IsCompleted,
+    bool? IsArchived
 );

@@ -81,7 +81,10 @@
     "emptySubtitle": "Goals help you stay focused. Add your first goal!",
     "createNew": "New goal",
     "createTask": "Also create a task for this goal",
-    "customCategory": "Other…"
+    "customCategory": "Other…",
+    "completed": "Completed",
+    "archived": "Archive",
+    "unarchive": "Restore from Archive"
   },
   "list": {
     "new": "New List",
@@ -705,6 +708,56 @@
   },
   "error": {
     "loadFailed": "Failed to load"
+  },
+  "freshStart": {
+    "trigger": "Fresh Start",
+    "title": "Fresh Start",
+    "subtitle": "Review your current state and update your plan for the new period",
+    "next": "Next",
+    "apply": "Apply Changes",
+    "applying": "Applying changes...",
+    "applyError": "Failed to apply changes. Please try again.",
+    "step": {
+      "goals": "Goals",
+      "tasks": "Tasks",
+      "habits": "Habits",
+      "plan": "Planning"
+    },
+    "action": {
+      "keep": "Continue",
+      "archive": "Archive 📦",
+      "complete": "Done ✅",
+      "stop": "Stop"
+    },
+    "goals": {
+      "empty": "No active goals to review",
+      "tasks": "{{count}} tasks"
+    },
+    "tasks": {
+      "empty": "No pending tasks to review",
+      "goalArchived": "Goal being archived",
+      "moveToGoal": "Move to goal..."
+    },
+    "habits": {
+      "empty": "No active habits or routines",
+      "routine": "Morning routine",
+      "habit": "Habit"
+    },
+    "plan": {
+      "maxTasks": "How many focus tasks per day?",
+      "maxTasksHint": "Maximum focused tasks",
+      "targetTime": "Target finish time",
+      "energyMode": "Energy mode",
+      "summary": "Summary of changes"
+    },
+    "summary": {
+      "archived": "{{count}} moved to archive",
+      "completed": "{{count}} marked as done",
+      "goals": "goals",
+      "tasks": "tasks",
+      "moved": "{{count}} tasks moved to a new goal",
+      "stopped": "{{count}} habits stopped"
+    }
   },
   "nextUp": "Next up",
   "showMoreTasks": "Show more tasks"

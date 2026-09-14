@@ -13,6 +13,7 @@ import NavigateNextRoundedIcon    from '@mui/icons-material/NavigateNextRounded'
 import { useTranslation }         from 'react-i18next'
 
 import TaskPreviewDrawer          from '../tasks/TaskPreviewDrawer'
+import FreshStartDialog           from '../freshStart/FreshStartDialog'
 import { useFocusCoach }          from '../../hooks/useFocusCoach'
 import { computeCoachProgress }   from '../../hooks/coachProgress'
 import CoachSettingsPanel         from './CoachSettingsPanel'
@@ -278,9 +279,10 @@ function CompactRecRow({
 export default function FocusCoachCard({ tasks, onRefresh, onToggle, onToggleSubTask, onEdit }: Props) {
   const { t } = useTranslation()
 
-  const [settingsOpen, setSettingsOpen] = useState(false)
-  const [previewTask,  setPreviewTask]  = useState<TaskItem | null>(null)
-  const [mainIndex,    setMainIndex]    = useState(0)
+  const [settingsOpen,   setSettingsOpen]   = useState(false)
+  const [freshStartOpen, setFreshStartOpen] = useState(false)
+  const [previewTask,    setPreviewTask]    = useState<TaskItem | null>(null)
+  const [mainIndex,      setMainIndex]      = useState(0)
 
   const { settings, setSettings, plan, refresh, completedToday, totalToday, progress, displayRoutines, displayHabits, today, snapshot } = useFocusCoach(tasks)
 
@@ -525,7 +527,28 @@ export default function FocusCoachCard({ tasks, onRefresh, onToggle, onToggleSub
         />
       </Box>
 
+      {/* ── Fresh Start link ── */}
+      <Box sx={{ px: 2, pb: 1.5, pt: 0.5, textAlign: 'center' }}>
+        <Button
+          size="small"
+          variant="text"
+          onClick={() => setFreshStartOpen(true)}
+          sx={{ fontSize: '0.7rem', color: 'text.secondary', textDecoration: 'none', opacity: 0.7 }}
+        >
+          🔄 {t('freshStart.trigger', 'התחל דף חדש')}
+        </Button>
+      </Box>
+
       <CoachSettingsPanel open={settingsOpen} settings={settings} onChange={setSettings} />
+
+      <FreshStartDialog
+        open={freshStartOpen}
+        onClose={() => setFreshStartOpen(false)}
+        tasks={tasks}
+        currentSettings={settings}
+        onSettingsChange={setSettings}
+        onApplied={() => { handleRefresh() }}
+      />
 
       <TaskPreviewDrawer
         task={previewTask}
