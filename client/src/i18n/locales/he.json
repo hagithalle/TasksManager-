@@ -65,6 +65,7 @@
     "new": "מטרה חדשה",
     "edit": "עריכת מטרה",
     "title": "כותרת מטרה",
+    "description": "תיאור (אופציונלי)",
     "category": "קטגוריה",
     "progress": "התקדמות",
     "tasks": "משימות",
@@ -316,7 +317,18 @@
       "morningDeepWork":  "עבודה עמוקה",
       "eveningLightTask": "קל לערב",
       "carriedOver":      "מאתמול",
+      "missed":           "פוספס",
       "actionableSubtask":"שלב קטן"
+    },
+    "goalSuggestions": {
+      "title": "קידום מטרות"
+    },
+    "goalSuggestion": {
+      "loading":   "מייצר הצעה…",
+      "error":     "לא הצלחתי לייצר הצעה כעת",
+      "added":     "נוספה להיום",
+      "addToToday":"הוסף להיום",
+      "notToday":  "לא היום"
     }
   },
   "ai": {
@@ -726,6 +738,11 @@
     "apply": "החל שינויים",
     "applying": "מחיל שינויים...",
     "applyError": "שגיאה בהחלת השינויים. נסה שוב.",
+    "success": {
+      "title": "הדף החדש שלך מוכן",
+      "subtitle": "כל השינויים הוחלו. לחץ למטה כדי שה-Smart Coach יבנה עבורך תכנון מעודכן.",
+      "buildPlan": "בנה לי תכנון חדש"
+    },
     "step": {
       "goals": "יעדים",
       "tasks": "משימות",
@@ -740,7 +757,9 @@
     },
     "goals": {
       "empty": "אין יעדים פעילים לסקירה",
-      "tasks": "{{count}} משימות"
+      "tasks": "{{count}} משימות",
+      "archiveAll": "העבר הכל לארכיון 📦",
+      "continueAll": "המשך עם הכל"
     },
     "tasks": {
       "empty": "אין משימות פתוחות לסקירה",
@@ -765,6 +784,7 @@
       "goals": "יעדים",
       "tasks": "משימות",
       "moved": "{{count}} משימות מועברות למטרה חדשה",
+      "unlinked": "{{count}} משימות ללא מטרה",
       "stopped": "{{count}} הרגלים נעצרים"
     }
   }

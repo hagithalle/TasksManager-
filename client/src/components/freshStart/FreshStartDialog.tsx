@@ -62,11 +62,12 @@ function ActionButton({
 // ── Goal step ─────────────────────────────────────────────────────────────────
 
 function GoalsStep({
-  goals, actions, setAction,
+  goals, actions, setAction, onBulkAction,
 }: {
   goals: Goal[]
   actions: Record<string, GoalAction>
   setAction: (id: string, a: GoalAction) => void
+  onBulkAction: (a: GoalAction) => void
 }) {
   const { t } = useTranslation()
   if (goals.length === 0)
@@ -80,6 +81,26 @@ function GoalsStep({
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+      {/* Bulk actions */}
+      <Stack direction="row" justifyContent="flex-end" gap={0.75} sx={{ mb: 1 }}>
+        <Button
+          size="small"
+          variant="text"
+          onClick={() => onBulkAction('keep')}
+          sx={{ fontSize: '0.7rem', color: 'text.secondary', py: 0.25, minWidth: 0 }}
+        >
+          {t('freshStart.goals.continueAll', 'המשך הכל')}
+        </Button>
+        <Button
+          size="small"
+          variant="text"
+          color="warning"
+          onClick={() => onBulkAction('archive')}
+          sx={{ fontSize: '0.7rem', py: 0.25, minWidth: 0 }}
+        >
+          {t('freshStart.goals.archiveAll', 'העבר הכל לארכיון 📦')}
+        </Button>
+      </Stack>
       {goals.map((g, i) => {
         const action = actions[g.id] ?? 'keep'
         return (
@@ -129,18 +150,25 @@ function GoalsStep({
 // ── Tasks step ────────────────────────────────────────────────────────────────
 
 function TasksStep({
-  tasks, actions, setAction, goals, archivedGoalIds,
+  tasks, actions, setAction, goals, archivedGoalIds, moveableGoals,
 }: {
   tasks: TaskItem[]
   actions: Record<string, TaskAction>
   setAction: (id: string, a: TaskAction) => void
   goals: Goal[]
   archivedGoalIds: Set<string>
+  moveableGoals: Goal[]
 }) {
   const { t } = useTranslation()
-  const activeGoals = goals.filter(g => !archivedGoalIds.has(g.id))
 
-  if (tasks.length === 0)
+  // Sort: tasks with archived-goal warning first (Bug 5)
+  const sorted = useMemo(() => {
+    const priority = tasks.filter(t => t.goalId && archivedGoalIds.has(t.goalId))
+    const rest     = tasks.filter(t => !t.goalId || !archivedGoalIds.has(t.goalId))
+    return [...priority, ...rest]
+  }, [tasks, archivedGoalIds])
+
+  if (sorted.length === 0)
     return (
       <Box sx={{ py: 4, textAlign: 'center' }}>
         <Typography variant="body2" color="text.secondary">
@@ -151,12 +179,14 @@ function TasksStep({
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-      {tasks.map((task, i) => {
+      {sorted.map((task, i) => {
         const action = actions[task.id] ?? 'keep'
-        const goalBeingArchived = task.goalId && archivedGoalIds.has(task.goalId)
+        const goalBeingArchived = !!task.goalId && archivedGoalIds.has(task.goalId)
         const goalName = task.goalId ? goals.find(g => g.id === task.goalId)?.title : undefined
         const isMoveAction = action.startsWith('move:')
         const moveGoalId = isMoveAction ? action.slice(5) : ''
+        // Show goal-change dropdown when there are goals to move to, OR when task has a goal that can be unlinked
+        const showDropdown = moveableGoals.length > 0 || !!task.goalId
 
         return (
           <Box key={task.id}>
@@ -191,21 +221,28 @@ function TasksStep({
                   color="warning"
                   onClick={() => setAction(task.id, 'archive')}
                 />
-                {activeGoals.length > 0 && (
-                  <FormControl size="small" sx={{ minWidth: 130 }}>
+                {showDropdown && (
+                  <FormControl size="small" sx={{ minWidth: 140 }}>
                     <Select
                       displayEmpty
-                      value={moveGoalId}
+                      value={action === 'unlink' ? '__unlink__' : moveGoalId}
                       onChange={e => {
                         const val = e.target.value as string
-                        setAction(task.id, val ? `move:${val}` : 'keep')
+                        if (val === '__unlink__') setAction(task.id, 'unlink')
+                        else if (val) setAction(task.id, `move:${val}`)
+                        else setAction(task.id, 'keep')
                       }}
                       sx={{ fontSize: '0.7rem', height: 26, '.MuiSelect-select': { py: 0.3 } }}
                     >
                       <MenuItem value="" sx={{ fontSize: '0.7rem' }}>
-                        {t('freshStart.tasks.moveToGoal', 'העבר למטרה...')}
+                        {t('freshStart.tasks.changeGoal', 'שנה מטרה...')}
                       </MenuItem>
-                      {activeGoals.map(g => (
+                      {task.goalId && (
+                        <MenuItem value="__unlink__" sx={{ fontSize: '0.7rem' }}>
+                          🚫 {t('freshStart.tasks.noGoal', 'ללא מטרה')}
+                        </MenuItem>
+                      )}
+                      {moveableGoals.map(g => (
                         <MenuItem key={g.id} value={g.id} sx={{ fontSize: '0.7rem' }}>
                           {g.title}
                         </MenuItem>
@@ -289,10 +326,10 @@ function PlanStep({
 }: {
   settings: CoachSettings
   onChange: (patch: Partial<CoachSettings>) => void
-  summary: { goals: number; complete: number; tasks: number; movedTasks: number; habits: number }
+  summary: { goals: number; complete: number; tasks: number; movedTasks: number; unlinkedTasks: number; habits: number }
 }) {
   const { t } = useTranslation()
-  const hasChanges = summary.goals + summary.complete + summary.tasks + summary.movedTasks + summary.habits > 0
+  const hasChanges = summary.goals + summary.complete + summary.tasks + summary.movedTasks + summary.unlinkedTasks + summary.habits > 0
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
@@ -391,6 +428,11 @@ function PlanStep({
                 🔄 {t('freshStart.summary.moved', '{{count}} משימות מועברות למטרה חדשה', { count: summary.movedTasks })}
               </Typography>
             )}
+            {summary.unlinkedTasks > 0 && (
+              <Typography variant="caption" color="text.secondary">
+                🔓 {t('freshStart.summary.unlinked', '{{count}} משימות ללא מטרה', { count: summary.unlinkedTasks })}
+              </Typography>
+            )}
             {summary.habits > 0 && (
               <Typography variant="caption" color="text.secondary">
                 ⏸️ {t('freshStart.summary.stopped', '{{count}} הרגלים נעצרים', { count: summary.habits })}
@@ -411,10 +453,11 @@ export default function FreshStartDialog({
   const { t }    = useTranslation()
   const { user } = useAuth()
 
-  const [step,  setStep]  = useState(0)
-  const [goals, setGoals] = useState<Goal[]>([])
+  const [step,    setStep]    = useState(0)
+  const [goals,   setGoals]   = useState<Goal[]>([])
   const [loading,  setLoading]  = useState(false)
   const [applying, setApplying] = useState(false)
+  const [applied,  setApplied]  = useState(false)
   const [error,    setError]    = useState<string | null>(null)
 
   const [goalActions,  setGoalActionsState]  = useState<Record<string, GoalAction>>({})
@@ -426,6 +469,7 @@ export default function FreshStartDialog({
   useEffect(() => {
     if (!open) return
     setStep(0)
+    setApplied(false)
     setGoalActionsState({})
     setTaskActionsState({})
     setHabitActionsState({})
@@ -460,19 +504,28 @@ export default function FreshStartDialog({
     new Set(Object.entries(goalActions).filter(([, a]) => a === 'archive').map(([id]) => id)),
     [goalActions])
 
+  // Goals still selectable as move-to targets: not being archived and not being completed
+  const moveableGoals = useMemo(() =>
+    goals.filter(g => goalActions[g.id] !== 'archive' && goalActions[g.id] !== 'complete'),
+    [goals, goalActions])
+
   // Summary counts for plan step
   const summary = useMemo(() => ({
-    goals:      Object.values(goalActions).filter(a => a === 'archive').length,
-    complete:   Object.values(goalActions).filter(a => a === 'complete').length,
-    tasks:      Object.values(taskActions).filter(a => a === 'archive').length,
-    movedTasks: Object.values(taskActions).filter(a => a.startsWith('move:')).length,
-    habits:     Object.values(habitActions).filter(a => a === 'archive').length,
+    goals:         Object.values(goalActions).filter(a => a === 'archive').length,
+    complete:      Object.values(goalActions).filter(a => a === 'complete').length,
+    tasks:         Object.values(taskActions).filter(a => a === 'archive').length,
+    movedTasks:    Object.values(taskActions).filter(a => a.startsWith('move:')).length,
+    unlinkedTasks: Object.values(taskActions).filter(a => a === 'unlink').length,
+    habits:        Object.values(habitActions).filter(a => a === 'archive').length,
   }), [goalActions, taskActions, habitActions])
 
   // Action setters
   const setGoalAction  = (id: string, a: GoalAction)  => setGoalActionsState(p  => ({ ...p, [id]: a }))
   const setTaskAction  = (id: string, a: TaskAction)   => setTaskActionsState(p  => ({ ...p, [id]: a }))
   const setHabitAction = (id: string, a: HabitAction)  => setHabitActionsState(p => ({ ...p, [id]: a }))
+
+  const setBulkGoalAction = (a: GoalAction) =>
+    setGoalActionsState(Object.fromEntries(goals.map(g => [g.id, a])))
 
   const updateDraftSettings = (patch: Partial<CoachSettings>) =>
     setDraftSettings(prev => ({ ...prev, ...patch }))
@@ -492,6 +545,7 @@ export default function FreshStartDialog({
       await Promise.all([
         ...Object.entries(taskActions).map(([id, action]) => {
           if (action === 'archive') return tasksApi.update(id, { status: 'archived' })
+          if (action === 'unlink') return tasksApi.update(id, { clearGoalId: true })
           if (action.startsWith('move:')) return tasksApi.update(id, { goalId: action.slice(5) })
           return Promise.resolve()
         }),
@@ -501,13 +555,18 @@ export default function FreshStartDialog({
         }),
       ])
       onSettingsChange(draftSettings)
-      onApplied()
-      onClose()
+      setApplied(true)
     } catch {
       setError(t('freshStart.applyError', 'שגיאה בהחלת השינויים. נסה שוב.'))
     } finally {
       setApplying(false)
     }
+  }
+
+  // Called from both the "Build" button and X-close on the success screen
+  function handleBuildPlan() {
+    onApplied()
+    onClose()
   }
 
   const STEPS = [
@@ -521,7 +580,7 @@ export default function FreshStartDialog({
   return (
     <Dialog
       open={open}
-      onClose={applying ? undefined : onClose}
+      onClose={applying ? undefined : applied ? handleBuildPlan : onClose}
       maxWidth="sm"
       fullWidth
       PaperProps={{ sx: { borderRadius: 3, maxHeight: '90vh' } }}
@@ -531,104 +590,142 @@ export default function FreshStartDialog({
           <Typography variant="h6" fontWeight={800} sx={{ flex: 1 }}>
             🔄 {t('freshStart.title', 'התחל דף חדש')}
           </Typography>
-          <Tooltip title={t('common.cancel', 'ביטול')}>
-            <IconButton size="small" onClick={onClose} disabled={applying}>
+          <Tooltip title={t('common.close', 'סגור')}>
+            <IconButton
+              size="small"
+              onClick={applied ? handleBuildPlan : onClose}
+              disabled={applying}
+            >
               <CloseRoundedIcon fontSize="small" />
             </IconButton>
           </Tooltip>
         </Stack>
-        <Typography variant="caption" color="text.secondary">
-          {t('freshStart.subtitle', 'סקור את המצב הנוכחי ועדכן את התכנית לתקופה החדשה')}
-        </Typography>
+        {!applied && (
+          <Typography variant="caption" color="text.secondary">
+            {t('freshStart.subtitle', 'סקור את המצב הנוכחי ועדכן את התכנית לתקופה החדשה')}
+          </Typography>
+        )}
       </DialogTitle>
 
-      <Box sx={{ px: 3, pb: 1 }}>
-        <Stepper activeStep={step} alternativeLabel>
-          {STEPS.map(label => (
-            <Step key={label}>
-              <StepLabel sx={{ '.MuiStepLabel-label': { fontSize: '0.7rem' } }}>{label}</StepLabel>
-            </Step>
-          ))}
-        </Stepper>
-      </Box>
-
-      <DialogContent dividers sx={{ minHeight: 200, maxHeight: 420, overflowY: 'auto' }}>
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-            <CircularProgress size={32} />
+      {/* ── Success state ── */}
+      {applied ? (
+        <>
+          <DialogContent dividers>
+            <Box sx={{ py: 4, textAlign: 'center' }}>
+              <Typography sx={{ fontSize: 48, mb: 2 }}>✨</Typography>
+              <Typography variant="h6" fontWeight={800} sx={{ mb: 1 }}>
+                {t('freshStart.success.title', 'הדף החדש שלך מוכן')}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {t('freshStart.success.subtitle', 'כל השינויים הוחלו. לחץ למטה כדי שה-Smart Coach יבנה עבורך תכנון מעודכן.')}
+              </Typography>
+            </Box>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, py: 2, justifyContent: 'center' }}>
+            <Button
+              variant="contained"
+              color="primary"
+              size="large"
+              onClick={handleBuildPlan}
+              sx={{ px: 4, fontWeight: 700 }}
+            >
+              🎯 {t('freshStart.success.buildPlan', 'בנה לי תכנון חדש')}
+            </Button>
+          </DialogActions>
+        </>
+      ) : (
+        <>
+          <Box sx={{ px: 3, pb: 1 }}>
+            <Stepper activeStep={step} alternativeLabel>
+              {STEPS.map(label => (
+                <Step key={label}>
+                  <StepLabel sx={{ '.MuiStepLabel-label': { fontSize: '0.7rem' } }}>{label}</StepLabel>
+                </Step>
+              ))}
+            </Stepper>
           </Box>
-        ) : (
-          <>
-            {step === 0 && (
-              <GoalsStep
-                goals={goals}
-                actions={goalActions}
-                setAction={setGoalAction}
-              />
-            )}
-            {step === 1 && (
-              <TasksStep
-                tasks={reviewTasks}
-                actions={taskActions}
-                setAction={setTaskAction}
-                goals={goals}
-                archivedGoalIds={archivedGoalIds}
-              />
-            )}
-            {step === 2 && (
-              <HabitsStep
-                habits={reviewHabits}
-                actions={habitActions}
-                setAction={setHabitAction}
-              />
-            )}
-            {step === 3 && (
-              <PlanStep
-                settings={draftSettings}
-                onChange={updateDraftSettings}
-                summary={summary}
-              />
-            )}
-          </>
-        )}
-      </DialogContent>
 
-      <DialogActions sx={{ px: 3, py: 1.5, gap: 1 }}>
-        {step > 0 && (
-          <Button
-            variant="outlined"
-            onClick={() => setStep(s => s - 1)}
-            disabled={applying}
-            sx={{ mr: 'auto' }}
-          >
-            {t('common.back', 'חזרה')}
-          </Button>
-        )}
-        {!isLast && (
-          <Button
-            variant="contained"
-            onClick={() => setStep(s => s + 1)}
-            disabled={loading}
-          >
-            {t('freshStart.next', 'הבא')}
-          </Button>
-        )}
-        {isLast && (
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={applyChanges}
-            disabled={applying}
-            startIcon={applying ? <CircularProgress size={14} color="inherit" /> : undefined}
-          >
-            {applying
-              ? t('freshStart.applying', 'מחיל שינויים...')
-              : t('freshStart.apply', 'החל שינויים')}
-          </Button>
-        )}
-      </DialogActions>
+          <DialogContent dividers sx={{ minHeight: 200, maxHeight: 420, overflowY: 'auto' }}>
+            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
+            {loading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                <CircularProgress size={32} />
+              </Box>
+            ) : (
+              <>
+                {step === 0 && (
+                  <GoalsStep
+                    goals={goals}
+                    actions={goalActions}
+                    setAction={setGoalAction}
+                    onBulkAction={setBulkGoalAction}
+                  />
+                )}
+                {step === 1 && (
+                  <TasksStep
+                    tasks={reviewTasks}
+                    actions={taskActions}
+                    setAction={setTaskAction}
+                    goals={goals}
+                    archivedGoalIds={archivedGoalIds}
+                    moveableGoals={moveableGoals}
+                  />
+                )}
+                {step === 2 && (
+                  <HabitsStep
+                    habits={reviewHabits}
+                    actions={habitActions}
+                    setAction={setHabitAction}
+                  />
+                )}
+                {step === 3 && (
+                  <PlanStep
+                    settings={draftSettings}
+                    onChange={updateDraftSettings}
+                    summary={summary}
+                  />
+                )}
+              </>
+            )}
+          </DialogContent>
+
+          <DialogActions sx={{ px: 3, py: 1.5, gap: 1 }}>
+            {step > 0 && (
+              <Button
+                variant="outlined"
+                onClick={() => setStep(s => s - 1)}
+                disabled={applying}
+                sx={{ mr: 'auto' }}
+              >
+                {t('common.back', 'חזרה')}
+              </Button>
+            )}
+            {!isLast && (
+              <Button
+                variant="contained"
+                onClick={() => setStep(s => s + 1)}
+                disabled={loading}
+              >
+                {t('freshStart.next', 'הבא')}
+              </Button>
+            )}
+            {isLast && (
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={applyChanges}
+                disabled={applying}
+                startIcon={applying ? <CircularProgress size={14} color="inherit" /> : undefined}
+              >
+                {applying
+                  ? t('freshStart.applying', 'מחיל שינויים...')
+                  : t('freshStart.apply', 'החל שינויים')}
+              </Button>
+            )}
+          </DialogActions>
+        </>
+      )}
     </Dialog>
   )
 }

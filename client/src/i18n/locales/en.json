@@ -65,6 +65,7 @@
     "new": "New Goal",
     "edit": "Edit Goal",
     "title": "Goal Title",
+    "description": "Description (optional)",
     "category": "Category",
     "progress": "Progress",
     "tasks": "Tasks",
@@ -315,7 +316,18 @@
       "morningDeepWork":  "Deep work",
       "eveningLightTask": "Light task",
       "carriedOver":      "Carried over",
+      "missed":           "Missed",
       "actionableSubtask":"Small step"
+    },
+    "goalSuggestions": {
+      "title": "Goal nudges"
+    },
+    "goalSuggestion": {
+      "loading":   "Generating suggestion…",
+      "error":     "Couldn't generate a suggestion right now",
+      "added":     "Added to today",
+      "addToToday":"Add to today",
+      "notToday":  "Not today"
     }
   },
   "ai": {
@@ -717,6 +729,11 @@
     "apply": "Apply Changes",
     "applying": "Applying changes...",
     "applyError": "Failed to apply changes. Please try again.",
+    "success": {
+      "title": "Your fresh start is ready",
+      "subtitle": "All changes have been applied. Click below to let Smart Coach build your updated plan.",
+      "buildPlan": "Build my new plan"
+    },
     "step": {
       "goals": "Goals",
       "tasks": "Tasks",
@@ -731,7 +748,9 @@
     },
     "goals": {
       "empty": "No active goals to review",
-      "tasks": "{{count}} tasks"
+      "tasks": "{{count}} tasks",
+      "archiveAll": "Archive all 📦",
+      "continueAll": "Continue all"
     },
     "tasks": {
       "empty": "No pending tasks to review",
@@ -756,6 +775,7 @@
       "goals": "goals",
       "tasks": "tasks",
       "moved": "{{count}} tasks moved to a new goal",
+      "unlinked": "{{count}} tasks unlinked from goal",
       "stopped": "{{count}} habits stopped"
     }
   },
