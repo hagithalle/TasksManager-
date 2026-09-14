@@ -14,6 +14,7 @@ import { useGoogleLogin }      from '@react-oauth/google'
 import { useTranslation } from 'react-i18next'
 import { tasksApi, calendarApi } from '../api'
 import { useAuth }   from '../contexts/AuthContext'
+import { TaskStatus } from '../types'
 import type { TaskItem } from '../types'
 import { TODAY, PRIORITY_STYLE, EXECUTION_STYLE } from '../utils'
 import { AddTaskDialog } from '../components'
@@ -153,7 +154,7 @@ function expandRecurringTasks(tasks: TaskItem[], rangeStart: string, rangeEnd: s
   const expanded: TaskItem[] = [...tasks]
   for (const task of tasks) {
     if (!task.dueDate || !task.recurrenceType || task.recurrenceType === 'none') continue
-    if (task.isCompleted) continue
+    if (task.isCompleted || task.taskStatus === TaskStatus.Archived) continue
     const interval = task.recurrenceInterval ?? 1
     let nextDate = advanceDate(task.dueDate, task.recurrenceType, interval)
     let safety = 0
@@ -221,8 +222,9 @@ export default function CalendarPage() {
 
   const weekDays = getWeekDays(selectedDate)
 
-  // Expand recurring tasks to fill the visible date range
+  // Expand recurring tasks to fill the visible date range (archived tasks excluded)
   const visibleTasks = useMemo(() => {
+    const nonArchived = tasks.filter((t) => t.taskStatus !== TaskStatus.Archived)
     let start: string, end: string
     if (viewMode === 'daily') {
       start = end = selectedDate
@@ -233,7 +235,7 @@ export default function CalendarPage() {
       const cells = getMonthDays(selectedDate).filter(Boolean)
       start = cells[0] ?? selectedDate; end = cells[cells.length - 1] ?? selectedDate
     }
-    return expandRecurringTasks(tasks, start, end)
+    return expandRecurringTasks(nonArchived, start, end)
   }, [tasks, viewMode, selectedDate])
 
   return (

@@ -1,5 +1,5 @@
 import {
-  Box, ButtonBase, Checkbox, Chip, Collapse, Divider, Fab,
+  Box, Button, ButtonBase, Checkbox, Chip, Collapse, Divider, Fab,
   IconButton, List, ListItem, ListItemIcon, ListItemText, Typography, Tooltip
 } from '@mui/material';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded'
@@ -22,7 +22,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth }                     from '../contexts/AuthContext'
 import { tasksApi, goalsApi }          from '../api'
-import { Priority, RecurrenceType } from '../types'
+import { Priority, RecurrenceType, TaskStatus } from '../types'
 import { isCompletedInCurrentPeriod } from '../hooks/focusEngine'
 import type { TaskItem, Goal }         from '../types'
 import { Filter, TODAY, applyFilter, isArchivedCompleted, PRIORITY_COLOR } from '../utils'
@@ -132,15 +132,27 @@ export default function TasksPage() {
       tasksApi.getByUser(user!.id).then(setLocalTasks).catch(() => {})
     })
   }, [user])
-  // ── stats (always over the full data set) ──
-  const statsCompleted = localTasks.filter((tk) => tk.isCompleted).length
-  const statsUrgent    = localTasks.filter(
+
+  const handleRestoreTask = useCallback((taskId: string) => {
+    const task = localTasks.find((t) => t.id === taskId)
+    if (!task) return
+    const restored = { ...task, taskStatus: TaskStatus.Open }
+    setLocalTasks((prev) => prev.map((t) => t.id === taskId ? restored : t))
+    tasksApi.update(taskId, { status: TaskStatus.Open }).catch(() => {
+      setLocalTasks((prev) => prev.map((t) => t.id === taskId ? task : t))
+    })
+  }, [localTasks])
+  // ── stats (exclude archived tasks — they have their own section) ──
+  const activeTasks    = localTasks.filter((tk) => tk.taskStatus !== TaskStatus.Archived)
+  const archivedTasks  = localTasks.filter((tk) => tk.taskStatus === TaskStatus.Archived)
+  const statsCompleted = activeTasks.filter((tk) => tk.isCompleted).length
+  const statsUrgent    = activeTasks.filter(
     (tk) => !tk.isCompleted && (tk.priority === Priority.Critical || tk.priority === Priority.High),
   ).length
-  const statsToday     = localTasks.filter(
+  const statsToday     = activeTasks.filter(
     (tk) => !tk.isCompleted && tk.dueDate?.startsWith(TODAY),
   ).length
-  const statsTotal     = localTasks.length
+  const statsTotal     = activeTasks.length
 
   const stats: {
     key:   Filter | null
@@ -186,8 +198,9 @@ export default function TasksPage() {
 
   const filtered = applyFilter(localTasks.filter((t) => !isArchivedCompleted(t)), filter)
 
-  // group by goalId
-  const grouped = goals
+  // group by goalId — only show active (non-archived) goals as headers
+  const activeGoals = goals.filter((g) => !g.isArchived)
+  const grouped = activeGoals
     .map((goal) => ({
       goal,
       tasks: filtered.filter((tk) => tk.goalId === goal.id),
@@ -397,6 +410,11 @@ export default function TasksPage() {
         </Box>
       )}
 
+      {/* ── Archived tasks section ── */}
+      {archivedTasks.length > 0 && (
+        <ArchivedTasksSection tasks={archivedTasks} onRestore={handleRestoreTask} />
+      )}
+
       {/* ── Add Task FAB ── */}
       <Fab
         color="primary"
@@ -421,7 +439,7 @@ export default function TasksPage() {
         onClose={() => setAddOpen(false)}
         onAdd={handleAddTask}
         onGoalCreated={(g) => setGoals((prev) => [...prev, g])}
-        goals={goals}
+        goals={activeGoals}
         userId={user?.id ?? ''}
       />
 
@@ -432,7 +450,7 @@ export default function TasksPage() {
         onEdit={handleEditTask}
         onGoalCreated={(g) => setGoals((prev) => [...prev, g])}
         editTask={editTask ?? undefined}
-        goals={goals}
+        goals={activeGoals}
         userId={user?.id ?? ''}
       />
 
@@ -768,5 +786,56 @@ function TaskGroup({ tasks, expanded, onToggleExpand, onToggleTask, onToggleSub,
       />
     )}
   </>
+  )
+}
+
+// ─── ArchivedTasksSection ─────────────────────────────────────────────────────
+function ArchivedTasksSection({ tasks, onRestore }: { tasks: TaskItem[]; onRestore: (id: string) => void }) {
+  const { t } = useTranslation()
+  const [open, setOpen] = useState(false)
+  return (
+    <Box sx={{ mt: 3, mb: 2 }}>
+      <Box
+        onClick={() => setOpen((o) => !o)}
+        sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: open ? 1 : 0, cursor: 'pointer', '&:hover': { opacity: 0.8 } }}
+      >
+        <Typography sx={{ fontSize: 16, lineHeight: 1 }}>📦</Typography>
+        <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ letterSpacing: 0.4, textTransform: 'uppercase', flex: 1 }}>
+          {t('task.archivedSection', 'ארכיון')}
+          <Typography component="span" variant="caption" sx={{ ml: 0.75, bgcolor: 'action.selected', borderRadius: 1, px: 0.75, py: 0.1, fontWeight: 700 }}>
+            {tasks.length}
+          </Typography>
+        </Typography>
+        {open ? <ExpandLessRoundedIcon sx={{ fontSize: 16, color: 'text.disabled' }} /> : <ExpandMoreRoundedIcon sx={{ fontSize: 16, color: 'text.disabled' }} />}
+      </Box>
+      <Collapse in={open}>
+        <Box sx={{ borderRadius: 3, border: '1px solid', borderColor: 'divider', overflow: 'hidden', opacity: 0.75 }}>
+          <List disablePadding>
+            {tasks.map((task, i) => (
+              <Box key={task.id}>
+                {i > 0 && <Divider />}
+                <ListItem sx={{ px: 1.5, py: 0.75, alignItems: 'center' }}>
+                  <ListItemText
+                    primary={
+                      <Typography variant="body2" sx={{ textDecoration: 'line-through', color: 'text.disabled' }}>
+                        {task.title}
+                      </Typography>
+                    }
+                  />
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => onRestore(task.id)}
+                    sx={{ fontSize: '0.65rem', py: 0.2, px: 1, minWidth: 0, flexShrink: 0 }}
+                  >
+                    {t('task.restore', 'שחזר')}
+                  </Button>
+                </ListItem>
+              </Box>
+            ))}
+          </List>
+        </Box>
+      </Collapse>
+    </Box>
   )
 }

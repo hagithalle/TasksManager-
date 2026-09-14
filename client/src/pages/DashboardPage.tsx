@@ -135,8 +135,8 @@ export default function DashboardPage() {
   const { streak, last7 } = useStreak(tasks)
 
   // ── Derived data ────────────────────────────────────────────────────────────
-  // Exclude tasks completed more than 24 h ago from all display logic
-  const visibleTasks   = tasks.filter((tk) => !isArchivedCompleted(tk))
+  // Exclude archived tasks and tasks completed more than 24 h ago from all display logic
+  const visibleTasks   = tasks.filter((tk) => !isArchivedCompleted(tk) && tk.taskStatus !== TaskStatus.Archived)
   const carriedTasks   = visibleTasks.filter((tk) => tk.taskStatus === TaskStatus.CarriedOver && !tk.isCompleted)
   const todayTasks     = visibleTasks.filter((tk) => tk.dueDate?.startsWith(TODAY) && !tk.isCompleted)
   const completedToday = todayTasks.filter((tk) =>  tk.isCompleted).length
@@ -360,9 +360,9 @@ export default function DashboardPage() {
         onSeeAll={() => navigate('/goals')}
       />
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mb: 3 }}>
-        {goals.map((goal) => {
-          // Derive progress live from tasks state
-          const goalTasks = tasks.filter((tk) => tk.goalId === goal.id)
+        {goals.filter((g) => !g.isArchived && !g.isCompleted).map((goal) => {
+          // Derive progress live from tasks state (exclude archived tasks)
+          const goalTasks = visibleTasks.filter((tk) => tk.goalId === goal.id)
           const completedCount = goalTasks.filter((tk) => tk.isCompleted).length
           const totalCount = goalTasks.length
           const pct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
@@ -450,7 +450,7 @@ export default function DashboardPage() {
         open={addTaskOpen}
         onClose={() => setAddTaskOpen(false)}
         onAdd={(task) => { setTasks((prev) => [task, ...prev]); setAddTaskOpen(false) }}
-        goals={goals}
+        goals={goals.filter((g) => !g.isArchived)}
         userId={user?.id ?? ''}
       />
 
@@ -459,7 +459,7 @@ export default function DashboardPage() {
         onClose={() => setEditTask(null)}
         editTask={editTask ?? undefined}
         onEdit={(updated) => { setTasks(prev => prev.map(t => t.id === updated.id ? updated : t)); setEditTask(null) }}
-        goals={goals}
+        goals={goals.filter((g) => !g.isArchived)}
         userId={user?.id ?? ''}
         allTasks={tasks}
       />

@@ -59,7 +59,9 @@
     "preview": "תצוגה מקדימה",
     "openLinked": "פתח משימה מקושרת",
     "applyNotes": "החל הערות",
-    "notesSuggestion": "הערות משימה"
+    "notesSuggestion": "הערות משימה",
+    "archivedSection": "ארכיון",
+    "restore": "שחזר"
   },
   "goal": {
     "new": "מטרה חדשה",

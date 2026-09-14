@@ -1,4 +1,4 @@
-import { ExecutionType, Priority } from '../types'
+import { ExecutionType, Priority, TaskStatus } from '../types'
 import type { TaskItem } from '../types'
 
 export const TODAY = new Date().toISOString().slice(0, 10)
@@ -50,10 +50,11 @@ export function flattenTasks(tasks: TaskItem[]): TaskLike[] {
 }
 
 export function applyFilter(tasks: TaskItem[], filter: Filter): TaskItem[] {
-  // Only operate on main tasks for display purposes (TasksPage shows main tasks only)
+  // Archived tasks are always excluded — they live in a separate archive section
+  const nonArchived = tasks.filter(t => t.taskStatus !== TaskStatus.Archived)
   switch (filter) {
     case 'today':
-      return tasks.filter(
+      return nonArchived.filter(
         task =>
           !task.isCompleted &&
           task.dueDate?.startsWith(TODAY) &&
@@ -61,7 +62,7 @@ export function applyFilter(tasks: TaskItem[], filter: Filter): TaskItem[] {
       )
 
     case 'urgent':
-      return tasks.filter(
+      return nonArchived.filter(
         task =>
           !task.isCompleted &&
           (task.priority === Priority.Critical || task.priority === Priority.High) &&
@@ -69,11 +70,11 @@ export function applyFilter(tasks: TaskItem[], filter: Filter): TaskItem[] {
       )
 
     case 'completed':
-      return tasks.filter(task => task.isCompleted)
+      return nonArchived.filter(task => task.isCompleted)
 
     case 'all':
     default:
-      return tasks.filter(isActiveDaily)
+      return nonArchived.filter(isActiveDaily)
   }
 }
 

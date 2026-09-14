@@ -396,7 +396,7 @@ export default function AddTaskDialog({ open, onClose, onAdd, onEdit, onGoalCrea
               label={t('nav.goals')}
             >
               <MenuItem value="">{t('task.noGoal')}</MenuItem>
-              {(goals ?? []).map((g) => (
+              {(goals ?? []).filter((g) => !g.isArchived).map((g) => (
                 <MenuItem key={g.id} value={g.id}>{g.title}</MenuItem>
               ))}
               <MenuItem value={NEW_GOAL_SENTINEL} sx={{ color: 'primary.main', fontWeight: 700 }}>

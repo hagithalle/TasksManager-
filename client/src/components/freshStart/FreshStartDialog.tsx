@@ -492,6 +492,8 @@ export default function FreshStartDialog({
   const [taskActions,  setTaskActionsState]  = useState<Record<string, TaskAction>>({})
   const [habitActions, setHabitActionsState] = useState<Record<string, HabitAction>>({})
   const [draftSettings, setDraftSettings]   = useState<CoachSettings>(currentSettings)
+  // Tracks which task IDs had their action auto-set by a goal cascade (vs manually by the user)
+  const [autoTaskIds, setAutoTaskIds] = useState<Set<string>>(new Set())
 
   // Reset when dialog opens
   useEffect(() => {
@@ -501,6 +503,7 @@ export default function FreshStartDialog({
     setGoalActionsState({})
     setTaskActionsState({})
     setHabitActionsState({})
+    setAutoTaskIds(new Set())
     setDraftSettings(currentSettings)
     setError(null)
 
@@ -547,16 +550,87 @@ export default function FreshStartDialog({
     habits:        Object.values(habitActions).filter(a => a === 'archive').length,
   }), [goalActions, taskActions, habitActions])
 
-  // Action setters
-  const setGoalAction  = (id: string, a: GoalAction)  => setGoalActionsState(p  => ({ ...p, [id]: a }))
-  const setTaskAction  = (id: string, a: TaskAction)   => setTaskActionsState(p  => ({ ...p, [id]: a }))
-  const setHabitAction = (id: string, a: HabitAction)  => setHabitActionsState(p => ({ ...p, [id]: a }))
+  // Action setters — goal changes cascade to linked tasks
+  const setGoalAction = (id: string, a: GoalAction) => {
+    setGoalActionsState(p => ({ ...p, [id]: a }))
+    const linked = reviewTasks.filter(t => t.goalId === id)
+    if (a === 'archive') {
+      // Auto-preselect archive for linked tasks not already manually overridden
+      setTaskActionsState(p => {
+        const next = { ...p }
+        const newAuto = new Set(autoTaskIds)
+        for (const task of linked) {
+          if (!autoTaskIds.has(task.id) && (!p[task.id] || p[task.id] === 'keep')) {
+            next[task.id] = 'archive'
+            newAuto.add(task.id)
+          }
+        }
+        setAutoTaskIds(newAuto)
+        return next
+      })
+    } else {
+      // Restore auto-archived tasks to 'keep' when goal is un-archived
+      setTaskActionsState(p => {
+        const next = { ...p }
+        const newAuto = new Set(autoTaskIds)
+        for (const task of linked) {
+          if (autoTaskIds.has(task.id)) {
+            next[task.id] = 'keep'
+            newAuto.delete(task.id)
+          }
+        }
+        setAutoTaskIds(newAuto)
+        return next
+      })
+    }
+  }
 
-  const setBulkGoalAction = (a: GoalAction) =>
+  // Manually setting a task action removes it from the auto-set set
+  const setTaskAction = (id: string, a: TaskAction) => {
+    setAutoTaskIds(prev => { const n = new Set(prev); n.delete(id); return n })
+    setTaskActionsState(p => ({ ...p, [id]: a }))
+  }
+
+  const setHabitAction = (id: string, a: HabitAction) => setHabitActionsState(p => ({ ...p, [id]: a }))
+
+  const setBulkGoalAction = (a: GoalAction) => {
     setGoalActionsState(Object.fromEntries(goals.map(g => [g.id, a])))
+    if (a === 'archive') {
+      // Auto-archive all linked tasks not yet manually overridden
+      setTaskActionsState(p => {
+        const next = { ...p }
+        const newAuto = new Set(autoTaskIds)
+        for (const task of reviewTasks) {
+          if (task.goalId && !autoTaskIds.has(task.id) && (!p[task.id] || p[task.id] === 'keep')) {
+            next[task.id] = 'archive'
+            newAuto.add(task.id)
+          }
+        }
+        setAutoTaskIds(newAuto)
+        return next
+      })
+    } else {
+      // Restore all auto-archived tasks to 'keep'
+      setTaskActionsState(p => {
+        const next = { ...p }
+        const newAuto = new Set(autoTaskIds)
+        for (const task of reviewTasks) {
+          if (autoTaskIds.has(task.id)) {
+            next[task.id] = 'keep'
+            newAuto.delete(task.id)
+          }
+        }
+        setAutoTaskIds(newAuto)
+        return next
+      })
+    }
+  }
 
-  const setBulkTaskAction = (a: 'keep' | 'archive') =>
+  const setBulkTaskAction = (a: 'keep' | 'archive') => {
+    // Bulk task override marks all as manually set (clears auto tracking)
+    setAutoTaskIds(new Set())
     setTaskActionsState(Object.fromEntries(reviewTasks.map(t => [t.id, a])))
+  }
 
   const updateDraftSettings = (patch: Partial<CoachSettings>) =>
     setDraftSettings(prev => ({ ...prev, ...patch }))
@@ -578,6 +652,13 @@ export default function FreshStartDialog({
           if (action === 'archive') return tasksApi.update(id, { status: 'archived' })
           if (action === 'unlink') return tasksApi.update(id, { clearGoalId: true })
           if (action.startsWith('move:')) return tasksApi.update(id, { goalId: action.slice(5) })
+          if (action === 'keep') {
+            // Invariant: a kept task whose goal is being archived must be unlinked
+            const task = reviewTasks.find(t => t.id === id)
+            if (task?.goalId && archivedGoalIds.has(task.goalId)) {
+              return tasksApi.update(id, { clearGoalId: true })
+            }
+          }
           return Promise.resolve()
         }),
         ...Object.entries(habitActions).map(([id, action]) => {

@@ -33,7 +33,7 @@ import GoalCategoryIcon from '../components/goals/GoalCategoryIcon'
 import AddTaskDialog from '../components/tasks/AddTaskDialog'
 import TaskPreviewDrawer from '../components/tasks/TaskPreviewDrawer'
 import { useAuth } from '../contexts/AuthContext'
-import { GoalType } from '../types'
+import { GoalType, TaskStatus } from '../types'
 import type { Goal, TaskItem } from '../types'
 import { applyFilter, PRIORITY_COLOR } from '../utils'
 import type { Filter } from '../utils'
@@ -61,13 +61,19 @@ export default function GoalDetailPage() {
 
   const isFiniteGoal = goal?.goalType === GoalType.Finite
 
-  const visibleTasks = useMemo(
-    () => applyFilter(localTasks, filter),
-    [localTasks, filter],
+  // Exclude archived tasks from all active views — they are not part of normal goal progress
+  const nonArchivedTasks = useMemo(
+    () => localTasks.filter((t) => t.taskStatus !== TaskStatus.Archived),
+    [localTasks],
   )
 
-  const totalCount = localTasks.length
-  const completedCount = localTasks.filter((task) => task.isCompleted).length
+  const visibleTasks = useMemo(
+    () => applyFilter(nonArchivedTasks, filter),
+    [nonArchivedTasks, filter],
+  )
+
+  const totalCount = nonArchivedTasks.length
+  const completedCount = nonArchivedTasks.filter((task) => task.isCompleted).length
   const overallPct = totalCount ? Math.round((completedCount / totalCount) * 100) : 0
 
   const weeklyTotal = goal?.weeklyTotal ?? 0
@@ -594,7 +600,7 @@ export default function GoalDetailPage() {
           setLocalTasks((prev) => [task, ...prev])
           setAddOpen(false)
         }}
-        goals={allGoals}
+        goals={allGoals.filter((g) => !g.isArchived)}
         userId={user?.id ?? ''}
         defaultGoalId={id}
       />
@@ -610,7 +616,7 @@ export default function GoalDetailPage() {
           setEditTask(null)
         }}
         editTask={editTask ?? undefined}
-        goals={allGoals}
+        goals={allGoals.filter((g) => !g.isArchived)}
         userId={user?.id ?? ''}
       />
 

@@ -59,7 +59,9 @@
     "preview": "Preview",
     "openLinked": "Open linked task",
     "applyNotes": "Apply notes",
-    "notesSuggestion": "Task notes"
+    "notesSuggestion": "Task notes",
+    "archivedSection": "Archive",
+    "restore": "Restore"
   },
   "goal": {
     "new": "New Goal",
