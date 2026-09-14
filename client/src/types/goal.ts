@@ -6,6 +6,9 @@ export interface Goal {
   /** User-facing title — stored as plain text; no translation key needed */
   title: string
 
+  /** Optional free-text context used by Smart Coach AI suggestions */
+  description?: string
+
   category: string
   goalType: GoalType
 

@@ -19,6 +19,7 @@ interface AddGoalDialogProps {
   createGoal: (payload: {
     userId: string
     title: string
+    description?: string
     category: string
     goalType: string
     dueDate?: string
@@ -33,6 +34,7 @@ export default function AddGoalDialog({ open, onClose, onAdd, onEdit, userId, cr
   const isEdit = !!editGoal
 
   const [title,        setTitle]        = useState('')
+  const [description,  setDescription]  = useState('')
   const [category,     setCategory]     = useState<string>(GoalCategory.Personal)
   const [customCat,    setCustomCat]    = useState('')
   const [showCustom,   setShowCustom]   = useState(false)
@@ -45,6 +47,7 @@ export default function AddGoalDialog({ open, onClose, onAdd, onEdit, userId, cr
   useEffect(() => {
     if (open && editGoal) {
       setTitle(editGoal.title)
+      setDescription(editGoal.description ?? '')
       const known = DEFAULT_CATEGORIES.includes(editGoal.category as GoalCategory)
       setCategory(editGoal.category)
       setShowCustom(!known)
@@ -55,6 +58,7 @@ export default function AddGoalDialog({ open, onClose, onAdd, onEdit, userId, cr
       setTitleError(false)
     } else if (!open) {
       setTitle('')
+      setDescription('')
       setCategory(GoalCategory.Personal)
       setCustomCat('')
       setShowCustom(false)
@@ -87,6 +91,7 @@ export default function AddGoalDialog({ open, onClose, onAdd, onEdit, userId, cr
       if (isEdit && editGoal) {
         const updated = await goalsApi.update(editGoal.id, {
           title: title.trim(),
+          description: description.trim() || undefined,
           category: finalCategory,
           goalType,
           dueDate: dueDate || undefined,
@@ -96,6 +101,7 @@ export default function AddGoalDialog({ open, onClose, onAdd, onEdit, userId, cr
         const goal = await createGoal({
           userId,
           title: title.trim(),
+          description: description.trim() || undefined,
           category: finalCategory,
           goalType,
           dueDate: dueDate || undefined,
@@ -137,6 +143,19 @@ export default function AddGoalDialog({ open, onClose, onAdd, onEdit, userId, cr
             fullWidth
             autoFocus
             size="small"
+          />
+
+          {/* Description */}
+          <TextField
+            label={t('goal.description', 'תיאור (אופציונלי)')}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            fullWidth
+            size="small"
+            multiline
+            minRows={2}
+            maxRows={5}
+            inputProps={{ maxLength: 2000 }}
           />
 
           {/* Category */}

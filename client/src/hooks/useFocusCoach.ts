@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import type { TaskItem } from '../types'
+import type { Goal } from '../types/goal'
 import { DailyRole, TaskStatus } from '../types/enums'
 import {
   buildFocusPlan,
@@ -7,6 +8,7 @@ import {
   isCompletedInCurrentPeriod,
   type CoachSettings,
   type FocusPlan,
+  type GoalMeta,
 } from './focusEngine'
 
 export type { CoachSettings, FocusPlan } from './focusEngine'
@@ -97,7 +99,7 @@ function saveSettings(s: CoachSettings) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(s))
 }
 
-export function useFocusCoach(tasks: TaskItem[]) {
+export function useFocusCoach(tasks: TaskItem[], goals: Goal[] = []) {
   const [settings, setSettingsState] = useState<CoachSettings>(loadSettings)
   const [tick, setTick] = useState(0)
 
@@ -111,9 +113,18 @@ export function useFocusCoach(tasks: TaskItem[]) {
 
   const refresh = useCallback(() => setTick(t => t + 1), [])
 
-  // Rebuild the plan whenever tasks, settings, or a manual refresh changes.
+  // Derive a lightweight goal-metadata map for the scoring engine
+  const goalMeta = useMemo((): Record<string, GoalMeta> => {
+    const m: Record<string, GoalMeta> = {}
+    for (const g of goals) {
+      m[g.id] = { dueDate: g.dueDate, isActive: !g.isCompleted && !g.isArchived }
+    }
+    return m
+  }, [goals])
+
+  // Rebuild the plan whenever tasks, settings, goals, or a manual refresh changes.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const plan: FocusPlan = useMemo(() => buildFocusPlan(tasks, settings), [tasks, settings, tick])
+  const plan: FocusPlan = useMemo(() => buildFocusPlan(tasks, settings, new Date(), goalMeta), [tasks, settings, tick, goalMeta])
 
   const today = new Date().toISOString().slice(0, 10)
 

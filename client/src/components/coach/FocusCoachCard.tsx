@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   Box, Button, Card, Chip, IconButton, LinearProgress,
   Stack, Tooltip, Typography,
@@ -22,11 +22,16 @@ import MorningRoutineSection      from './MorningRoutineSection'
 import OngoingHabitsSection       from './OngoingHabitsSection'
 import SmartCoachProgressSummary  from './SmartCoachProgressSummary'
 import type { TaskItem }          from '../../types'
+import type { Goal }              from '../../types/goal'
 import { Priority }               from '../../types'
 import type { ScoredRecommendation, ReasonKey } from '../../hooks/focusEngine'
+import { identifyUncoveredGoals } from '../../hooks/focusEngine'
+import GoalSuggestionCard, { isSuggestionDismissed } from './GoalSuggestionCard'
+import { useAuth } from '../../contexts/AuthContext'
 
 interface Props {
   tasks:            TaskItem[]
+  goals?:           Goal[]
   onRefresh:        () => void
   onToggle?:        (taskId: string) => void
   onToggleSubTask?: (taskId: string, subId: string) => void
@@ -49,6 +54,7 @@ const REASON_META: Record<ReasonKey, { emoji: string; color: string; i18n: strin
   morningDeepWork:  { emoji: '🌅', color: '#3b82f6', i18n: 'coach.reason.morningDeepWork' },
   eveningLightTask: { emoji: '🌙', color: '#6366f1', i18n: 'coach.reason.eveningLightTask' },
   carriedOver:      { emoji: '🔄', color: '#f59e0b', i18n: 'coach.reason.carriedOver' },
+  missed:           { emoji: '⚠️', color: '#ef4444', i18n: 'coach.reason.missed' },
   actionableSubtask:{ emoji: '📌', color: '#7c5cff', i18n: 'coach.reason.actionableSubtask' },
 }
 
@@ -276,15 +282,16 @@ function CompactRecRow({
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
-export default function FocusCoachCard({ tasks, onRefresh, onToggle, onToggleSubTask, onEdit }: Props) {
+export default function FocusCoachCard({ tasks, goals, onRefresh, onToggle, onToggleSubTask, onEdit }: Props) {
   const { t } = useTranslation()
+  const { user } = useAuth()
 
   const [settingsOpen,   setSettingsOpen]   = useState(false)
   const [freshStartOpen, setFreshStartOpen] = useState(false)
   const [previewTask,    setPreviewTask]    = useState<TaskItem | null>(null)
   const [mainIndex,      setMainIndex]      = useState(0)
 
-  const { settings, setSettings, plan, refresh, completedToday, totalToday, progress, displayRoutines, displayHabits, today, snapshot } = useFocusCoach(tasks)
+  const { settings, setSettings, plan, refresh, completedToday, totalToday, progress, displayRoutines, displayHabits, today, snapshot } = useFocusCoach(tasks, goals)
 
   const coachProgress = computeCoachProgress(
     displayRoutines,
@@ -293,6 +300,16 @@ export default function FocusCoachCard({ tasks, onRefresh, onToggle, onToggleSub
     snapshot,
     today,
   )
+
+  // Goal suggestions: active goals with no focus task today, up to 2, non-dismissed
+  const goalSuggestions = useMemo(() => {
+    if (!goals || goals.length === 0 || !user) return []
+    const uncoveredIds = identifyUncoveredGoals(plan, goals)
+    return uncoveredIds
+      .map(id => goals.find(g => g.id === id))
+      .filter((g): g is NonNullable<typeof g> => !!g && !isSuggestionDismissed(g.id))
+      .slice(0, 2)
+  }, [plan, goals, user])
 
   const handleRefresh = () => {
     setMainIndex(0)
@@ -517,6 +534,23 @@ export default function FocusCoachCard({ tasks, onRefresh, onToggle, onToggleSub
             </Box>
           )}
         </Box>
+
+        {/* ── Goal Suggestions ── */}
+        {goalSuggestions.length > 0 && user && (
+          <Box sx={{ mt: 1.5, display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Typography variant="caption" fontWeight={700} color="text.secondary">
+              🌱 {t('coach.goalSuggestions.title', 'הצעות לקידום מטרות')}
+            </Typography>
+            {goalSuggestions.map(goal => (
+              <GoalSuggestionCard
+                key={goal.id}
+                goal={goal}
+                userId={user.id}
+                onAddedToToday={() => handleRefresh()}
+              />
+            ))}
+          </Box>
+        )}
 
         {/* ── Ongoing Habits ── */}
         <OngoingHabitsSection

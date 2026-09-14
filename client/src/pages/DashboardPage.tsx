@@ -236,6 +236,7 @@ export default function DashboardPage() {
       {/* ── Focus Coach ── */}
       <FocusCoachCard
         tasks={tasks}
+        goals={goals}
         onRefresh={() => {
           if (!user) return
           tasksApi.getByUser(user.id).then(setTasks).catch(() => {})

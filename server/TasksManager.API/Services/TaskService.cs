@@ -190,7 +190,8 @@ public class TaskService : ITaskService
         if (dto.DueDate.HasValue)          task.DueDate       = dto.DueDate;
         if (dto.PlannedTime is not null)   task.PlannedTime   = dto.PlannedTime;
         if (dto.DurationMinutes.HasValue)  task.DurationMinutes = dto.DurationMinutes;
-        if (dto.GoalId.HasValue)           task.GoalId        = dto.GoalId;
+        if (dto.ClearGoalId == true)       task.GoalId        = null;
+        else if (dto.GoalId.HasValue)     task.GoalId        = dto.GoalId;
         if (dto.ListId.HasValue)           task.ListId        = dto.ListId;
         if (dto.ReminderOffsetMinutes.HasValue)
             task.ReminderOffsetMinutes = dto.ReminderOffsetMinutes;

@@ -7,6 +7,7 @@ public record GoalDto(
     Guid Id,
     Guid UserId,
     string Title,
+    string? Description,
     string Category,
     GoalType GoalType,
     DateTime? DueDate,
@@ -24,6 +25,7 @@ public record GoalDto(
 public record CreateGoalDto(
     Guid UserId,
     [Required][MaxLength(200)] string Title,
+    [MaxLength(2000)] string? Description,
     [Required][MaxLength(100)] string Category,
     GoalType GoalType,
     DateTime? DueDate,
@@ -32,6 +34,7 @@ public record CreateGoalDto(
 
 public record UpdateGoalDto(
     [MaxLength(200)] string? Title,
+    [MaxLength(2000)] string? Description,
     [MaxLength(100)] string? Category,
     GoalType? GoalType,
     DateTime? DueDate,

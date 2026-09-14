@@ -198,6 +198,27 @@ async function analyzeLists(lists: PersonalList[], language = 'he'): Promise<AiL
   return data
 }
 
+// ── Goal Action Suggestion ────────────────────────────────────────────────────
+
+export interface AiGoalSuggestionRequest {
+  goalId:          string
+  goalTitle:       string
+  goalDescription?: string
+  goalCategory:    string
+  dueDate?:        string
+  language?:       string
+}
+
+export interface AiGoalSuggestionResponse {
+  goalId:     string
+  suggestion: string
+}
+
+async function suggestGoalAction(req: AiGoalSuggestionRequest): Promise<AiGoalSuggestionResponse> {
+  const { data } = await apiClient.post<AiGoalSuggestionResponse>('/ai/goal-suggestion', req)
+  return data
+}
+
 // ── Plan Analysis ─────────────────────────────────────────────────────────────
 
 export interface AiPlanSubTask {
@@ -264,4 +285,4 @@ async function planShabbat(cookingHistory: CookingHistoryItem[], language = 'he'
   return data
 }
 
-export const aiApi = { analyzeDay, searchTasks, getInsights, analyzeGoals, analyzeLists, analyzePlan, planShabbat }
+export const aiApi = { analyzeDay, searchTasks, getInsights, analyzeGoals, analyzeLists, analyzePlan, planShabbat, suggestGoalAction }

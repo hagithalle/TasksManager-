@@ -575,6 +575,63 @@ Rules:
         }
     }
 
+    // ── Goal Action Suggestion ────────────────────────────────────────────────
+
+    public async Task<AiGoalSuggestionResponseDto> SuggestGoalActionAsync(AiGoalSuggestionRequestDto dto)
+    {
+        var cacheKey = CacheKey($"goal-suggestion:{dto.GoalId}:{DateTime.UtcNow:yyyy-MM-dd}", dto.Language ?? "he");
+        if (_cache.TryGetValue(cacheKey, out AiGoalSuggestionResponseDto? cached) && cached is not null)
+        {
+            _logger.LogInformation("AI goal suggestion cache hit for {GoalId}", dto.GoalId);
+            return cached;
+        }
+
+        var apiKey = _config["OpenAI:ApiKey"]
+            ?? throw new InvalidOperationException("OpenAI API key is not configured.");
+
+        var langHe = (dto.Language ?? "he") == "he";
+        var today = DateTime.UtcNow.ToString("yyyy-MM-dd");
+        var descPart = string.IsNullOrWhiteSpace(dto.GoalDescription) ? "" : $"\nDescription: {dto.GoalDescription}";
+        var duePart  = string.IsNullOrWhiteSpace(dto.DueDate)        ? "" : $"\nDue date: {dto.DueDate}";
+
+        var prompt = $@"
+You are a productivity coach helping someone make progress on their goals. Today is {today}.
+
+Goal: {dto.GoalTitle}{descPart}
+Category: {dto.GoalCategory}{duePart}
+
+Suggest ONE concrete, actionable task they could do TODAY to make progress on this goal.
+The suggestion should:
+- Be completable in under 2 hours
+- Be specific and actionable (not vague like ""work on the goal"")
+- Be realistic for a single day
+- Be in {(langHe ? "Hebrew (עברית)" : "English")}
+
+Return ONLY valid JSON (no markdown):
+{{
+  ""suggestion"": ""one concrete action title in {(langHe ? "Hebrew" : "English")}""
+}}";
+
+        var generated = await CallGptAsync(apiKey, prompt, 150);
+        try
+        {
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            using var doc = JsonDocument.Parse(generated);
+            var suggestion = doc.RootElement.GetProperty("suggestion").GetString()
+                             ?? (langHe ? "בצע פעולה קטנה קדימה" : "Take one small step forward");
+            var result = new AiGoalSuggestionResponseDto(dto.GoalId, suggestion);
+            _cache.Set(cacheKey, result, CacheDuration);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to parse goal suggestion response: {Text}", generated);
+            var fallback = new AiGoalSuggestionResponseDto(dto.GoalId,
+                langHe ? "בצע פעולה קטנה לקידום המטרה" : "Take one small step toward this goal");
+            return fallback;
+        }
+    }
+
     // ── Shared GPT helper ────────────────────────────────────────────────────
 
     private async Task<string> CallGptAsync(string apiKey, string prompt, int maxTokens)

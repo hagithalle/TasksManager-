@@ -72,7 +72,7 @@ export default function GoalsPage() {
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-      {!loading && !error && goals.length === 0 && active.length === 0 && (
+      {!loading && !error && goals.length === 0 && (
         <Box
           sx={{
             display: 'flex', flexDirection: 'column', alignItems: 'center',
@@ -89,9 +89,10 @@ export default function GoalsPage() {
         </Box>
       )}
 
-      {!loading && !error && goals.length > 0 && active.length > 0 && (
+      {!loading && !error && goals.length > 0 && (
         <>
-      {/* ── AI Agent banner ── */}
+      {/* ── AI Agent banner (only when active goals exist) ── */}
+      {active.length > 0 && (
       <Box
         onClick={() => setAgentOpen(true)}
         sx={{
@@ -117,6 +118,7 @@ export default function GoalsPage() {
         </Box>
         <Typography sx={{ fontSize: 20, flexShrink: 0 }}>✨</Typography>
       </Box>
+      )}
       {/* ── Pinned section ── */}
       {pinned.length > 0 && (
         <Box sx={{ mb: 3 }}>

@@ -155,6 +155,22 @@ public record AiParseResponseDto(
     List<AiParsedListItemDto> ListItems
 );
 
+// ── Goal Action Suggestion ────────────────────────────────────────────────────
+
+public record AiGoalSuggestionRequestDto(
+    string GoalId,
+    string GoalTitle,
+    string? GoalDescription,
+    string GoalCategory,
+    string? DueDate,
+    string? Language = "he"
+);
+
+public record AiGoalSuggestionResponseDto(
+    string GoalId,
+    string Suggestion
+);
+
 // ── Task Plan Analysis ────────────────────────────────────────────────────────
 
 public record AiPlanRequestDto([Required][MaxLength(2000)] string Text, string? Language = "he");

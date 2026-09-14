@@ -97,5 +97,6 @@ public record UpdateTaskItemDto(
     int? RecurrenceInterval = null,
     string? Nature = null,
     ItemStatus? Status = null,
-    string? DailyRole = null
+    string? DailyRole = null,
+    bool? ClearGoalId = null
 );

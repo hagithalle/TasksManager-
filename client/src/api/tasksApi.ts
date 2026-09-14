@@ -41,6 +41,7 @@ export interface UpdateTaskPayload {
   nature?: string
   dailyRole?: string
   status?: string
+  clearGoalId?: boolean
 }
 
 export interface CreateSubTaskPayload {

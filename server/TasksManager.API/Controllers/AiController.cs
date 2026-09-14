@@ -225,4 +225,27 @@ public class AiController : ControllerBase
             return StatusCode(500, new { code = "AI_ERROR" });
         }
     }
+
+    // POST api/ai/goal-suggestion
+    [HttpPost("goal-suggestion")]
+    public async Task<IActionResult> SuggestGoalAction(AiGoalSuggestionRequestDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.GoalId) || string.IsNullOrWhiteSpace(dto.GoalTitle))
+            return BadRequest(new { message = "GoalId and GoalTitle are required." });
+
+        try
+        {
+            var result = await _ai.SuggestGoalActionAsync(dto);
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(503, new { code = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected AI error in goal-suggestion");
+            return StatusCode(500, new { code = "AI_ERROR" });
+        }
+    }
 }

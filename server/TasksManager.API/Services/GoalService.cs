@@ -52,6 +52,7 @@ public class GoalService : IGoalService
             Id = Guid.NewGuid(),
             UserId = dto.UserId,
             Title = dto.Title,
+            Description = dto.Description,
             Category = dto.Category,
             GoalType = dto.GoalType,
             DueDate = dto.DueDate,
@@ -69,8 +70,9 @@ public class GoalService : IGoalService
         var goal = await _db.Goals.Include(g => g.Tasks).FirstOrDefaultAsync(g => g.Id == id);
         if (goal is null || goal.UserId != callerId) return null;
 
-        if (dto.Title is not null)       goal.Title    = dto.Title;
-        if (dto.Category is not null)    goal.Category = dto.Category;
+        if (dto.Title is not null)       goal.Title       = dto.Title;
+        if (dto.Description is not null) goal.Description = dto.Description;
+        if (dto.Category is not null)    goal.Category    = dto.Category;
         if (dto.GoalType is not null)    goal.GoalType = dto.GoalType.Value;
         if (dto.DueDate.HasValue)        goal.DueDate  = dto.DueDate;
         if (dto.IsPinned.HasValue)       goal.IsPinned = dto.IsPinned.Value;
@@ -117,7 +119,7 @@ public class GoalService : IGoalService
     }
 
     private static GoalDto ToDto(Goal g) => new(
-        g.Id, g.UserId, g.Title, g.Category, g.GoalType,
+        g.Id, g.UserId, g.Title, g.Description, g.Category, g.GoalType,
         g.DueDate, g.IsPinned, g.IsCompleted, g.CompletedAt,
         g.Tasks.Count,
         g.Tasks.Count(t => t.IsCompleted),

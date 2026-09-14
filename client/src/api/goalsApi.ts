@@ -4,6 +4,7 @@ import type { Goal } from '../types'
 export interface CreateGoalPayload {
   userId: string
   title: string
+  description?: string
   category: string
   goalType: string
   dueDate?: string
@@ -12,6 +13,7 @@ export interface CreateGoalPayload {
 
 export interface UpdateGoalPayload {
   title?: string
+  description?: string
   category?: string
   goalType?: string
   dueDate?: string
@@ -25,6 +27,7 @@ function mapGoal(raw: any): Goal {
   return {
     id:               raw.id,
     title:            raw.title,
+    description:      raw.description ?? undefined,
     category:         raw.category,
     goalType:         raw.goalType,
     totalTasks:       raw.totalTasks ?? 0,

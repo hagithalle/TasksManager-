@@ -1,7 +1,18 @@
 import type { TaskItem } from '../types/task'
 import { Priority, ExecutionType, TaskNature, TaskStatus, RecurrenceType, DailyRole } from '../types/enums'
 
-// ── Public types ───────────────────────────────────────────────────────────────
+// ── Public types ──────────────────────────────────────────────────────────────
+
+/**
+ * Minimal goal metadata passed into the engine.
+ * Kept separate from the full Goal API model so the engine stays decoupled.
+ */
+export interface GoalMeta {
+  /** ISO 'yyyy-MM-dd', only relevant for Finite goals */
+  dueDate?: string
+  /** false = completed or archived — task gets no goal-based boost */
+  isActive: boolean
+}
 
 export type EnergyMode = 'morning' | 'afternoon' | 'evening'
 
@@ -10,7 +21,7 @@ export type ReasonKey =
   | 'criticalPriority' | 'highPriority'
   | 'frog' | 'linkedToGoal' | 'quickWin' | 'waitingDays'
   | 'morningDeepWork' | 'eveningLightTask'
-  | 'carriedOver' | 'actionableSubtask'
+  | 'carriedOver' | 'missed' | 'actionableSubtask'
 
 /** A task (or subtask) flattened into a recommendation candidate. */
 export interface FlatCandidate {
@@ -171,7 +182,8 @@ function flattenCandidates(tasks: TaskItem[]): FlatCandidate[] {
   for (const task of tasks) {
     if (task.isCompleted) continue
     if (isCompletedInCurrentPeriod(task)) continue
-    if (task.taskStatus === TaskStatus.Archived || task.taskStatus === TaskStatus.Missed) continue
+    if (task.taskStatus === TaskStatus.Archived) continue
+    // Missed tasks (past scheduled time, not completed) resurface as focus candidates
 
     const openSubs = task.subTasks?.filter(s => !s.isCompleted) ?? []
 
@@ -223,7 +235,10 @@ function flattenCandidates(tasks: TaskItem[]): FlatCandidate[] {
 
 function isEligible(c: FlatCandidate, scheduledIds: Set<string>): boolean {
   if (scheduledIds.has(c.sourceTask.id)) return false
-  if (!c.isSubTask && c.plannedTime) return false
+  // Tasks with a plannedTime are normally routed to the schedule strip, not focus.
+  // Exception: Missed tasks — their time has passed, they are no longer in the strip
+  // (extractScheduledEvents excludes Missed), so they are eligible as focus candidates.
+  if (!c.isSubTask && c.plannedTime && c.taskStatus !== TaskStatus.Missed) return false
   if (isCompletedInCurrentPeriod(c.sourceTask)) return false
   return true
 }
@@ -235,6 +250,7 @@ interface ScoreCtx {
   today:      string
   energyMode: EnergyMode
   frogKey?:   string
+  goalMeta:   Record<string, GoalMeta>
 }
 
 function computeScore(c: FlatCandidate, ctx: ScoreCtx): { pts: number; reasons: ReasonKey[] } {
@@ -264,7 +280,21 @@ function computeScore(c: FlatCandidate, ctx: ScoreCtx): { pts: number; reasons: 
   if (ctx.frogKey && ctx.frogKey === c.key) { pts += 15; reasons.push('frog') }
 
   // ── Linked to a goal ─────────────────────────────────────────────────────
-  if (c.goalId) { pts += 10; reasons.push('linkedToGoal') }
+  // Completed / archived goals suppress the boost entirely.
+  // Active goals score by proximity to the goal's dueDate (capped at +18).
+  if (c.goalId) {
+    const meta = ctx.goalMeta[c.goalId]
+    if (!meta || meta.isActive) {
+      let goalPts = 8  // base: unknown goal or active with no dueDate or distant dueDate
+      if (meta?.dueDate) {
+        const d = daysBetween(ctx.today, meta.dueDate)
+        if      (d <= 7)  goalPts = 18
+        else if (d <= 30) goalPts = 12
+      }
+      pts += goalPts
+      reasons.push('linkedToGoal')
+    }
+  }
 
   // ── Duration fit (shorter fits = easier to slot in) ──────────────────────
   const mins = estimateDuration(c.durationMinutes, c.executionType)
@@ -294,8 +324,19 @@ function computeScore(c: FlatCandidate, ctx: ScoreCtx): { pts: number; reasons: 
     else         pts +=  2
   }
 
-  // ── Carried over ──────────────────────────────────────────────────────────
+  // ── Carried over / previously missed ─────────────────────────────────────
   if (c.taskStatus === TaskStatus.CarriedOver) { pts += 5; reasons.push('carriedOver') }
+  // Missed: was explicitly scheduled but not completed — slightly stronger signal
+  if (c.taskStatus === TaskStatus.Missed)      { pts += 8; reasons.push('missed') }
+
+  // ── Carry-over escalation: gradual urgency boost based on days overdue ────
+  // dueDate is guaranteed present for both CarriedOver and Missed (server sets
+  // status only when DueDate < today).  Capped at 12 pts so a long-waiting
+  // medium-priority task doesn't outrank a Critical task due today.
+  if ((c.taskStatus === TaskStatus.CarriedOver || c.taskStatus === TaskStatus.Missed) && c.dueDate) {
+    const daysOverdue = Math.max(0, -daysBetween(ctx.today, c.dueDate))
+    pts += Math.min(Math.floor(daysOverdue * 2), 12)
+  }
 
   // ── Subtask bonus (prefer actionable chunks over big tasks) ───────────────
   if (c.isSubTask) { pts += 5; reasons.push('actionableSubtask') }
@@ -309,21 +350,18 @@ export function buildFocusPlan(
   tasks:    TaskItem[],
   settings: CoachSettings,
   now:      Date = new Date(),
+  goalMeta: Record<string, GoalMeta> = {},
 ): FocusPlan {
   const today      = now.toISOString().slice(0, 10)
   const energyMode = settings.energyMode === 'auto'
     ? getEnergyMode(now.getHours())
     : settings.energyMode
 
-  // Available time until target
-  const [th, tm]   = settings.targetTime.split(':').map(Number)
-  const targetDate = new Date(now)
+  // Raw time until target (before deducting commitments)
+  const [th, tm]        = settings.targetTime.split(':').map(Number)
+  const targetDate      = new Date(now)
   targetDate.setHours(th, tm, 0, 0)
-  const availableMinutes = Math.max(0, Math.floor((targetDate.getTime() - now.getTime()) / 60_000))
-  // 17.5 % buffer for interruptions; if target already passed use Infinity so we don't skip tasks
-  const usableMinutes = availableMinutes > 0
-    ? Math.floor(availableMinutes * 0.825)
-    : Infinity
+  const rawAvailableMinutes = Math.max(0, Math.floor((targetDate.getTime() - now.getTime()) / 60_000))
 
   // ── Partition by dailyRole (must happen before all other steps) ────────────
   const focusPool   = tasks.filter(isFocusTask)
@@ -337,6 +375,20 @@ export function buildFocusPlan(
   // Scheduled events (Focus tasks only — routines/habits never enter the schedule strip)
   const scheduledEvents = extractScheduledEvents(focusPool)
   const scheduledIds    = new Set(scheduledEvents.map(e => e.task.id))
+
+  // Deduct committed time: scheduled events + pending routines/habits (already
+  // filtered for completion, so completed items are not double-subtracted).
+  // The three pools are mutually exclusive by dailyRole, so no double-counting.
+  const committedMinutes =
+    scheduledEvents.reduce((s, e) => s + estimateDuration(e.task.durationMinutes, e.task.executionType), 0) +
+    morningRoutines.reduce((s, t) => s + estimateDuration(t.durationMinutes, t.executionType), 0) +
+    ongoingHabits.reduce(  (s, t) => s + estimateDuration(t.durationMinutes, t.executionType), 0)
+
+  const availableMinutes = Math.max(0, rawAvailableMinutes - committedMinutes)
+  // 17.5 % buffer for interruptions; if target already passed use Infinity so we don't skip tasks
+  const usableMinutes = rawAvailableMinutes > 0
+    ? Math.floor(availableMinutes * 0.825)
+    : Infinity
 
   // Flatten and filter Focus candidates
   const flat     = flattenCandidates(focusPool)
@@ -352,7 +404,7 @@ export function buildFocusPlan(
   })[0]
 
   // Score and sort
-  const ctx: ScoreCtx = { now, today, energyMode, frogKey: frogCand?.key }
+  const ctx: ScoreCtx = { now, today, energyMode, frogKey: frogCand?.key, goalMeta }
   const scored: ScoredRecommendation[] = eligible.map(c => {
     const { pts, reasons } = computeScore(c, ctx)
     return {
@@ -364,7 +416,7 @@ export function buildFocusPlan(
   })
   scored.sort((a, b) => b.score - a.score)
 
-  // Greedy time-budget selection with soft diversity enforcement
+  // Greedy selection: score-ordered, time-budget-aware, soft diversity enforced
   const selected: ScoredRecommendation[] = []
   let remaining = usableMinutes
   const typeCount = new Map<string, number>()
@@ -382,14 +434,24 @@ export function buildFocusPlan(
       if (hasAlternative) continue
     }
 
+    // Time-budget: skip tasks that would exceed remaining time when a fitting
+    // alternative exists. Only allow an over-budget task when nothing has been
+    // selected yet AND no smaller task fits — so the plan is never left empty.
+    if (rec.estimatedMinutes > remaining) {
+      const hasFitting = scored.some(x =>
+        !selected.includes(x) &&
+        x.estimatedMinutes <= remaining
+      )
+      if (hasFitting || selected.length > 0) continue
+      // selected.length === 0 && !hasFitting: fall through — allow top task
+    }
+
     selected.push(rec)
     remaining -= rec.estimatedMinutes
     typeCount.set(rec.candidate.executionType, tc + 1)
-  }
 
-  // Fallback: at least show the top-scoring task even if it doesn't fit
-  if (selected.length === 0 && scored.length > 0) {
-    selected.push(scored[0])
+    // Once the budget is consumed (including the over-budget fallback), stop
+    if (remaining <= 0) break
   }
 
   const usedMinutes = selected.reduce((sum, r) => sum + r.estimatedMinutes, 0)
@@ -412,4 +474,23 @@ export function buildFocusPlan(
     energyMode,
     nextEvent,
   }
+}
+
+/**
+ * Returns active goals that have no focus task selected in today's plan.
+ * Used by Smart Coach to decide which goals to generate AI suggestions for.
+ * Goals without at least one linked task in `plan.focusTasks` are "uncovered."
+ */
+export function identifyUncoveredGoals(
+  plan:  FocusPlan,
+  goals: { id: string; isCompleted?: boolean; isArchived?: boolean }[]
+): string[] {
+  const coveredGoalIds = new Set(
+    plan.focusTasks
+      .map(r => r.candidate.goalId)
+      .filter((id): id is string => !!id)
+  )
+  return goals
+    .filter(g => !g.isCompleted && !g.isArchived && !coveredGoalIds.has(g.id))
+    .map(g => g.id)
 }
