@@ -16,6 +16,7 @@ import { tasksApi }               from '../../api/tasksApi'
 import type { Goal }              from '../../types/goal'
 import type { TaskItem }          from '../../types/task'
 import { DailyRole, TaskStatus }  from '../../types/enums'
+import { DEFAULT_COACH_SETTINGS } from '../../hooks/focusEngine'
 import type { CoachSettings }     from '../../hooks/focusEngine'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -28,12 +29,14 @@ type TaskAction  = string
 // ── Props ──────────────────────────────────────────────────────────────────────
 
 interface Props {
-  open:             boolean
-  onClose:          () => void
-  tasks:            TaskItem[]
-  currentSettings:  CoachSettings
-  onSettingsChange: (patch: Partial<CoachSettings>) => void
-  onApplied:        () => void
+  open:              boolean
+  onClose:           () => void
+  tasks:             TaskItem[]
+  currentSettings?:  CoachSettings
+  onSettingsChange?: (patch: Partial<CoachSettings>) => void
+  onApplied?:        () => void
+  /** Which step to start on: 0=Goals 1=Tasks 2=Habits 3=Plan. Default 0. */
+  initialStep?:      number
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -150,7 +153,7 @@ function GoalsStep({
 // ── Tasks step ────────────────────────────────────────────────────────────────
 
 function TasksStep({
-  tasks, actions, setAction, goals, archivedGoalIds, moveableGoals,
+  tasks, actions, setAction, goals, archivedGoalIds, moveableGoals, onBulkAction,
 }: {
   tasks: TaskItem[]
   actions: Record<string, TaskAction>
@@ -158,6 +161,7 @@ function TasksStep({
   goals: Goal[]
   archivedGoalIds: Set<string>
   moveableGoals: Goal[]
+  onBulkAction: (a: 'keep' | 'archive') => void
 }) {
   const { t } = useTranslation()
 
@@ -179,6 +183,26 @@ function TasksStep({
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+      {/* Bulk actions */}
+      <Stack direction="row" justifyContent="flex-end" gap={0.75} sx={{ mb: 1 }}>
+        <Button
+          size="small"
+          variant="text"
+          onClick={() => onBulkAction('keep')}
+          sx={{ fontSize: '0.7rem', color: 'text.secondary', py: 0.25, minWidth: 0 }}
+        >
+          {t('freshStart.tasks.keepAll', 'השאר הכל')}
+        </Button>
+        <Button
+          size="small"
+          variant="text"
+          color="warning"
+          onClick={() => onBulkAction('archive')}
+          sx={{ fontSize: '0.7rem', py: 0.25, minWidth: 0 }}
+        >
+          {t('freshStart.tasks.archiveAll', 'העבר הכל לארכיון 📦')}
+        </Button>
+      </Stack>
       {sorted.map((task, i) => {
         const action = actions[task.id] ?? 'keep'
         const goalBeingArchived = !!task.goalId && archivedGoalIds.has(task.goalId)
@@ -448,12 +472,16 @@ function PlanStep({
 // ── Main dialog ────────────────────────────────────────────────────────────────
 
 export default function FreshStartDialog({
-  open, onClose, tasks, currentSettings, onSettingsChange, onApplied,
+  open, onClose, tasks,
+  currentSettings  = DEFAULT_COACH_SETTINGS,
+  onSettingsChange = () => {},
+  onApplied        = () => {},
+  initialStep      = 0,
 }: Props) {
   const { t }    = useTranslation()
   const { user } = useAuth()
 
-  const [step,    setStep]    = useState(0)
+  const [step,    setStep]    = useState(initialStep)
   const [goals,   setGoals]   = useState<Goal[]>([])
   const [loading,  setLoading]  = useState(false)
   const [applying, setApplying] = useState(false)
@@ -468,7 +496,7 @@ export default function FreshStartDialog({
   // Reset when dialog opens
   useEffect(() => {
     if (!open) return
-    setStep(0)
+    setStep(initialStep)
     setApplied(false)
     setGoalActionsState({})
     setTaskActionsState({})
@@ -483,7 +511,7 @@ export default function FreshStartDialog({
       .catch(() => setError(t('error.loadFailed', 'שגיאה בטעינת הנתונים')))
       .finally(() => setLoading(false))
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, user])
+  }, [open, user, initialStep])
 
   // Derived task lists
   const reviewTasks = useMemo(() =>
@@ -526,6 +554,9 @@ export default function FreshStartDialog({
 
   const setBulkGoalAction = (a: GoalAction) =>
     setGoalActionsState(Object.fromEntries(goals.map(g => [g.id, a])))
+
+  const setBulkTaskAction = (a: 'keep' | 'archive') =>
+    setTaskActionsState(Object.fromEntries(reviewTasks.map(t => [t.id, a])))
 
   const updateDraftSettings = (patch: Partial<CoachSettings>) =>
     setDraftSettings(prev => ({ ...prev, ...patch }))
@@ -588,7 +619,7 @@ export default function FreshStartDialog({
       <DialogTitle sx={{ pb: 1 }}>
         <Stack direction="row" alignItems="center" gap={1}>
           <Typography variant="h6" fontWeight={800} sx={{ flex: 1 }}>
-            🔄 {t('freshStart.title', 'התחל דף חדש')}
+            🔄 {t('freshStart.title', 'ארגון מחדש')}
           </Typography>
           <Tooltip title={t('common.close', 'סגור')}>
             <IconButton
@@ -670,6 +701,7 @@ export default function FreshStartDialog({
                     goals={goals}
                     archivedGoalIds={archivedGoalIds}
                     moveableGoals={moveableGoals}
+                    onBulkAction={setBulkTaskAction}
                   />
                 )}
                 {step === 2 && (

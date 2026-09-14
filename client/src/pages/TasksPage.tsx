@@ -28,6 +28,7 @@ import type { TaskItem, Goal }         from '../types'
 import { Filter, TODAY, applyFilter, isArchivedCompleted, PRIORITY_COLOR } from '../utils'
 import AddTaskDialog from '../components/tasks/AddTaskDialog'
 import ShareDialog from '../components/ShareDialog'
+import FreshStartDialog from '../components/freshStart/FreshStartDialog'
 
 // ─── component ───────────────────────────────────────────────────────────────
 export default function TasksPage() {
@@ -43,8 +44,9 @@ export default function TasksPage() {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const [localTasks, setLocalTasks] = useState<TaskItem[]>([])
   const [goals,      setGoals]      = useState<Goal[]>([])
-  const [addOpen,    setAddOpen]    = useState(false)
-  const [editTask,   setEditTask]   = useState<TaskItem | null>(null)
+  const [addOpen,         setAddOpen]         = useState(false)
+  const [editTask,        setEditTask]        = useState<TaskItem | null>(null)
+  const [reorganizeOpen,  setReorganizeOpen]  = useState(false)
 
   useEffect(() => {
     if (!user) return
@@ -276,8 +278,8 @@ export default function TasksPage() {
         })}
       </Box>
 
-      {/* ── Filter chips ── */}
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+      {/* ── Filter chips + reorganize ── */}
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2, alignItems: 'center' }}>
         {filters.map((f) => (
           <Chip
             key={f}
@@ -294,6 +296,17 @@ export default function TasksPage() {
             }}
           />
         ))}
+        {localTasks.length > 0 && (
+          <Box sx={{ ml: 'auto' }}>
+            <Chip
+              label={`🔄 ${t('freshStart.triggerTasks', 'ארגון מחדש של המשימות')}`}
+              size="small"
+              onClick={() => setReorganizeOpen(true)}
+              variant="outlined"
+              sx={{ fontSize: '0.65rem', color: 'text.secondary', borderColor: 'divider' }}
+            />
+          </Box>
+        )}
       </Box>
 
       {/* ── No tasks at all ── */}
@@ -421,6 +434,17 @@ export default function TasksPage() {
         editTask={editTask ?? undefined}
         goals={goals}
         userId={user?.id ?? ''}
+      />
+
+      <FreshStartDialog
+        open={reorganizeOpen}
+        onClose={() => setReorganizeOpen(false)}
+        tasks={localTasks}
+        initialStep={1}
+        onApplied={() => {
+          setReorganizeOpen(false)
+          if (user) tasksApi.getByUser(user.id).then(setLocalTasks).catch(() => {})
+        }}
       />
     </Box>
   )

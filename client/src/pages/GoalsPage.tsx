@@ -11,6 +11,7 @@ import type { Goal } from '../types'
 import GoalCard from '../components/goals/GoalCard'
 import AddGoalDialog from '../components/goals/AddGoalDialog'
 import GoalsAgentDialog from '../components/goals/GoalsAgentDialog'
+import FreshStartDialog from '../components/freshStart/FreshStartDialog'
 
 export default function GoalsPage() {
   const { t } = useTranslation()
@@ -20,10 +21,11 @@ export default function GoalsPage() {
   const [goals, setGoals]   = useState<Goal[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError]   = useState<string | null>(null)
-  const [addOpen,       setAddOpen]       = useState(false)
-  const [editGoal,      setEditGoal]      = useState<Goal | null>(null)
-  const [agentOpen,     setAgentOpen]     = useState(false)
-  const [showArchived,  setShowArchived]  = useState(false)
+  const [addOpen,         setAddOpen]         = useState(false)
+  const [editGoal,        setEditGoal]        = useState<Goal | null>(null)
+  const [agentOpen,       setAgentOpen]       = useState(false)
+  const [showArchived,    setShowArchived]    = useState(false)
+  const [reorganizeOpen,  setReorganizeOpen]  = useState(false)
 
   useEffect(() => {
     if (!user) return
@@ -91,6 +93,20 @@ export default function GoalsPage() {
 
       {!loading && !error && goals.length > 0 && (
         <>
+      {/* ── Reorganize entry point ── */}
+      {active.length > 0 && (
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 0.5 }}>
+          <Button
+            size="small"
+            variant="text"
+            onClick={() => setReorganizeOpen(true)}
+            sx={{ fontSize: '0.72rem', color: 'text.secondary' }}
+          >
+            🔄 {t('freshStart.triggerGoals', 'ארגון מחדש של המטרות')}
+          </Button>
+        </Box>
+      )}
+
       {/* ── AI Agent banner (only when active goals exist) ── */}
       {active.length > 0 && (
       <Box
@@ -283,6 +299,17 @@ export default function GoalsPage() {
         open={agentOpen}
         onClose={() => setAgentOpen(false)}
         goals={goals}
+      />
+
+      <FreshStartDialog
+        open={reorganizeOpen}
+        onClose={() => setReorganizeOpen(false)}
+        tasks={[]}
+        initialStep={0}
+        onApplied={() => {
+          setReorganizeOpen(false)
+          goalsApi.getByUser(user!.id).then(setGoals).catch(() => {})
+        }}
       />
     </Box>
   )

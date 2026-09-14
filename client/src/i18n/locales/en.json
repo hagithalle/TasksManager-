@@ -722,9 +722,11 @@
     "loadFailed": "Failed to load"
   },
   "freshStart": {
-    "trigger": "Fresh Start",
-    "title": "Fresh Start",
-    "subtitle": "Review your current state and update your plan for the new period",
+    "trigger": "Reorganize",
+    "triggerGoals": "Reorganize Goals",
+    "triggerTasks": "Reorganize Tasks",
+    "title": "Reorganize",
+    "subtitle": "Review your goals and tasks and decide what continues, what's done, and what gets archived.",
     "next": "Next",
     "apply": "Apply Changes",
     "applying": "Applying changes...",
@@ -755,7 +757,9 @@
     "tasks": {
       "empty": "No pending tasks to review",
       "goalArchived": "Goal being archived",
-      "moveToGoal": "Move to goal..."
+      "moveToGoal": "Move to goal...",
+      "archiveAll": "Archive all 📦",
+      "keepAll": "Keep all"
     },
     "habits": {
       "empty": "No active habits or routines",

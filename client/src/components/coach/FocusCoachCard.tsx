@@ -569,7 +569,7 @@ export default function FocusCoachCard({ tasks, goals, onRefresh, onToggle, onTo
           onClick={() => setFreshStartOpen(true)}
           sx={{ fontSize: '0.7rem', color: 'text.secondary', textDecoration: 'none', opacity: 0.7 }}
         >
-          🔄 {t('freshStart.trigger', 'התחל דף חדש')}
+          🔄 {t('freshStart.trigger', 'ארגון מחדש')}
         </Button>
       </Box>
 
