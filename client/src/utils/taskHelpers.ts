@@ -1,4 +1,4 @@
-import { ExecutionType, Priority, TaskStatus } from '../types'
+import { DailyRole, ExecutionType, Priority, TaskStatus } from '../types'
 import type { TaskItem } from '../types'
 
 export const TODAY = new Date().toISOString().slice(0, 10)
@@ -16,7 +16,7 @@ type DailyItem = {
   recurrenceType?: string
 }
 
-export type Filter = 'all' | 'today' | 'urgent' | 'completed'
+export type Filter = 'all' | 'today' | 'urgent' | 'completed' | 'habits'
 
 export function isArchivedCompleted(task: TaskItem): boolean {
   if (!task.isCompleted || !task.completedAt) return false
@@ -49,13 +49,21 @@ export function flattenTasks(tasks: TaskItem[]): TaskLike[] {
   })
 }
 
+const isHabitTask = (t: TaskItem) =>
+  t.dailyRole === DailyRole.MorningRoutine || t.dailyRole === DailyRole.OngoingHabit
+
 export function applyFilter(tasks: TaskItem[], filter: Filter): TaskItem[] {
   // Archived tasks are always excluded — they live in a separate archive section
   const nonArchived = tasks.filter(t => t.taskStatus !== TaskStatus.Archived)
   switch (filter) {
+    case 'habits':
+      // Show all non-archived habit/routine tasks regardless of completion
+      return nonArchived.filter(isHabitTask)
+
     case 'today':
       return nonArchived.filter(
         task =>
+          !isHabitTask(task) &&
           !task.isCompleted &&
           task.dueDate?.startsWith(TODAY) &&
           isActiveDaily(task)
@@ -64,17 +72,18 @@ export function applyFilter(tasks: TaskItem[], filter: Filter): TaskItem[] {
     case 'urgent':
       return nonArchived.filter(
         task =>
+          !isHabitTask(task) &&
           !task.isCompleted &&
           (task.priority === Priority.Critical || task.priority === Priority.High) &&
           isActiveDaily(task)
       )
 
     case 'completed':
-      return nonArchived.filter(task => task.isCompleted)
+      return nonArchived.filter(task => !isHabitTask(task) && task.isCompleted)
 
     case 'all':
     default:
-      return nonArchived.filter(isActiveDaily)
+      return nonArchived.filter(task => !isHabitTask(task) && isActiveDaily(task))
   }
 }
 

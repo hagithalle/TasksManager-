@@ -233,13 +233,20 @@ function flattenCandidates(tasks: TaskItem[]): FlatCandidate[] {
 
 // ── Step 3: filter eligible candidates ────────────────────────────────────────
 
-function isEligible(c: FlatCandidate, scheduledIds: Set<string>): boolean {
+function isEligible(c: FlatCandidate, scheduledIds: Set<string>, goalMeta: Record<string, GoalMeta>): boolean {
   if (scheduledIds.has(c.sourceTask.id)) return false
   // Tasks with a plannedTime are normally routed to the schedule strip, not focus.
   // Exception: Missed tasks — their time has passed, they are no longer in the strip
   // (extractScheduledEvents excludes Missed), so they are eligible as focus candidates.
   if (!c.isSubTask && c.plannedTime && c.taskStatus !== TaskStatus.Missed) return false
   if (isCompletedInCurrentPeriod(c.sourceTask)) return false
+  // Exclude tasks whose linked goal is known to be archived or completed.
+  // If the goal is absent from goalMeta (historical data mismatch), we let it through
+  // so we don't accidentally hide tasks — the user can fix the link manually.
+  if (c.goalId) {
+    const meta = goalMeta[c.goalId]
+    if (meta && !meta.isActive) return false
+  }
   return true
 }
 
@@ -392,7 +399,7 @@ export function buildFocusPlan(
 
   // Flatten and filter Focus candidates
   const flat     = flattenCandidates(focusPool)
-  const eligible = flat.filter(c => isEligible(c, scheduledIds))
+  const eligible = flat.filter(c => isEligible(c, scheduledIds, goalMeta))
 
   // Frog: highest-priority candidate due today
   const todayCands = eligible.filter(c => c.dueDate === today)

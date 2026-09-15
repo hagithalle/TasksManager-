@@ -39,7 +39,8 @@
       "all": "All",
       "today": "Today",
       "urgent": "Urgent",
-      "completed": "Completed"
+      "completed": "Completed",
+      "habits": "🔄 Habits & Routines"
     },
     "noGoal": "No Goal",
     "emptyTitle": "No tasks yet",

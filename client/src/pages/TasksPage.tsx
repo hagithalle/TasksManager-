@@ -22,7 +22,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth }                     from '../contexts/AuthContext'
 import { tasksApi, goalsApi }          from '../api'
-import { Priority, RecurrenceType, TaskStatus } from '../types'
+import { DailyRole, Priority, RecurrenceType, TaskStatus } from '../types'
 import { isCompletedInCurrentPeriod } from '../hooks/focusEngine'
 import type { TaskItem, Goal }         from '../types'
 import { Filter, TODAY, applyFilter, isArchivedCompleted, PRIORITY_COLOR } from '../utils'
@@ -142,17 +142,19 @@ export default function TasksPage() {
       setLocalTasks((prev) => prev.map((t) => t.id === taskId ? task : t))
     })
   }, [localTasks])
-  // ── stats (exclude archived tasks — they have their own section) ──
+  // ── stats (exclude archived and habit tasks — they have their own sections) ──
+  const isHabit = (t: TaskItem) => t.dailyRole === DailyRole.MorningRoutine || t.dailyRole === DailyRole.OngoingHabit
   const activeTasks    = localTasks.filter((tk) => tk.taskStatus !== TaskStatus.Archived)
   const archivedTasks  = localTasks.filter((tk) => tk.taskStatus === TaskStatus.Archived)
-  const statsCompleted = activeTasks.filter((tk) => tk.isCompleted).length
-  const statsUrgent    = activeTasks.filter(
+  const focusTasks     = activeTasks.filter((tk) => !isHabit(tk))
+  const statsCompleted = focusTasks.filter((tk) => tk.isCompleted).length
+  const statsUrgent    = focusTasks.filter(
     (tk) => !tk.isCompleted && (tk.priority === Priority.Critical || tk.priority === Priority.High),
   ).length
-  const statsToday     = activeTasks.filter(
+  const statsToday     = focusTasks.filter(
     (tk) => !tk.isCompleted && tk.dueDate?.startsWith(TODAY),
   ).length
-  const statsTotal     = activeTasks.length
+  const statsTotal     = focusTasks.length
 
   const stats: {
     key:   Filter | null
@@ -213,7 +215,7 @@ export default function TasksPage() {
   const toggleExpand = (id: string) =>
     setExpanded((prev) => ({ ...prev, [id]: !prev[id] }))
 
-  const filters: Filter[] = ['all', 'today', 'urgent', 'completed']
+  const filters: Filter[] = ['all', 'today', 'urgent', 'completed', 'habits']
 
   return (
     <Box sx={{ px: 2, pt: 2, pb: 4 }}>
