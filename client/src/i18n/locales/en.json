@@ -62,7 +62,8 @@
     "applyNotes": "Apply notes",
     "notesSuggestion": "Task notes",
     "archivedSection": "Archive",
-    "restore": "Restore"
+    "restore": "Restore",
+    "stopHabit": "Stop Habit"
   },
   "goal": {
     "new": "New Goal",

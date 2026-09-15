@@ -62,7 +62,8 @@
     "applyNotes": "החל הערות",
     "notesSuggestion": "הערות משימה",
     "archivedSection": "ארכיון",
-    "restore": "שחזר"
+    "restore": "שחזר",
+    "stopHabit": "הפסק הרגל"
   },
   "goal": {
     "new": "מטרה חדשה",
@@ -140,7 +141,7 @@
     "label":          "תפקיד ביום",
     "focus":          "משימת מיקוד",
     "morningRoutine": "שגרת בוקר",
-    "ongoingHabit":   "הרגל שוטף"
+    "ongoingHabit":   "הרגל מתמשך"
   },
   "taskStatus": {
     "open":        "פתוח",

@@ -14,6 +14,7 @@ import CalendarMonthRoundedIcon        from '@mui/icons-material/CalendarMonthRo
 import TodayRoundedIcon                from '@mui/icons-material/TodayRounded'
 import EditRoundedIcon                 from '@mui/icons-material/EditRounded'
 import DeleteRoundedIcon               from '@mui/icons-material/DeleteRounded'
+import ArchiveRoundedIcon              from '@mui/icons-material/ArchiveRounded'
 import ShareRoundedIcon                from '@mui/icons-material/ShareRounded'
 import type { SvgIconComponent }       from '@mui/icons-material'
 import { useTranslation }  from 'react-i18next'
@@ -139,6 +140,15 @@ export default function TasksPage() {
     const restored = { ...task, taskStatus: TaskStatus.Open }
     setLocalTasks((prev) => prev.map((t) => t.id === taskId ? restored : t))
     tasksApi.update(taskId, { status: TaskStatus.Open }).catch(() => {
+      setLocalTasks((prev) => prev.map((t) => t.id === taskId ? task : t))
+    })
+  }, [localTasks])
+
+  const handleArchiveHabit = useCallback((taskId: string) => {
+    const task = localTasks.find((t) => t.id === taskId)
+    if (!task) return
+    setLocalTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, taskStatus: TaskStatus.Archived } : t))
+    tasksApi.update(taskId, { status: TaskStatus.Archived }).catch(() => {
       setLocalTasks((prev) => prev.map((t) => t.id === taskId ? task : t))
     })
   }, [localTasks])
@@ -379,6 +389,8 @@ export default function TasksPage() {
             onToggleSub={toggleSubComplete}
             onEdit={setEditTask}
             onDelete={handleDeleteTask}
+            onArchive={handleArchiveHabit}
+            isHabitsView={filter === 'habits'}
             completedInitiallyOpen={filter === 'completed'}
             i18n={i18n}
             t={t}
@@ -405,6 +417,8 @@ export default function TasksPage() {
             onToggleSub={toggleSubComplete}
             onEdit={setEditTask}
             onDelete={handleDeleteTask}
+            onArchive={handleArchiveHabit}
+            isHabitsView={filter === 'habits'}
             completedInitiallyOpen={filter === 'completed'}
             i18n={i18n}
             t={t}
@@ -479,13 +493,15 @@ interface TaskGroupProps {
   onToggleSub:             (taskId: string, subId: string) => void
   onEdit:                  (task: TaskItem) => void
   onDelete:                (id: string) => void
+  onArchive?:              (id: string) => void
+  isHabitsView?:           boolean
   completedInitiallyOpen?: boolean
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   t:                       (key: string, opts?: any) => string
   i18n:                    { language: string }
 }
 
-function TaskGroup({ tasks, expanded, onToggleExpand, onToggleTask, onToggleSub, onEdit, onDelete, completedInitiallyOpen = false, t, i18n }: TaskGroupProps) {
+function TaskGroup({ tasks, expanded, onToggleExpand, onToggleTask, onToggleSub, onEdit, onDelete, onArchive, isHabitsView = false, completedInitiallyOpen = false, t, i18n }: TaskGroupProps) {
   const [shareTask, setShareTask] = useState<TaskItem | null>(null)
   const [showDone, setShowDone]   = useState(completedInitiallyOpen)
   const [previewTask, setPreviewTask] = useState<TaskItem | null>(null)
@@ -563,9 +579,17 @@ function TaskGroup({ tasks, expanded, onToggleExpand, onToggleTask, onToggleSub,
                         <IconButton size="small" onClick={() => onEdit(task)} sx={{ p: 0.25 }}>
                           <EditRoundedIcon sx={{ fontSize: 15, color: 'text.disabled' }} />
                         </IconButton>
-                        <IconButton size="small" onClick={() => onDelete(task.id)} sx={{ p: 0.25 }}>
-                          <DeleteRoundedIcon sx={{ fontSize: 15, color: 'text.disabled' }} />
-                        </IconButton>
+                        {isHabitsView ? (
+                          <Tooltip title={t('task.stopHabit', 'הפסק הרגל')}>
+                            <IconButton size="small" onClick={() => onArchive?.(task.id)} sx={{ p: 0.25 }}>
+                              <ArchiveRoundedIcon sx={{ fontSize: 15, color: 'text.disabled' }} />
+                            </IconButton>
+                          </Tooltip>
+                        ) : (
+                          <IconButton size="small" onClick={() => onDelete(task.id)} sx={{ p: 0.25 }}>
+                            <DeleteRoundedIcon sx={{ fontSize: 15, color: 'text.disabled' }} />
+                          </IconButton>
+                        )}
                         <IconButton size="small" onClick={() => setShareTask(task)} sx={{ p: 0.25 }}>
                           <ShareRoundedIcon sx={{ fontSize: 15, color: 'text.disabled' }} />
                         </IconButton>
@@ -581,7 +605,16 @@ function TaskGroup({ tasks, expanded, onToggleExpand, onToggleTask, onToggleSub,
                   }
                   secondary={
                     <Box component="span" sx={{ display: 'flex', gap: 1.5, mt: 0.25, flexWrap: 'wrap' }}>
-                      {task.dueDate && (
+                      {/* Role badge — shown only in habits view */}
+                      {isHabitsView && task.dailyRole && (
+                        <Typography component="span" variant="caption" fontWeight={700}
+                          sx={{ color: task.dailyRole === DailyRole.MorningRoutine ? '#d97706' : '#7c5cff' }}>
+                          {task.dailyRole === DailyRole.MorningRoutine
+                            ? `🌅 ${t('dailyRole.morningRoutine')}`
+                            : `🔁 ${t('dailyRole.ongoingHabit')}`}
+                        </Typography>
+                      )}
+                      {task.dueDate && !isHabitsView && (
                         <Typography component="span" variant="caption" color="text.secondary">
                           {t('task.dueDate')}: {new Date(task.dueDate).toLocaleDateString(i18n.language, { day: '2-digit', month: '2-digit' })}
                         </Typography>
@@ -598,7 +631,7 @@ function TaskGroup({ tasks, expanded, onToggleExpand, onToggleTask, onToggleSub,
                       )}
                       {task.recurrenceType && task.recurrenceType !== RecurrenceType.None && (
                         <Typography component="span" variant="caption" color="primary.main" sx={{ fontWeight: 600 }}>
-                          🔁 {t(`recurrence.${task.recurrenceType}`, task.recurrenceType)}
+                          {!isHabitsView && '🔁 '}{t(`recurrence.${task.recurrenceType}`, task.recurrenceType)}
                         </Typography>
                       )}
                       {donePeriod && (
